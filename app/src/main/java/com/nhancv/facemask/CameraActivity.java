@@ -5,7 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 
 import org.opencv.android.OpenCVLoader;
 
-public class MainActivity extends AppCompatActivity {
+public class CameraActivity extends AppCompatActivity {
 
     static {
         OpenCVLoader.initDebug();
@@ -14,6 +14,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_camera);
+        if (null == savedInstanceState) {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.container, CameraFragment.newInstance())
+                    .commit();
+        }
     }
 }
