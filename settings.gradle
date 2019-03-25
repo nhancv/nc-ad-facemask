@@ -1,4 +1,4 @@
-include ':app'
+include ':app', ':dlib'
 
 def opencvsdk = '../OpenCV-android-sdk'
 include ':opencv'
