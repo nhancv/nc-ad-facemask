@@ -285,10 +285,8 @@ public class CameraFragment extends Fragment
                 }
                 case STATE_WAITING_LOCK: {
                     Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
-                    if (afState == null) {
-                        captureStillPicture();
-                    } else if (CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED == afState ||
-                            CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED == afState) {
+                    if (afState != null && (CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED == afState ||
+                            CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED == afState)) {
                         // CONTROL_AE_STATE can be null on some devices
                         Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
                         if (aeState == null ||
@@ -298,6 +296,8 @@ public class CameraFragment extends Fragment
                         } else {
                             runPrecaptureSequence();
                         }
+                    } else {
+                        captureStillPicture();
                     }
                     break;
                 }
@@ -899,16 +899,19 @@ public class CameraFragment extends Fragment
         if (mCameraId.equals(CAMERA_FRONT)) {
             mCameraId = CAMERA_BACK;
             closeCamera();
+            stopBackgroundThread();
             reopenCamera();
         } else if (mCameraId.equals(CAMERA_BACK)) {
             mCameraId = CAMERA_FRONT;
             closeCamera();
+            stopBackgroundThread();
             reopenCamera();
 
         }
     }
 
     private void reopenCamera() {
+        startBackgroundThread();
         if (mTextureView.isAvailable()) {
             openCamera(mTextureView.getWidth(), mTextureView.getHeight());
         } else {
