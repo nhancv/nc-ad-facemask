@@ -1,6 +1,7 @@
 package com.nhancv.facemask;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -58,6 +59,8 @@ import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import hugo.weaving.DebugLog;
+
 public class CameraFragment extends Fragment
         implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
 
@@ -78,7 +81,7 @@ public class CameraFragment extends Fragment
     /**
      * Tag for the {@link Log}.
      */
-    private static final String TAG = "Camera2BasicFragment";
+    private static final String TAG = "CameraFragment";
 
     /**
      * Camera state: Showing camera preview.
@@ -270,8 +273,6 @@ public class CameraFragment extends Fragment
 
     };
 
-    private final OnGetImageListener mOnGetPreviewListener = new OnGetImageListener();
-
     /**
      * {@link CaptureRequest.Builder} for the camera preview
      */
@@ -405,6 +406,9 @@ public class CameraFragment extends Fragment
      * @param aspectRatio       The aspect ratio
      * @return The optimal {@code Size}, or an arbitrary one if none were big enough
      */
+
+    @SuppressLint("LongLogTag")
+    @DebugLog
     private static Size chooseOptimalSize(Size[] choices, int textureViewWidth,
             int textureViewHeight, int maxWidth, int maxHeight, Size aspectRatio) {
 
@@ -513,6 +517,8 @@ public class CameraFragment extends Fragment
      * @param height The height of available size for camera preview
      */
     @SuppressWarnings("SuspiciousNameCombination")
+    @SuppressLint("LongLogTag")
+    @DebugLog
     private void setUpCameraOutputs(int width, int height) {
         Activity activity = getActivity();
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
@@ -607,7 +613,8 @@ public class CameraFragment extends Fragment
                 // Check if the flash is supported.
                 Boolean available = characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
                 mFlashSupported = available == null ? false : available;
-
+                // mCameraId = cameraId;
+                return;
             }
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -622,6 +629,8 @@ public class CameraFragment extends Fragment
     /**
      * Opens the camera specified by {@link CameraFragment#mCameraId}.
      */
+    @SuppressLint("LongLogTag")
+    @DebugLog
     private void openCamera(int width, int height) {
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -647,6 +656,8 @@ public class CameraFragment extends Fragment
     /**
      * Closes the current {@link CameraDevice}.
      */
+
+    @DebugLog
     private void closeCamera() {
         try {
             mCameraOpenCloseLock.acquire();
@@ -677,6 +688,9 @@ public class CameraFragment extends Fragment
     /**
      * Starts a background thread and its {@link Handler}.
      */
+
+    @SuppressLint("LongLogTag")
+    @DebugLog
     private void startBackgroundThread() {
         mBackgroundThread = new HandlerThread("CameraBackground");
         mBackgroundThread.start();
@@ -692,6 +706,9 @@ public class CameraFragment extends Fragment
     /**
      * Stops the background thread and its {@link Handler}.
      */
+
+    @SuppressLint("LongLogTag")
+    @DebugLog
     private void stopBackgroundThread() {
         try {
             if (mBackgroundThread != null) {
@@ -714,9 +731,14 @@ public class CameraFragment extends Fragment
         }
     }
 
+    private final OnGetImageListener mOnGetPreviewListener = new OnGetImageListener();
+
     /**
      * Creates a new {@link CameraCaptureSession} for camera preview.
      */
+
+    @SuppressLint("LongLogTag")
+    @DebugLog
     private void createCameraPreviewSession() {
         try {
             SurfaceTexture texture = mTextureView.getSurfaceTexture();
@@ -781,7 +803,6 @@ public class CameraFragment extends Fragment
             e.printStackTrace();
         }
         mOnGetPreviewListener.initialize(Objects.requireNonNull(getActivity()).getApplicationContext(), getActivity().getAssets(),
-                this,
                 (ImageView) getActivity().findViewById(R.id.fragment_camera_iv_preview), inferenceHandler, uiHandler);
     }
 
@@ -793,6 +814,9 @@ public class CameraFragment extends Fragment
      * @param viewWidth  The width of `mTextureView`
      * @param viewHeight The height of `mTextureView`
      */
+
+    @SuppressLint("LongLogTag")
+    @DebugLog
     private void configureTransform(int viewWidth, int viewHeight) {
         Activity activity = getActivity();
         if (null == mTextureView || null == mPreviewSize || null == activity) {

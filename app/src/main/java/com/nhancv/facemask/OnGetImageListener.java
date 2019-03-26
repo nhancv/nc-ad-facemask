@@ -37,13 +37,11 @@ import java.util.List;
  */
 public class OnGetImageListener implements OnImageAvailableListener {
 
-    private static final int INPUT_SIZE = 225;
+    private static final int INPUT_SIZE = 150;
     private static final String TAG = "OnGetImageListener";
 
     private int mScreenRotation = 0;
 
-    private int mframeNum = 0;
-    private List<VisionDetRet> results;
     private int mPreviewWdith = 0;
     private int mPreviewHeight = 0;
     private byte[][] mYUVBytes;
@@ -59,17 +57,14 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private FaceDet mFaceDet;
     private ImageView mWindow;
     private Paint mFaceLandmardkPaint;
-    private CameraFragment cameraFragment;
 
     public void initialize(
             final Context context,
             final AssetManager assetManager,
-            final CameraFragment fragment,
             final ImageView imageView,
             final Handler handler,
             final Handler mUIHandler) {
         this.mContext = context;
-        this.cameraFragment = fragment;
         this.mInferenceHandler = handler;
         this.mUIHandler = mUIHandler;
         mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
@@ -199,52 +194,51 @@ public class OnGetImageListener implements OnImageAvailableListener {
         drawResizedBitmap(mRGBframeBitmap, mCroppedBitmap);
 
         if (mInferenceHandler != null)
-        mInferenceHandler.post(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        if (!new File(Constants.getFaceShapeModelPath()).exists()) {
-                            FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
-                        }
+            mInferenceHandler.post(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            if (!new File(Constants.getFaceShapeModelPath()).exists()) {
+                                FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
+                            }
 
-                        if(mframeNum % 1 == 0) {
                             long startTime = System.currentTimeMillis();
+
+                            List<VisionDetRet> results;
                             synchronized (OnGetImageListener.this) {
                                 results = mFaceDet.detect(mCroppedBitmap);
                             }
                             long endTime = System.currentTimeMillis();
                             Log.d(TAG, "run: " + "Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
-                        }
-                        // Draw on bitmap
-                        if (results != null) {
-                            for (final VisionDetRet ret : results) {
-                                float resizeRatio = 1.0f;
-                                Rect bounds = new Rect();
-                                bounds.left = (int) (ret.getLeft() * resizeRatio);
-                                bounds.top = (int) (ret.getTop() * resizeRatio);
-                                bounds.right = (int) (ret.getRight() * resizeRatio);
-                                bounds.bottom = (int) (ret.getBottom() * resizeRatio);
-                                Canvas canvas = new Canvas(mCroppedBitmap);
-                                canvas.drawRect(bounds, mFaceLandmardkPaint);
+                            // Draw on bitmap
+                            if (results != null) {
+                                for (final VisionDetRet ret : results) {
+                                    float resizeRatio = 1.0f;
+                                    Rect bounds = new Rect();
+                                    bounds.left = (int) (ret.getLeft() * resizeRatio);
+                                    bounds.top = (int) (ret.getTop() * resizeRatio);
+                                    bounds.right = (int) (ret.getRight() * resizeRatio);
+                                    bounds.bottom = (int) (ret.getBottom() * resizeRatio);
+                                    Canvas canvas = new Canvas(mCroppedBitmap);
+                                    canvas.drawRect(bounds, mFaceLandmardkPaint);
 
-                                // Draw landmark
-                                ArrayList<Point> landmarks = ret.getFaceLandmarks();
-                                for (Point point : landmarks) {
-                                    int pointX = (int) (point.x * resizeRatio);
-                                    int pointY = (int) (point.y * resizeRatio);
-                                    canvas.drawCircle(pointX, pointY, 2, mFaceLandmardkPaint);
+                                    // Draw landmark
+                                    ArrayList<Point> landmarks = ret.getFaceLandmarks();
+                                    for (Point point : landmarks) {
+                                        int pointX = (int) (point.x * resizeRatio);
+                                        int pointY = (int) (point.y * resizeRatio);
+                                        canvas.drawCircle(pointX, pointY, 2, mFaceLandmardkPaint);
+                                    }
                                 }
                             }
-                        }
 
-                        mframeNum++;
                         mUIHandler.post(() -> {
                             mWindow.setImageBitmap(mCroppedBitmap);
                         });
 
-                        mIsComputing = false;
-                    }
-                });
+                            mIsComputing = false;
+                        }
+                    });
 
         Trace.endSection();
     }
