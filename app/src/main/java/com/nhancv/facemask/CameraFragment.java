@@ -64,7 +64,7 @@ public class CameraFragment extends Fragment
     /**
      * Conversion from screen rotation to JPEG orientation.
      */
-    public static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     private static final int REQUEST_CAMERA_PERMISSION = 1;
     private static final String FRAGMENT_DIALOG = "dialog";
 
@@ -153,7 +153,7 @@ public class CameraFragment extends Fragment
     /**
      * ID of the current {@link CameraDevice}.
      */
-    private String mCameraId = CAMERA_FRONT;
+    private String mCameraId = CAMERA_BACK;
 
     /**
      * An {@link AutoFitTextureView} for camera preview.
@@ -396,17 +396,17 @@ public class CameraFragment extends Fragment
      * doesn't exist, choose the largest one that is at most as large as the respective max size,
      * and whose aspect ratio matches with the specified value.
      *
-     * @param choices The list of sizes that the camera supports for the intended output
-     * class
-     * @param textureViewWidth The width of the texture view relative to sensor coordinate
+     * @param choices           The list of sizes that the camera supports for the intended output
+     *                          class
+     * @param textureViewWidth  The width of the texture view relative to sensor coordinate
      * @param textureViewHeight The height of the texture view relative to sensor coordinate
-     * @param maxWidth The maximum width that can be chosen
-     * @param maxHeight The maximum height that can be chosen
-     * @param aspectRatio The aspect ratio
+     * @param maxWidth          The maximum width that can be chosen
+     * @param maxHeight         The maximum height that can be chosen
+     * @param aspectRatio       The aspect ratio
      * @return The optimal {@code Size}, or an arbitrary one if none were big enough
      */
     private static Size chooseOptimalSize(Size[] choices, int textureViewWidth,
-                                          int textureViewHeight, int maxWidth, int maxHeight, Size aspectRatio) {
+            int textureViewHeight, int maxWidth, int maxHeight, Size aspectRatio) {
 
         // Collect the supported resolutions that are at least as big as the preview Surface
         List<Size> bigEnough = new ArrayList<>();
@@ -418,7 +418,7 @@ public class CameraFragment extends Fragment
             if (option.getWidth() <= maxWidth && option.getHeight() <= maxHeight &&
                     option.getHeight() == option.getWidth() * h / w) {
                 if (option.getWidth() >= textureViewWidth &&
-                        option.getHeight() >= textureViewHeight) {
+                    option.getHeight() >= textureViewHeight) {
                     bigEnough.add(option);
                 } else {
                     notBigEnough.add(option);
@@ -509,7 +509,7 @@ public class CameraFragment extends Fragment
     /**
      * Sets up member variables related to camera.
      *
-     * @param width The width of available size for camera preview
+     * @param width  The width of available size for camera preview
      * @param height The height of available size for camera preview
      */
     @SuppressWarnings("SuspiciousNameCombination")
@@ -521,6 +521,12 @@ public class CameraFragment extends Fragment
                 CameraCharacteristics characteristics
                         = manager.getCameraCharacteristics(cameraId);
 
+                // We don't use a front facing camera in this sample.
+                Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+                if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
+                    continue;
+                }
+
                 StreamConfigurationMap map = characteristics.get(
                         CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                 if (map == null) {
@@ -529,7 +535,7 @@ public class CameraFragment extends Fragment
 
                 // For still image captures, we use the largest available size.
                 Size largest = Collections.max(
-                        Arrays.asList(map.getOutputSizes(ImageFormat.YUV_420_888)),
+                        Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
                         new CompareSizesByArea());
                 mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
                         ImageFormat.JPEG, /*maxImages*/2);
@@ -784,7 +790,7 @@ public class CameraFragment extends Fragment
      * This method should be called after the camera preview size is determined in
      * setUpCameraOutputs and also the size of `mTextureView` is fixed.
      *
-     * @param viewWidth The width of `mTextureView`
+     * @param viewWidth  The width of `mTextureView`
      * @param viewHeight The height of `mTextureView`
      */
     private void configureTransform(int viewWidth, int viewHeight) {
@@ -905,7 +911,7 @@ public class CameraFragment extends Fragment
      * @param rotation The screen rotation.
      * @return The JPEG orientation (one of 0, 90, 270, and 360)
      */
-    public int getOrientation(int rotation) {
+    private int getOrientation(int rotation) {
         // Sensor orientation is 90 for most devices, or 270 for some devices (eg. Nexus 5X)
         // We have to take that into account and rotate JPEG properly.
         // For devices with orientation of 90, we simply return our mapping from ORIENTATIONS.

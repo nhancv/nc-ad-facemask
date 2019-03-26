@@ -37,7 +37,7 @@ import java.util.List;
  */
 public class OnGetImageListener implements OnImageAvailableListener {
 
-    private static final int INPUT_SIZE = 150;
+    private static final int INPUT_SIZE = 225;
     private static final String TAG = "OnGetImageListener";
 
     private int mScreenRotation = 0;
@@ -98,15 +98,13 @@ public class OnGetImageListener implements OnImageAvailableListener {
         int screen_width = point.x;
         int screen_height = point.y;
         Log.d(TAG, String.format("screen size (%d,%d)", screen_width, screen_height));
-        int rotation = cameraFragment.getOrientation (getOrient.getRotation());
-        mScreenRotation = rotation;
-//        if (screen_width < screen_height) {
-//            orientation = Configuration.ORIENTATION_PORTRAIT;
-//            mScreenRotation = 90;
-//        } else {
-//            orientation = Configuration.ORIENTATION_LANDSCAPE;
-//            mScreenRotation = 0;
-//        }
+        if (screen_width < screen_height) {
+            orientation = Configuration.ORIENTATION_PORTRAIT;
+            mScreenRotation = 90;
+        } else {
+            orientation = Configuration.ORIENTATION_LANDSCAPE;
+            mScreenRotation = 0;
+        }
 
         final float minDim = Math.min(src.getWidth(), src.getHeight());
 
