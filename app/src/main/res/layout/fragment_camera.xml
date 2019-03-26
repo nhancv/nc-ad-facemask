@@ -40,7 +40,7 @@
         >
 
         <Button
-            android:id="@+id/picture"
+            android:id="@+id/fragment_camera_ib_take_picture"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -48,10 +48,20 @@
             />
 
         <ImageButton
-            android:id="@+id/info"
+            android:id="@+id/fragment_camera_ib_switch_camera"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical|right"
+            android:layout_gravity="center_vertical|end"
+            android:contentDescription="@string/description_info"
+            android:padding="20dp"
+            android:src="@drawable/ic_action_info"
+            style="@android:style/Widget.Material.Light.Button.Borderless"
+            />
+        <ImageButton
+            android:id="@+id/fragment_camera_ib_toggle_preview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|start"
             android:contentDescription="@string/description_info"
             android:padding="20dp"
             android:src="@drawable/ic_action_info"

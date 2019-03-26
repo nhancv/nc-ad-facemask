@@ -64,7 +64,7 @@ public class CameraFragment extends Fragment
     /**
      * Conversion from screen rotation to JPEG orientation.
      */
-    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+    public static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     private static final int REQUEST_CAMERA_PERMISSION = 1;
     private static final String FRAGMENT_DIALOG = "dialog";
 
@@ -450,8 +450,9 @@ public class CameraFragment extends Fragment
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
-        view.findViewById(R.id.picture).setOnClickListener(this);
-        view.findViewById(R.id.info).setOnClickListener(this);
+        view.findViewById(R.id.fragment_camera_ib_take_picture).setOnClickListener(this);
+        view.findViewById(R.id.fragment_camera_ib_toggle_preview).setOnClickListener(this);
+        view.findViewById(R.id.fragment_camera_ib_switch_camera).setOnClickListener(this);
         mTextureView = (AutoFitTextureView) view.findViewById(R.id.texture);
     }
 
@@ -691,7 +692,7 @@ public class CameraFragment extends Fragment
                 mBackgroundThread.quitSafely();
                 mBackgroundThread.join();
             }
-            if(inferenceThread != null) {
+            if (inferenceThread != null) {
                 inferenceThread.quitSafely();
                 inferenceThread.join();
             }
@@ -729,7 +730,7 @@ public class CameraFragment extends Fragment
             // Create the reader for the preview frames.
             previewReader =
                     ImageReader.newInstance(
-                            mPreviewSize.getWidth(), mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 1);
+                            mPreviewSize.getWidth(), mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 2);
 
             previewReader.setOnImageAvailableListener(mOnGetPreviewListener, mBackgroundHandler);
             mPreviewRequestBuilder.addTarget(previewReader.getSurface());
@@ -774,6 +775,7 @@ public class CameraFragment extends Fragment
             e.printStackTrace();
         }
         mOnGetPreviewListener.initialize(Objects.requireNonNull(getActivity()).getApplicationContext(), getActivity().getAssets(),
+                this,
                 (ImageView) getActivity().findViewById(R.id.fragment_camera_iv_preview), inferenceHandler, uiHandler);
     }
 
@@ -903,7 +905,7 @@ public class CameraFragment extends Fragment
      * @param rotation The screen rotation.
      * @return The JPEG orientation (one of 0, 90, 270, and 360)
      */
-    private int getOrientation(int rotation) {
+    public int getOrientation(int rotation) {
         // Sensor orientation is 90 for most devices, or 270 for some devices (eg. Nexus 5X)
         // We have to take that into account and rotate JPEG properly.
         // For devices with orientation of 90, we simply return our mapping from ORIENTATIONS.
@@ -936,24 +938,24 @@ public class CameraFragment extends Fragment
     public void onClick(final View view) {
         view.setEnabled(false);
         switch (view.getId()) {
-            case R.id.picture: {
+            case R.id.fragment_camera_ib_toggle_preview:
+                View v = Objects.requireNonNull(getActivity()).findViewById(R.id.fragment_camera_iv_preview);
+                if(v.getVisibility() == View.VISIBLE) {
+                    v.setVisibility(View.INVISIBLE);
+                } else {
+                    v.setVisibility(View.VISIBLE);
+                }
+                break;
+            case R.id.fragment_camera_ib_take_picture: {
                 takePicture();
                 break;
             }
-            case R.id.info: {
+            case R.id.fragment_camera_ib_switch_camera: {
                 switchCamera();
                 break;
             }
         }
-        view.postDelayed(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        view.setEnabled(true);
-                    }
-                }
-                , 500);
-
+        view.postDelayed(() -> view.setEnabled(true), 500);
 
     }
 

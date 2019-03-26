@@ -37,7 +37,7 @@ import java.util.List;
  */
 public class OnGetImageListener implements OnImageAvailableListener {
 
-    private static final int INPUT_SIZE = 224;
+    private static final int INPUT_SIZE = 150;
     private static final String TAG = "OnGetImageListener";
 
     private int mScreenRotation = 0;
@@ -59,14 +59,17 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private FaceDet mFaceDet;
     private ImageView mWindow;
     private Paint mFaceLandmardkPaint;
+    private CameraFragment cameraFragment;
 
     public void initialize(
             final Context context,
             final AssetManager assetManager,
+            final CameraFragment fragment,
             final ImageView imageView,
             final Handler handler,
             final Handler mUIHandler) {
         this.mContext = context;
+        this.cameraFragment = fragment;
         this.mInferenceHandler = handler;
         this.mUIHandler = mUIHandler;
         mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
@@ -95,13 +98,15 @@ public class OnGetImageListener implements OnImageAvailableListener {
         int screen_width = point.x;
         int screen_height = point.y;
         Log.d(TAG, String.format("screen size (%d,%d)", screen_width, screen_height));
-        if (screen_width < screen_height) {
-            orientation = Configuration.ORIENTATION_PORTRAIT;
-            mScreenRotation = -90;
-        } else {
-            orientation = Configuration.ORIENTATION_LANDSCAPE;
-            mScreenRotation = 0;
-        }
+        int rotation = cameraFragment.getOrientation (getOrient.getRotation());
+        mScreenRotation = rotation;
+//        if (screen_width < screen_height) {
+//            orientation = Configuration.ORIENTATION_PORTRAIT;
+//            mScreenRotation = 90;
+//        } else {
+//            orientation = Configuration.ORIENTATION_LANDSCAPE;
+//            mScreenRotation = 0;
+//        }
 
         final float minDim = Math.min(src.getWidth(), src.getHeight());
 
@@ -195,6 +200,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
         mRGBframeBitmap.setPixels(mRGBBytes, 0, mPreviewWdith, 0, 0, mPreviewWdith, mPreviewHeight);
         drawResizedBitmap(mRGBframeBitmap, mCroppedBitmap);
 
+        if (mInferenceHandler != null)
         mInferenceHandler.post(
                 new Runnable() {
                     @Override
