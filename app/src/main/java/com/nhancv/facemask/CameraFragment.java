@@ -28,6 +28,7 @@ import android.media.ImageReader;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
@@ -41,6 +42,7 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -52,6 +54,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -190,6 +193,10 @@ public class CameraFragment extends Fragment
             mCameraOpenCloseLock.release();
             cameraDevice.close();
             mCameraDevice = null;
+
+            if (mOnGetPreviewListener != null) {
+                mOnGetPreviewListener.deInitialize();
+            }
         }
 
         @Override
@@ -200,6 +207,10 @@ public class CameraFragment extends Fragment
             Activity activity = getActivity();
             if (null != activity) {
                 activity.finish();
+            }
+
+            if (mOnGetPreviewListener != null) {
+                mOnGetPreviewListener.deInitialize();
             }
         }
 
@@ -216,9 +227,29 @@ public class CameraFragment extends Fragment
     private Handler mBackgroundHandler;
 
     /**
+     * An additional thread for running inference so as not to block the camera.
+     */
+    private HandlerThread inferenceThread;
+
+    /**
+     * A {@link Handler} for running tasks in the background.
+     */
+    private Handler inferenceHandler;
+
+    /**
+     * A {@link Handler} for running tasks in the UI.
+     */
+    private Handler uiHandler;
+
+    /**
      * An {@link ImageReader} that handles still image capture.
      */
     private ImageReader mImageReader;
+
+    /**
+     * An {@link ImageReader} that handles preview frame capture.
+     */
+    private ImageReader previewReader;
 
     /**
      * This is the output file for our picture.
@@ -238,6 +269,8 @@ public class CameraFragment extends Fragment
         }
 
     };
+
+    private final OnGetImageListener mOnGetPreviewListener = new OnGetImageListener();
 
     /**
      * {@link CaptureRequest.Builder} for the camera preview
@@ -495,7 +528,7 @@ public class CameraFragment extends Fragment
 
                 // For still image captures, we use the largest available size.
                 Size largest = Collections.max(
-                        Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
+                        Arrays.asList(map.getOutputSizes(ImageFormat.YUV_420_888)),
                         new CompareSizesByArea());
                 mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
                         ImageFormat.JPEG, /*maxImages*/2);
@@ -618,10 +651,15 @@ public class CameraFragment extends Fragment
                 mCameraDevice.close();
                 mCameraDevice = null;
             }
+            if (null != previewReader) {
+                previewReader.close();
+                previewReader = null;
+            }
             if (null != mImageReader) {
                 mImageReader.close();
                 mImageReader = null;
             }
+            mOnGetPreviewListener.deInitialize();
         } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
         } finally {
@@ -636,6 +674,12 @@ public class CameraFragment extends Fragment
         mBackgroundThread = new HandlerThread("CameraBackground");
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
+
+        inferenceThread = new HandlerThread("InferenceThread");
+        inferenceThread.start();
+        inferenceHandler = new Handler(inferenceThread.getLooper());
+
+        uiHandler = new Handler(Looper.getMainLooper());
     }
 
     /**
@@ -647,8 +691,17 @@ public class CameraFragment extends Fragment
                 mBackgroundThread.quitSafely();
                 mBackgroundThread.join();
             }
+            if(inferenceThread != null) {
+                inferenceThread.quitSafely();
+                inferenceThread.join();
+            }
             mBackgroundThread = null;
             mBackgroundHandler = null;
+
+            inferenceThread = null;
+            inferenceHandler = null;
+
+            uiHandler = null;
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -673,9 +726,16 @@ public class CameraFragment extends Fragment
                     = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             mPreviewRequestBuilder.addTarget(surface);
 
+            // Create the reader for the preview frames.
+            previewReader =
+                    ImageReader.newInstance(
+                            mPreviewSize.getWidth(), mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 1);
+
+            previewReader.setOnImageAvailableListener(mOnGetPreviewListener, mBackgroundHandler);
+            mPreviewRequestBuilder.addTarget(previewReader.getSurface());
 
             // Here, we create a CameraCaptureSession for camera preview.
-            mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
+            mCameraDevice.createCaptureSession(Arrays.asList(surface, previewReader.getSurface(), mImageReader.getSurface()),
                     new CameraCaptureSession.StateCallback() {
 
                         @Override
@@ -713,6 +773,8 @@ public class CameraFragment extends Fragment
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
+        mOnGetPreviewListener.initialize(Objects.requireNonNull(getActivity()).getApplicationContext(), getActivity().getAssets(),
+                (ImageView) getActivity().findViewById(R.id.fragment_camera_iv_preview), inferenceHandler, uiHandler);
     }
 
     /**
