@@ -1,8 +1,6 @@
 package com.nhancv.facemask;
 
 import android.content.Context;
-import android.content.res.AssetManager;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
@@ -56,24 +54,26 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private Context mContext;
     private FaceDet mFaceDet;
     private ImageView mWindow;
-    private Paint mFaceLandmardkPaint;
+    private Paint mFaceLandmarkPaint;
+    private String cameraId;
 
     public void initialize(
             final Context context,
-            final AssetManager assetManager,
+            final String cameraId,
             final ImageView imageView,
             final Handler handler,
             final Handler mUIHandler) {
         this.mContext = context;
+        this.cameraId = cameraId;
         this.mInferenceHandler = handler;
         this.mUIHandler = mUIHandler;
         mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
         mWindow = imageView;
 
-        mFaceLandmardkPaint = new Paint();
-        mFaceLandmardkPaint.setColor(Color.GREEN);
-        mFaceLandmardkPaint.setStrokeWidth(2);
-        mFaceLandmardkPaint.setStyle(Paint.Style.STROKE);
+        mFaceLandmarkPaint = new Paint();
+        mFaceLandmarkPaint.setColor(Color.GREEN);
+        mFaceLandmarkPaint.setStrokeWidth(2);
+        mFaceLandmarkPaint.setStyle(Paint.Style.STROKE);
     }
 
     public void deInitialize() {
@@ -87,24 +87,24 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private void drawResizedBitmap(final Bitmap src, final Bitmap dst) {
 
         Display getOrient = ((WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        int orientation = Configuration.ORIENTATION_UNDEFINED;
         Point point = new Point();
         getOrient.getSize(point);
         int screen_width = point.x;
         int screen_height = point.y;
         Log.d(TAG, String.format("screen size (%d,%d)", screen_width, screen_height));
         if (screen_width < screen_height) {
-            orientation = Configuration.ORIENTATION_PORTRAIT;
-            mScreenRotation = 90;
+            if(cameraId.equals(CameraFragment.CAMERA_BACK)){
+                mScreenRotation = 90;
+            } else {
+                mScreenRotation = -90;
+            }
         } else {
-            orientation = Configuration.ORIENTATION_LANDSCAPE;
             mScreenRotation = 0;
         }
 
         final float minDim = Math.min(src.getWidth(), src.getHeight());
 
         final Matrix matrix = new Matrix();
-
         // We only want the center square out of the original rectangle.
         final float translateX = -Math.max(0, (src.getWidth() - minDim) / 2);
         final float translateY = -Math.max(0, (src.getHeight() - minDim) / 2);
@@ -220,14 +220,14 @@ public class OnGetImageListener implements OnImageAvailableListener {
                                     bounds.right = (int) (ret.getRight() * resizeRatio);
                                     bounds.bottom = (int) (ret.getBottom() * resizeRatio);
                                     Canvas canvas = new Canvas(mCroppedBitmap);
-                                    canvas.drawRect(bounds, mFaceLandmardkPaint);
+                                    canvas.drawRect(bounds, mFaceLandmarkPaint);
 
                                     // Draw landmark
                                     ArrayList<Point> landmarks = ret.getFaceLandmarks();
                                     for (Point point : landmarks) {
                                         int pointX = (int) (point.x * resizeRatio);
                                         int pointY = (int) (point.y * resizeRatio);
-                                        canvas.drawCircle(pointX, pointY, 2, mFaceLandmardkPaint);
+                                        canvas.drawCircle(pointX, pointY, 2, mFaceLandmarkPaint);
                                     }
                                 }
                             }
