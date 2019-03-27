@@ -40,7 +40,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
     private int mScreenRotation = 0;
 
-    private int mPreviewWdith = 0;
+    private int mPreviewWidth = 0;
     private int mPreviewHeight = 0;
     private byte[][] mYUVBytes;
     private int[] mRGBBytes = null;
@@ -102,7 +102,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
         int screen_height = point.y;
         Log.d(TAG, String.format("screen size (%d,%d)", screen_width, screen_height));
         if (screen_width < screen_height) {
-            if(cameraId.equals(CameraFragment.CAMERA_BACK)){
+            if(cameraId.equals(CAMERA_BACK)){
                 mScreenRotation = 90;
             } else {
                 mScreenRotation = -90;
@@ -161,14 +161,14 @@ public class OnGetImageListener implements OnImageAvailableListener {
             final Plane[] planes = image.getPlanes();
 
             // Initialize the storage bitmaps once when the resolution is known.
-            if (mPreviewWdith != image.getWidth() || mPreviewHeight != image.getHeight()) {
-                mPreviewWdith = image.getWidth();
+            if (mPreviewWidth != image.getWidth() || mPreviewHeight != image.getHeight()) {
+                mPreviewWidth = image.getWidth();
                 mPreviewHeight = image.getHeight();
 
-                Log.d(TAG, String.format("Initializing at size %dx%d", mPreviewWdith, mPreviewHeight));
-                mRGBBytes = new int[mPreviewWdith * mPreviewHeight];
-                mRGBframeBitmap = Bitmap.createBitmap(mPreviewWdith, mPreviewHeight, Config.ARGB_8888);
-                mCroppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
+                Log.d(TAG, String.format("Initializing at size %dx%d", mPreviewWidth, mPreviewHeight));
+                mRGBBytes = new int[mPreviewWidth * mPreviewHeight];
+                mRGBframeBitmap = Bitmap.createBitmap(mPreviewWidth, mPreviewHeight, Config.ARGB_8888);
+                mCroppedBitmap = Bitmap.createBitmap(INPUT_SIZE, Math.max(mPreviewWidth, mPreviewHeight) / Math.min(mPreviewWidth, mPreviewHeight) * INPUT_SIZE, Config.ARGB_8888);
 
                 mYUVBytes = new byte[planes.length][];
                 for (int i = 0; i < planes.length; ++i) {
@@ -188,7 +188,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                     mYUVBytes[1],
                     mYUVBytes[2],
                     mRGBBytes,
-                    mPreviewWdith,
+                    mPreviewWidth,
                     mPreviewHeight,
                     yRowStride,
                     uvRowStride,
@@ -205,7 +205,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
             return;
         }
 
-        mRGBframeBitmap.setPixels(mRGBBytes, 0, mPreviewWdith, 0, 0, mPreviewWdith, mPreviewHeight);
+        mRGBframeBitmap.setPixels(mRGBBytes, 0, mPreviewWidth, 0, 0, mPreviewWidth, mPreviewHeight);
         drawResizedBitmap(mRGBframeBitmap, mCroppedBitmap);
 
         if (mInferenceHandler != null)

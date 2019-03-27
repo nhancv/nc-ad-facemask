@@ -9,10 +9,6 @@
         android:id="@+id/texture"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
         />
 
     <FrameLayout
@@ -22,18 +18,25 @@
 
         <ImageView
             android:id="@+id/fragment_camera_iv_preview"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="Preview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:gravity="center"
-            android:scaleType="fitXY"
             />
+        <!--android:scaleType="fitXY"-->
+
     </FrameLayout>
+
+    <com.nhancv.facemask.m2d.M2DLandmarkView
+        android:id="@+id/landmarkView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
 
     <com.nhancv.facemask.m3d.M3DSurfaceView
         android:id="@+id/gLView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="invisible"
         />
     <FrameLayout
         android:id="@+id/control"

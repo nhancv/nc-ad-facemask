@@ -46,9 +46,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.nhancv.facemask.m2d.M2DPosController;
 import com.nhancv.facemask.m3d.M3DPosController;
 import com.nhancv.facemask.m3d.M3DSceneLoader;
 import com.nhancv.facemask.m3d.M3DSurfaceView;
+import com.tzutalin.dlib.VisionDetRet;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -66,7 +68,7 @@ import java.util.concurrent.TimeUnit;
 import hugo.weaving.DebugLog;
 
 public class CameraFragment extends Fragment
-        implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
+        implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback, FaceLandmarkListener {
 
     /**
      * Conversion from screen rotation to JPEG orientation.
@@ -258,7 +260,8 @@ public class CameraFragment extends Fragment
      */
     private ImageReader previewReader;
 
-    private FaceLandmarkListener faceLandmarkListener;
+    private M3DPosController m3DPosController;
+    private M2DPosController m2DPosController;
     /**
      * This is the output file for our picture.
      */
@@ -479,7 +482,8 @@ public class CameraFragment extends Fragment
         M3DSurfaceView gLView = getActivity().findViewById(R.id.gLView);
         scene.init(uri, 0, gLView);
         gLView.setupScene(scene);
-        faceLandmarkListener = new M3DPosController(gLView);
+        m3DPosController = new M3DPosController(gLView);
+        m2DPosController = new M2DPosController(getActivity().findViewById(R.id.landmarkView));
 
     }
 
@@ -817,7 +821,7 @@ public class CameraFragment extends Fragment
         }
         mOnGetPreviewListener.initialize(Objects.requireNonNull(getActivity()).getApplicationContext(),
                 mCameraId, getActivity().findViewById(R.id.fragment_camera_iv_preview), inferenceHandler, uiHandler,
-                faceLandmarkListener
+                this
                 );
     }
 
@@ -1033,6 +1037,17 @@ public class CameraFragment extends Fragment
             requestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                     CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
         }
+    }
+
+    @Override
+    public void landmarkUpdate(List<VisionDetRet> visionDetRetList) {
+        m3DPosController.landmarkUpdate(visionDetRetList);
+        uiHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                m2DPosController.landmarkUpdate(visionDetRetList);
+            }
+        });
     }
 
     /**
