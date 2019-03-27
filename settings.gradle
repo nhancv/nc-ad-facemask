@@ -1,4 +1,4 @@
-include ':app', ':dlib'
+include ':app', ':dlib', ':engine'
 
 //def opencvsdk = '../OpenCV-android-sdk'
 //include ':opencv'

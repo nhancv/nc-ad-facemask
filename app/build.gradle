@@ -18,12 +18,6 @@ android {
         }
     }
 
-    sourceSets {
-        main {
-            assets.srcDirs = ['src/main/res/raw']
-        }
-    }
-
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -47,6 +41,7 @@ dependencies {
     implementation 'com.jakewharton.timber:timber:4.5.1'
 //    implementation project(':opencv')
     implementation project(':dlib')
+    implementation project(':engine')
 
 }
 
