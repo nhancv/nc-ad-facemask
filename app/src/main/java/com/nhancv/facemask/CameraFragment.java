@@ -160,7 +160,7 @@ public class CameraFragment extends Fragment
     /**
      * ID of the current {@link CameraDevice}.
      */
-    private String mCameraId = CAMERA_BACK;
+    private String mCameraId = CAMERA_FRONT;
 
     /**
      * An {@link AutoFitTextureView} for camera preview.

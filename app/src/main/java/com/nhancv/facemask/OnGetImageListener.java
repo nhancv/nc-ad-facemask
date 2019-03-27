@@ -57,7 +57,13 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private Paint mFaceLandmarkPaint;
     private String cameraId;
     private FaceLandmarkListener faceLandmarkListener;
-
+    /**
+     * 0 forback camera
+     * 1 for front camera
+     * Initlity default camera is front camera
+     */
+    public static final String CAMERA_FRONT = "1";
+    public static final String CAMERA_BACK = "0";
     public void initialize(
             final Context context,
             final String cameraId,
@@ -100,6 +106,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 mScreenRotation = 90;
             } else {
                 mScreenRotation = -90;
+
             }
         } else {
             mScreenRotation = 0;
@@ -108,22 +115,27 @@ public class OnGetImageListener implements OnImageAvailableListener {
         final float minDim = Math.min(src.getWidth(), src.getHeight());
 
         final Matrix matrix = new Matrix();
-        // We only want the center square out of the original rectangle.
-        final float translateX = -Math.max(0, (src.getWidth() - minDim) / 2);
-        final float translateY = -Math.max(0, (src.getHeight() - minDim) / 2);
-        matrix.preTranslate(translateX, translateY);
 
-        final float scaleFactor = dst.getHeight() / minDim;
+        // We only want the center square out of the original rectangle.
+        final float translateX = -Math.max(0, (src.getWidth() - minDim) / 2);//-120
+        final float translateY = -Math.max(0, (src.getHeight() - minDim) / 2);//0
+        matrix.preTranslate(translateX, translateY);//translate
+
+        final float scaleFactor = dst.getHeight() / minDim;//150/720
         matrix.postScale(scaleFactor, scaleFactor);
 
         // Rotate around the center if necessary.
         if (mScreenRotation != 0) {
-            matrix.postTranslate(-dst.getWidth() / 2.0f, -dst.getHeight() / 2.0f);
+            matrix.postTranslate(-dst.getWidth() / 2.0f, -dst.getHeight() / 2.0f); //translate to origin
             matrix.postRotate(mScreenRotation);
-            matrix.postTranslate(dst.getWidth() / 2.0f, dst.getHeight() / 2.0f);
+            matrix.postTranslate(dst.getWidth() / 2.0f, dst.getHeight() / 2.0f); //translate back
         }
-
+        if(this.cameraId.equals(CAMERA_FRONT)) {
+            matrix.postScale(-1,1);//matrix[-0.0,-0.208,0  -0.2083,0.0,175.0; 0,0,1]
+            matrix.postTranslate(dst.getWidth(),0);//scale image back
+        }
         final Canvas canvas = new Canvas(dst);
+
         canvas.drawBitmap(src, matrix, null);
     }
 
