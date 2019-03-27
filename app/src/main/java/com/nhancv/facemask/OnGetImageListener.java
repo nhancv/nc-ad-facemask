@@ -56,7 +56,14 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private ImageView mWindow;
     private Paint mFaceLandmarkPaint;
     private String cameraId;
-
+    private Bitmap mInversedBipmap = null;
+    /**
+     * 0 forback camera
+     * 1 for front camera
+     * Initlity default camera is front camera
+     */
+    public static final String CAMERA_FRONT = "1";
+    public static final String CAMERA_BACK = "0";
     public void initialize(
             final Context context,
             final String cameraId,
@@ -76,6 +83,12 @@ public class OnGetImageListener implements OnImageAvailableListener {
         mFaceLandmarkPaint.setStyle(Paint.Style.STROKE);
     }
 
+    public Bitmap imageSideInversion(Bitmap src){
+        Matrix sideInversion = new Matrix();
+        sideInversion.setScale(-1, 1);
+        Bitmap inversedImage = Bitmap.createBitmap(src, 0, 0, src.getWidth(), src.getHeight(), sideInversion, false);
+        return inversedImage;
+    }
     public void deInitialize() {
         synchronized (OnGetImageListener.this) {
             if (mFaceDet != null) {
@@ -97,6 +110,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 mScreenRotation = 90;
             } else {
                 mScreenRotation = -90;
+
             }
         } else {
             mScreenRotation = 0;
@@ -105,22 +119,43 @@ public class OnGetImageListener implements OnImageAvailableListener {
         final float minDim = Math.min(src.getWidth(), src.getHeight());
 
         final Matrix matrix = new Matrix();
-        // We only want the center square out of the original rectangle.
-        final float translateX = -Math.max(0, (src.getWidth() - minDim) / 2);
-        final float translateY = -Math.max(0, (src.getHeight() - minDim) / 2);
-        matrix.preTranslate(translateX, translateY);
+/*
 
-        final float scaleFactor = dst.getHeight() / minDim;
+        if(this.cameraId.equals(CAMERA_FRONT)) {
+            matrix.setScale(-1, 1);
+        }
+*/
+
+        // We only want the center square out of the original rectangle.
+        final float translateX = -Math.max(0, (src.getWidth() - minDim) / 2);//-120
+        final float translateY = -Math.max(0, (src.getHeight() - minDim) / 2);//0
+        matrix.preTranslate(translateX, translateY);//translate
+
+        final float scaleFactor = dst.getHeight() / minDim;//150/720
+ /*       if(this.cameraId.equals(CAMERA_FRONT)) {
+            matrix.postScale(-scaleFactor, scaleFactor);
+        }
+        else
+        {
+            matrix.postScale(scaleFactor, scaleFactor);
+        }*/
         matrix.postScale(scaleFactor, scaleFactor);
 
         // Rotate around the center if necessary.
         if (mScreenRotation != 0) {
-            matrix.postTranslate(-dst.getWidth() / 2.0f, -dst.getHeight() / 2.0f);
+            matrix.postTranslate(-dst.getWidth() / 2.0f, -dst.getHeight() / 2.0f); //translate to origin
             matrix.postRotate(mScreenRotation);
-            matrix.postTranslate(dst.getWidth() / 2.0f, dst.getHeight() / 2.0f);
+            matrix.postTranslate(dst.getWidth() / 2.0f, dst.getHeight() / 2.0f); //translate back
         }
-
+        if(this.cameraId.equals(CAMERA_FRONT)) {
+            //matrix.postScale(1, 1); //matrix[0.0,0.208,0  -0.2083,0.0,175.0; 0,0,1]
+            matrix.postScale(-1,1);//matrix[-0.0,-0.208,0  -0.2083,0.0,175.0; 0,0,1]
+            //matrix.postScale(1,-1);//matrix[0.0,0.208,0  0.2083,0.0,-175.0; 0,0,1]
+            matrix.postTranslate(dst.getWidth(),0);//scale image back
+            //matrix.postScale(-1,-1);//matrix[-0.0,-0.208,0  0.2083,0.0,-175.0; 0,0,1]
+        }
         final Canvas canvas = new Canvas(dst);
+
         canvas.drawBitmap(src, matrix, null);
     }
 
@@ -192,7 +227,13 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
         mRGBframeBitmap.setPixels(mRGBBytes, 0, mPreviewWdith, 0, 0, mPreviewWdith, mPreviewHeight);
         drawResizedBitmap(mRGBframeBitmap, mCroppedBitmap);
-
+//        if(this.cameraId==CAMERA_FRONT) {
+//            mInversedBipmap = this.imageSideInversion(mCroppedBitmap);
+//        }
+//        else
+//        {
+//            mInversedBipmap = mCroppedBitmap;
+//        }
         if (mInferenceHandler != null)
             mInferenceHandler.post(
                     new Runnable() {
