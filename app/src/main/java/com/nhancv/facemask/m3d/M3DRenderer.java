@@ -88,7 +88,11 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
         // Set the background frame color
         float[] backgroundColor = main.getBackgroundColor();
-        GLES20.glClearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3]);
+//        GLES20.glClearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3]);
+        GLES20.glDisable(GL10.GL_DITHER);
+        GLES20.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_FASTEST);
+
+        GLES20.glClearColor(0,0,0,0);
 
         // Use culling to remove back faces.
         // Don't remove back faces so we can see them

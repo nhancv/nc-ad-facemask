@@ -30,6 +30,11 @@
             />
     </FrameLayout>
 
+    <com.nhancv.facemask.m3d.M3DSurfaceView
+        android:id="@+id/gLView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
     <FrameLayout
         android:id="@+id/control"
         android:layout_width="match_parent"

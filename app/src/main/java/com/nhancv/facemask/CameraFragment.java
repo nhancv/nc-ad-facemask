@@ -26,6 +26,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -44,6 +45,9 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+
+import com.nhancv.facemask.m3d.M3DSceneLoader;
+import com.nhancv.facemask.m3d.M3DSurfaceView;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -463,6 +467,18 @@ public class CameraFragment extends Fragment
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         mFile = new File(getActivity().getExternalFilesDir(null), "pic.jpg");
+
+
+        //Asset path ex: assets://com.nhancv.facemask/models/ToyPlane.obj
+        //Uri uri = Uri.parse("assets://" + getPackageName() + "/" + file);
+        Uri uri = Uri.parse("assets://com.nhancv.facemask/models/ToyPlane.obj");
+        //Log.d(TAG, "onResume: uri" + uri.getPath());
+
+        M3DSceneLoader scene = new M3DSceneLoader(getActivity());
+        M3DSurfaceView gLView = getActivity().findViewById(R.id.gLView);
+        scene.init(uri, 0, gLView);
+        gLView.setupRender(scene);
+
     }
 
     @Override
