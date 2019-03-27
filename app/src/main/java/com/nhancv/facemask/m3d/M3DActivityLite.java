@@ -37,7 +37,7 @@ public class M3DActivityLite extends Activity {
                         scene = new M3DSceneLoader(this);
                         M3DSurfaceView gLView = findViewById(R.id.gLView);
                         scene.init(uri, 0, gLView);
-                        gLView.setupRender(scene);
+                        gLView.setupScene(scene);
                     }
                 });
 

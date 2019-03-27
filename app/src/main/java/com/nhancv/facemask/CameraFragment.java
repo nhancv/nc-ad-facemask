@@ -46,6 +46,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.nhancv.facemask.m3d.M3DPosController;
 import com.nhancv.facemask.m3d.M3DSceneLoader;
 import com.nhancv.facemask.m3d.M3DSurfaceView;
 
@@ -257,6 +258,7 @@ public class CameraFragment extends Fragment
      */
     private ImageReader previewReader;
 
+    private FaceLandmarkListener faceLandmarkListener;
     /**
      * This is the output file for our picture.
      */
@@ -468,16 +470,16 @@ public class CameraFragment extends Fragment
         super.onActivityCreated(savedInstanceState);
         mFile = new File(getActivity().getExternalFilesDir(null), "pic.jpg");
 
-
         //Asset path ex: assets://com.nhancv.facemask/models/ToyPlane.obj
         //Uri uri = Uri.parse("assets://" + getPackageName() + "/" + file);
-        Uri uri = Uri.parse("assets://com.nhancv.facemask/models/ToyPlane.obj");
+        Uri uri = Uri.parse("assets://com.nhancv.facemask/models/nhancv.obj");
         //Log.d(TAG, "onResume: uri" + uri.getPath());
 
         M3DSceneLoader scene = new M3DSceneLoader(getActivity());
         M3DSurfaceView gLView = getActivity().findViewById(R.id.gLView);
         scene.init(uri, 0, gLView);
-        gLView.setupRender(scene);
+        gLView.setupScene(scene);
+        faceLandmarkListener = new M3DPosController(gLView);
 
     }
 
@@ -814,7 +816,9 @@ public class CameraFragment extends Fragment
             e.printStackTrace();
         }
         mOnGetPreviewListener.initialize(Objects.requireNonNull(getActivity()).getApplicationContext(),
-                mCameraId, getActivity().findViewById(R.id.fragment_camera_iv_preview), inferenceHandler, uiHandler);
+                mCameraId, getActivity().findViewById(R.id.fragment_camera_iv_preview), inferenceHandler, uiHandler,
+                faceLandmarkListener
+                );
     }
 
     /**

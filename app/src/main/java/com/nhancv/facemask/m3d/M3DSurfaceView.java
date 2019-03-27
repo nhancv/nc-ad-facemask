@@ -33,13 +33,13 @@ public class M3DSurfaceView extends GLSurfaceView {
         // This is the actual renderer of the 3D space
         renderer = new M3DRenderer(this);
         setRenderer(renderer);
-        //setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         getHolder().setFormat(PixelFormat.TRANSLUCENT);
         setZOrderOnTop(true);
 
     }
 
-    public void setupRender(M3DSceneLoader sceneLoader) {
+    public void setupScene(M3DSceneLoader sceneLoader) {
         this.scene = sceneLoader;
     }
 

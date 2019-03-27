@@ -56,17 +56,20 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private ImageView mWindow;
     private Paint mFaceLandmarkPaint;
     private String cameraId;
+    private FaceLandmarkListener faceLandmarkListener;
 
     public void initialize(
             final Context context,
             final String cameraId,
             final ImageView imageView,
             final Handler handler,
-            final Handler mUIHandler) {
+            final Handler mUIHandler,
+            final FaceLandmarkListener faceLandmarkListener) {
         this.mContext = context;
         this.cameraId = cameraId;
         this.mInferenceHandler = handler;
         this.mUIHandler = mUIHandler;
+        this.faceLandmarkListener = faceLandmarkListener;
         mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
         mWindow = imageView;
 
@@ -212,6 +215,10 @@ public class OnGetImageListener implements OnImageAvailableListener {
                             Log.d(TAG, "run: " + "Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
                             // Draw on bitmap
                             if (results != null) {
+
+                                //Update 3d model
+                                faceLandmarkListener.landmarkUpdate(results);
+
                                 for (final VisionDetRet ret : results) {
                                     float resizeRatio = 1.0f;
                                     Rect bounds = new Rect();
