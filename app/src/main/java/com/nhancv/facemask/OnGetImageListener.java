@@ -1,5 +1,6 @@
 package com.nhancv.facemask;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -29,6 +30,8 @@ import com.tzutalin.dlibtest.ImageUtils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import hugo.weaving.DebugLog;
 
 /**
  * Class that takes in preview frames and converts the image to Bitmaps to process with dlib lib.
@@ -64,6 +67,8 @@ public class OnGetImageListener implements OnImageAvailableListener {
      */
     public static final String CAMERA_FRONT = "1";
     public static final String CAMERA_BACK = "0";
+
+    @DebugLog
     public void initialize(
             final Context context,
             final String cameraId,
@@ -85,6 +90,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
         mFaceLandmarkPaint.setStyle(Paint.Style.STROKE);
     }
 
+    @DebugLog
     public void deInitialize() {
         synchronized (OnGetImageListener.this) {
             if (mFaceDet != null) {
@@ -93,6 +99,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
         }
     }
 
+    @DebugLog
     private void drawResizedBitmap(final Bitmap src, final Bitmap dst) {
 
         Display getOrient = ((WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
