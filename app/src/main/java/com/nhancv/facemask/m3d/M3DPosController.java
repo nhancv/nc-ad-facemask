@@ -73,8 +73,10 @@ public class M3DPosController implements FaceLandmarkListener {
         float ratio = 1.0f;
         handler = new Handler();
         listObjectTransformation = new ArrayList<>();
-        for (final VisionDetRet ret : visionDetRetList) {
 
+        renderer.setObjectVisible(false);
+        for (final VisionDetRet ret : visionDetRetList) {
+            renderer.setObjectVisible(true);
             float resizeRatio = 1.0f;
             Rect bounds = new Rect();
             bounds.left = (int) (ret.getLeft() * resizeRatio);
@@ -120,6 +122,7 @@ public class M3DPosController implements FaceLandmarkListener {
                 //Scale(1, 1, 1/0.9f);
 
             }
+            //Scale scale = new Scale()
             if(objectTransformation!=null)
                 listObjectTransformation.add( objectTransformation);//add each tranformation for each object
         }
