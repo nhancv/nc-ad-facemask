@@ -16,6 +16,8 @@ import android.media.ImageReader.OnImageAvailableListener;
 import android.os.Handler;
 import android.os.Trace;
 import android.util.Log;
+import android.view.Display;
+import android.view.WindowManager;
 import android.widget.ImageView;
 
 import com.tzutalin.dlib.Constants;
@@ -99,22 +101,22 @@ public class OnGetImageListener implements OnImageAvailableListener {
     @DebugLog
     private void drawResizedBitmap(final Bitmap src, final Bitmap dst) {
 
-//        Display getOrient = ((WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-//        Point point = new Point();
-//        getOrient.getSize(point);
-//        int screen_width = point.x;
-//        int screen_height = point.y;
-//        Log.d(TAG, String.format("screen size (%d,%d)", screen_width, screen_height));
-//        if (screen_width < screen_height) {
-//            if(cameraId.equals(CAMERA_BACK)){
-//                mScreenRotation = 90;
-//            } else {
+        Display getOrient = ((WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        Point point = new Point();
+        getOrient.getSize(point);
+        int screen_width = point.x;
+        int screen_height = point.y;
+        Log.d(TAG, String.format("screen size (%d,%d)", screen_width, screen_height));
+        if (screen_width < screen_height) {
+            if(cameraId.equals(CAMERA_BACK)){
+                mScreenRotation = 90;
+            } else {
                 mScreenRotation = -90;
-//            }
-//        } else {
-//            mScreenRotation = 0;
-//        }
-//
+            }
+        } else {
+            mScreenRotation = 0;
+        }
+
         final float minDim = Math.min(src.getWidth(), src.getHeight());
 
         final Matrix matrix = new Matrix();
@@ -128,15 +130,15 @@ public class OnGetImageListener implements OnImageAvailableListener {
         matrix.postScale(scaleFactor, scaleFactor);
 
         // Rotate around the center if necessary.
-//        if (mScreenRotation != 0) {
+        if (mScreenRotation != 0) {
             matrix.postTranslate(-dst.getWidth() / 2.0f, -dst.getHeight() / 2.0f); //translate to origin
             matrix.postRotate(mScreenRotation);
             matrix.postTranslate(dst.getWidth() / 2.0f, dst.getHeight() / 2.0f); //translate back
-//        }
-//        if(this.cameraId.equals(CAMERA_FRONT)) {
+        }
+        if(this.cameraId.equals(CAMERA_FRONT)) {
             matrix.postScale(-1,1);//matrix[-0.0,-0.208,0  -0.2083,0.0,175.0; 0,0,1]
             matrix.postTranslate(dst.getWidth(),0);//scale image back
-//        }
+        }
         final Canvas canvas = new Canvas(dst);
 
         canvas.drawBitmap(src, matrix, null);
@@ -242,7 +244,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                                     bounds.top = (int) (ret.getTop() * resizeRatio);
                                     bounds.right = (int) (ret.getRight() * resizeRatio);
                                     bounds.bottom = (int) (ret.getBottom() * resizeRatio);
-                                    Canvas canvas = new Canvas(mCroppedBitmap);
+                                    Canvas canvas = new Canvas(mRGBframeBitmap);
                                     canvas.drawRect(bounds, mFaceLandmarkPaint);
 
                                     // Draw landmark
@@ -256,7 +258,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                             }
 
                         mUIHandler.post(() -> {
-                            mWindow.setImageBitmap(mCroppedBitmap);
+                            mWindow.setImageBitmap(mRGBframeBitmap);
                         });
 
                             mIsComputing = false;
