@@ -65,11 +65,11 @@ public class M3DSceneLoader implements LoaderTask.Callback {
     /**
      * Light toggle feature: we have 3 states: no light, light, light + rotation
      */
-    private boolean rotatingLight = true;
+    private boolean rotatingLight = false;
     /**
      * Light toggle feature: whether to draw using lights
      */
-    private boolean drawLighting = true;
+    private boolean drawLighting = false;
     /**
      * Animate model (dae only) or not
      */
@@ -166,9 +166,9 @@ public class M3DSceneLoader implements LoaderTask.Callback {
         camera.animate();
 
         // initial camera animation. animate if user didn't touch the screen
-        if (!userHasInteracted) {
+        /*if (!userHasInteracted) {
             animateCamera();
-        }
+        }*/
 
         if (objects.isEmpty()) return;
 
