@@ -48,8 +48,6 @@ import android.widget.Toast;
 
 import com.nhancv.facemask.m2d.M2DPosController;
 import com.nhancv.facemask.m3d.M3DPosController;
-import com.nhancv.facemask.m3d.M3DSceneLoader;
-import com.nhancv.facemask.m3d.M3DSurfaceView;
 import com.tzutalin.dlib.VisionDetRet;
 
 import java.io.File;
@@ -480,11 +478,11 @@ public class CameraFragment extends Fragment
         Uri uri = Uri.parse("assets://com.nhancv.facemask/models/nhancv.obj");
         //Log.d(TAG, "onResume: uri" + uri.getPath());
 
-        M3DSceneLoader scene = new M3DSceneLoader(getActivity());
-        M3DSurfaceView gLView = getActivity().findViewById(R.id.gLView);
-        scene.init(uri, 0, gLView);
-        gLView.setupScene(scene);
-        m3DPosController = new M3DPosController(gLView);
+//        M3DSceneLoader scene = new M3DSceneLoader(getActivity());
+//        M3DSurfaceView gLView = getActivity().findViewById(R.id.gLView);
+//        scene.init(uri, 0, gLView);
+//        gLView.setupScene(scene);
+//        m3DPosController = new M3DPosController(gLView);
         m2DPosController = new M2DPosController(getActivity().findViewById(R.id.landmarkView));
 
     }
@@ -775,10 +773,7 @@ public class CameraFragment extends Fragment
             mPreviewRequestBuilder.addTarget(surface);
 
             // Create the reader for the preview frames.
-            previewReader =
-                    ImageReader.newInstance(
-                            mPreviewSize.getWidth(), mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 2);
-
+            previewReader = ImageReader.newInstance(mPreviewSize.getWidth(), mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 2);
             previewReader.setOnImageAvailableListener(mOnGetPreviewListener, mBackgroundHandler);
             mPreviewRequestBuilder.addTarget(previewReader.getSurface());
 
@@ -796,11 +791,10 @@ public class CameraFragment extends Fragment
                             // When the session is ready, we start displaying the preview.
                             mCaptureSession = cameraCaptureSession;
                             try {
-                                // Auto focus should be continuous for camera preview.
-                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
-                                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-                                // Flash is automatically enabled when necessary.
-                                setAutoFlash(mPreviewRequestBuilder);
+//                                // Auto focus should be continuous for camera preview.
+//                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+//                                // Flash is automatically enabled when necessary.
+//                                 setAutoFlash(mPreviewRequestBuilder);
 
                                 // Finally, we start displaying the camera preview.
                                 mPreviewRequest = mPreviewRequestBuilder.build();
@@ -822,9 +816,7 @@ public class CameraFragment extends Fragment
             e.printStackTrace();
         }
         mOnGetPreviewListener.initialize(Objects.requireNonNull(getActivity()).getApplicationContext(),
-                mCameraId, getActivity().findViewById(R.id.fragment_camera_iv_preview), inferenceHandler, uiHandler,
-                this
-                );
+                mCameraId, getActivity().findViewById(R.id.fragment_camera_iv_preview), inferenceHandler, uiHandler, this);
     }
 
     /**
@@ -1043,7 +1035,7 @@ public class CameraFragment extends Fragment
 
     @Override
     public void landmarkUpdate(List<VisionDetRet> visionDetRetList) {
-        m3DPosController.landmarkUpdate(visionDetRetList);
+//        m3DPosController.landmarkUpdate(visionDetRetList);
         uiHandler.post(new Runnable() {
             @Override
             public void run() {

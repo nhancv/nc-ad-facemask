@@ -1,5 +1,6 @@
 package com.nhancv.facemask.m2d;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -13,6 +14,8 @@ import com.tzutalin.dlib.VisionDetRet;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import hugo.weaving.DebugLog;
 
 public class M2DLandmarkView extends View {
 
@@ -53,6 +56,8 @@ public class M2DLandmarkView extends View {
         this.previewHeight = previewHeight;
     }
 
+    @SuppressLint("LongLogTag")
+    @DebugLog
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         currentWidth = MeasureSpec.getSize(widthMeasureSpec);
@@ -61,22 +66,29 @@ public class M2DLandmarkView extends View {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
+    private float getX(float x) {
+        return x/previewWidth * currentWidth + (currentWidth/2f - previewWidth /2f);
+    }
+
+    private float getY(float y) {
+        return y/previewHeight * currentHeight + (currentHeight/2f - previewHeight /2f);
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         if (visionDetRetList == null) return;
         for (final VisionDetRet ret : visionDetRetList) {
-            float resizeRatio = currentWidth * 1f /150;
-            bounds.left = (int) (ret.getLeft() * resizeRatio);
-            bounds.top = (int) (ret.getTop() * resizeRatio);
-            bounds.right = (int) (ret.getRight() * resizeRatio);
-            bounds.bottom = (int) (ret.getBottom() * resizeRatio);
+            bounds.left = (int) (getX(ret.getLeft()));
+            bounds.top = (int) (getY(ret.getTop()));
+            bounds.right = (int) getX(ret.getRight());
+            bounds.bottom = (int) getY(ret.getBottom());
             canvas.drawRect(bounds, mFaceLandmarkPaint);
 
             // Draw landmark
             ArrayList<Point> landmarks = ret.getFaceLandmarks();
             for (Point point : landmarks) {
-                int pointX = (int) (point.x * resizeRatio);
-                int pointY = (int) (point.y * resizeRatio);
+                int pointX = (int) getX(point.x);
+                int pointY = (int) getY(point.y);
                 canvas.drawCircle(pointX, pointY, 2, mFaceLandmarkPaint);
             }
         }
