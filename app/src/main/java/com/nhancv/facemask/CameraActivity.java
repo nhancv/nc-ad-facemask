@@ -3,15 +3,21 @@ package com.nhancv.facemask;
 import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.Display;
 
 import hugo.weaving.DebugLog;
 
 public class CameraActivity extends AppCompatActivity {
+
+    private static final String TAG = CameraActivity.class.getSimpleName();
 
     private static final int REQUEST_CODE_PERMISSION = 2;
     // Storage Permissions
@@ -24,6 +30,8 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+
         setContentView(R.layout.activity_camera);
         // Just use hugo to print log
         isExternalStorageWritable();
@@ -41,6 +49,17 @@ public class CameraActivity extends AppCompatActivity {
                     .replace(R.id.container, CameraFragment.newInstance())
                     .commit();
         }
+
+
+        Display display = getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        int width = size.x;
+        int height = size.y;
+
+        //onCreate: Width 1080 - Height 1776 (Sony E5655)
+        Log.e(TAG, "onCreate: Width " + width + " - Height " + height);
+
     }
 
     /**
