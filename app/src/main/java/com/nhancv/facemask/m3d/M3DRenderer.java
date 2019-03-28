@@ -14,8 +14,10 @@ import org.andresoviedo.android_3d_model_engine.model.Object3D;
 import org.andresoviedo.android_3d_model_engine.model.Object3DData;
 import org.andresoviedo.android_3d_model_engine.services.Object3DBuilder;
 import org.andresoviedo.util.android.GLUtil;
+import com.nhancv.facemask.m3d.transformation.*;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +67,7 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
      * Skeleton Animator
      */
     private Animator animator = new Animator();
-
+    private List<ObjectTransformation> objectTransformationList = new ArrayList<>();
     /**
      * Construct a new renderer for the specified surface view
      *
@@ -76,12 +78,36 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
         this.main = modelSurfaceView;
     }
 
+    public void setObjectTransformationList(List<ObjectTransformation> objectTransformationList) {
+        this.objectTransformationList = objectTransformationList;
+    }
+
     public float getNear() {
         return near;
     }
 
     public float getFar() {
         return far;
+    }
+    int value = -1;
+    public void setRotate(float angle,float x, float y, float z) {
+        Matrix.rotateM(modelProjectionMatrix, 0,angle, x, y, z);
+    }
+    public void setScale(float x, float y ,float z){
+        //default is 1, 1, 1
+        if(x ==0) {
+            x =1;
+        }
+        if(y == 0) {
+            y = 1;
+        }
+        if(z==0) {
+            z =1;
+        }
+        Matrix.scaleM(modelProjectionMatrix, 0, x, y, z);
+    }
+    public void setTranslate(float x, float y, float z) {
+       Matrix.translateM(modelProjectionMatrix, 0, x, y, z);
     }
 
     @Override
@@ -130,11 +156,23 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
 
         // Calculate the projection and view transformation
         Matrix.multiplyMM(mvpMatrix, 0, modelProjectionMatrix, 0, modelViewMatrix, 0);
+
     }
 
 
-
-
+    int i = -1;
+    public void performTranformation(Object3DData objData,ObjectTransformation transformation)
+    {
+        float[] rotation = transformation.getRotationValue();
+        if(rotation!=null)
+            objData.setRotation(rotation);
+        float[] translation = transformation.getTranslationValue();
+        if(translation!=null)
+            objData.setPosition(translation);
+        float[] scale = transformation.getScaleValue();
+        if(scale!=null)
+            objData.setScale(scale);
+    }
     @Override
     public void onDrawFrame(GL10 unused) {
 
@@ -152,6 +190,7 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
 
         // recalculate mvp matrix according to where we are looking at now
         Camera camera = scene.getCamera();
+
         if (camera.hasChanged()) {
             Matrix.setLookAtM(modelViewMatrix, 0, camera.xPos, camera.yPos, camera.zPos, camera.xView, camera.yView,
                     camera.zView, camera.xUp, camera.yUp, camera.zUp);
@@ -161,7 +200,7 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
         }
 
         // draw light
-        if (scene.isDrawLighting()) {
+/*       if (scene.isDrawLighting()) {
 
             Object3DImpl lightBulbDrawer = (Object3DImpl) drawer.getPointDrawer();
 
@@ -172,17 +211,29 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
 
             // Draw a point that represents the light bulb
             lightBulbDrawer.draw(scene.getLightBulb(), modelProjectionMatrix, modelViewMatrix, -1, lightPosInEyeSpace);
-        }
-
+        }*/
+      /*  Object3DData axis = Object3DBuilder.buildAxis().setId("axis");
+        axis.setColor(new float[]{1.0f,0,0,1.0f});
+        scene.addObject(axis);*/
         List<Object3DData> objects = scene.getObjects();
         for (int i=0; i<objects.size(); i++) {
             Object3DData objData = null;
+            ObjectTransformation transformation = null;
             try {
                 objData = objects.get(i);
-                boolean changed = objData.isChanged();
+                if(objectTransformationList!=null && i<objectTransformationList.size()){
+                    transformation = objectTransformationList.get(i);
+                    //perform tranformation with objectData using tranformation
+                    performTranformation(objData, transformation);
+                }
+                //objData.setColor(new float[]{1.0f,0,0,1.0f});
+                //objData.setPosition(new float[]{0,1.0f,0});
+                //objData.setRotation()
+                //objData.setScale(new float[]{1,1,1});
+                boolean changed = objData.isChanged ();
 
                 Object3D drawerObject = drawer.getDrawer(objData, scene.isDrawTextures(), scene.isDrawLighting(),
-                        scene.isDrawAnimation());
+                        scene.isDrawAnimation()); //obj
 
                 if (!infoLogged) {
                     Log.i("ModelRenderer","Using drawer "+drawerObject.getClass());
