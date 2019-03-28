@@ -1,6 +1,5 @@
 package com.nhancv.facemask;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -175,7 +174,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 Log.d(TAG, String.format("Initializing at size %dx%d", mPreviewWidth, mPreviewHeight));
                 mRGBBytes = new int[mPreviewWidth * mPreviewHeight];
                 mRGBframeBitmap = Bitmap.createBitmap(mPreviewWidth, mPreviewHeight, Config.ARGB_8888);
-                mCroppedBitmap = Bitmap.createBitmap(INPUT_SIZE, Math.max(mPreviewWidth, mPreviewHeight) / Math.min(mPreviewWidth, mPreviewHeight) * INPUT_SIZE, Config.ARGB_8888);
+                mCroppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE * 16/9, Config.ARGB_8888);
 
                 mYUVBytes = new byte[planes.length][];
                 for (int i = 0; i < planes.length; ++i) {

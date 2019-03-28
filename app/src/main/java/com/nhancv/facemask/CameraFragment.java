@@ -130,12 +130,14 @@ public class CameraFragment extends Fragment
      */
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener
             = new TextureView.SurfaceTextureListener() {
-
+        @SuppressLint("LongLogTag")
+        @DebugLog
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
             openCamera(width, height);
         }
-
+        @SuppressLint("LongLogTag")
+        @DebugLog
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
             configureTransform(width, height);
