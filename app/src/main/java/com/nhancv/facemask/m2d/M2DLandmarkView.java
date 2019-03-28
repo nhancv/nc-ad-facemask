@@ -22,8 +22,8 @@ public class M2DLandmarkView extends View {
     private List<VisionDetRet> visionDetRetList;
     private Paint mFaceLandmarkPaint;
     private Rect bounds;
-    private int previewWidth;
-    private int previewHeight;
+    private int bmWidth;
+    private int bmHeight;
     private int currentWidth;
     private int currentHeight;
 
@@ -50,10 +50,10 @@ public class M2DLandmarkView extends View {
         bounds = new Rect();
     }
 
-    public void setVisionDetRetList(List<VisionDetRet> visionDetRetList, int previewWidth, int previewHeight) {
+    public void setVisionDetRetList(List<VisionDetRet> visionDetRetList, int bmWidth, int bmHeight) {
         this.visionDetRetList = visionDetRetList;
-        this.previewWidth = previewWidth;
-        this.previewHeight = previewHeight;
+        this.bmWidth = bmWidth;
+        this.bmHeight = bmHeight;
     }
 
     @SuppressLint("LongLogTag")
@@ -67,11 +67,11 @@ public class M2DLandmarkView extends View {
     }
 
     private float getX(float x) {
-        return x/previewWidth * currentWidth + (currentWidth/2f - previewWidth /2f);
+        return x/bmWidth * currentWidth;
     }
 
     private float getY(float y) {
-        return y/previewHeight * currentHeight + (currentHeight/2f - previewHeight /2f);
+        return y/bmHeight * currentHeight;
     }
 
     @Override

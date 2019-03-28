@@ -1035,14 +1035,9 @@ public class CameraFragment extends Fragment
     }
 
     @Override
-    public void landmarkUpdate(List<VisionDetRet> visionDetRetList) {
+    public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
 //        m3DPosController.landmarkUpdate(visionDetRetList);
-        uiHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                m2DPosController.landmarkUpdate(visionDetRetList);
-            }
-        });
+        uiHandler.post(() -> m2DPosController.landmarkUpdate(visionDetRetList, bmW, bmH));
     }
 
     /**

@@ -14,10 +14,10 @@ public class M2DPosController implements FaceLandmarkListener {
     }
 
     @Override
-    public void landmarkUpdate(List<VisionDetRet> visionDetRetList) {
+    public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
         //1280x720
         //640x480
-        landmarkView.setVisionDetRetList(visionDetRetList, 480, 680);
+        landmarkView.setVisionDetRetList(visionDetRetList, bmW, bmH);
         landmarkView.invalidate();
     }
 }

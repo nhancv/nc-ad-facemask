@@ -19,7 +19,7 @@ public class M3DPosController implements FaceLandmarkListener {
     }
 
     @Override
-    public void landmarkUpdate(List<VisionDetRet> visionDetRetList) {
+    public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
         Log.d(TAG, "landmarkUpdate: " + visionDetRetList.size());
 
     }
