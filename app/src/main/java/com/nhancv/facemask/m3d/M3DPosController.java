@@ -27,7 +27,6 @@ public class M3DPosController implements FaceLandmarkListener {
     private int bmWidth;
     private int bmHeight;
     private List<ObjectTransformation> listObjectTransformation;
-    private float resizeRatio = 1.0f;
     private int surfaceWidth;
     private int surfaceHeight;
     private int centerX;
@@ -63,27 +62,20 @@ public class M3DPosController implements FaceLandmarkListener {
             };
             handler.postDelayed(r,1000);*/
     Handler handler = new Handler();
-    public void setResizeRatio(float resizeRatio){
-        this.resizeRatio = resizeRatio;
-    }
     public M3DPosController(M3DSurfaceView surfaceView) {
         this.surfaceView = surfaceView;//receive the current surface view
         this.renderer = surfaceView.getModelRenderer();
         this.listObjectTransformation = new ArrayList<ObjectTransformation>();
         this.bounds = new Rect();
-        this.surfaceWidth = surfaceView.getCurrentWidth();
-        this.surfaceHeight = surfaceView.getCurrentHeight();
-        this.centerX = this.surfaceWidth/2;
-        this.centerY = this.surfaceHeight/2;
     }
-    private int getHeight(VisionDetRet ret,float resizeRatio)
+    private int getHeight(VisionDetRet ret)
     {
-        int h =(int) (Math.abs(ret.getBottom()-ret.getTop())*resizeRatio);
+        int h =(int) (Math.abs(ret.getBottom()-ret.getTop()));
         return h;
     }
-    private int getWidth(VisionDetRet ret,float resizeRatio)
+    private int getWidth(VisionDetRet ret)
     {
-        int w =(int) (Math.abs(ret.getRight()-ret.getLeft())*resizeRatio);
+        int w =(int) (Math.abs(ret.getRight()-ret.getLeft()));
         return w;
     }
 
@@ -99,24 +91,29 @@ public class M3DPosController implements FaceLandmarkListener {
     {
         return h/2 + top;
     }
-    private int objX(int w, int x){
-        return x - w/2;
+    private int objX(int centerX, int x){
+        return x - centerX; //x coord is normal
     }
-    private int objY(int h, int y){
-        return y - h/2;
-    }
-    private float getY(float y) {
-        return y/bmHeight * surfaceView.getCurrentHeight();
+    private int objY(int centerY, int y){
+
+        return centerY - y; //y coord is opposite
     }
 
-    int i = -1;
-    int curArea = 22500;
+    private float getY(float y) {
+        return y/bmHeight * this.surfaceHeight;
+    }
+
 
     @Override
     public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
         this.visionDetRetList = visionDetRetList;
         this.bmWidth = bmW;
         this.bmHeight = bmH;
+        this.surfaceWidth = surfaceView.getCurrentWidth();
+        this.surfaceHeight = surfaceView.getCurrentHeight();
+        this.centerX = this.surfaceWidth/2;
+        this.centerY = this.surfaceHeight/2;
+
         if (visionDetRetList == null) return;
 
         Log.d(TAG, "landmarkUpdate: " + visionDetRetList.size());
@@ -129,22 +126,24 @@ public class M3DPosController implements FaceLandmarkListener {
 
         for (final VisionDetRet ret : visionDetRetList) {
             renderer.setObjectVisible(true);
-            int h = getHeight(ret,resizeRatio);
-            int w = getWidth(ret,resizeRatio);
 
             bounds.left = (int) (getX(ret.getLeft()));
             bounds.top = (int) (getY(ret.getTop()));
             bounds.right = (int) getX(ret.getRight());
             bounds.bottom = (int) getY(ret.getBottom());
-
-            int centerX = faceCenterX(w,bounds.left);
-            int centerY = faceCenterY(h,bounds.top);
-
-            int objX = objX(w,centerX);
-            int objY = objY(h,centerY);
+            //get face width and height
+            int w = bounds.right - bounds.left;
+            int h = bounds.bottom - bounds.top;
+            //get the center of face
+            int centerFaceX = faceCenterX(w,bounds.left);
+            int centerFaceY = faceCenterY(h,bounds.top);
+            //convert from coord arcooding to center
+            int objX = objX(centerX,centerFaceX)/100;
+            int objY = objY(centerY,centerFaceY)/100;
             ObjectTransformation objectTransformation;
             //
             Rotation rotation = new Rotation(0,0,0);
+            Log.d("M3DPositionController","x"+objX+ ",y"+objY);
             Translation translation = new Translation(objX,objY,0);
             Scale scale = new Scale(1,1,1);
 
@@ -153,7 +152,7 @@ public class M3DPosController implements FaceLandmarkListener {
             //Scale(160,160);
             //Scale(1, 1, 0.9f);
             objectTransformation = new ObjectTransformationBuilder().setRotation(rotation)
-                                                                    .setTranslation(translation).build();
+                                                                    .setTranslation(translation).setScale(scale).build();
             //Scale scale = new Scale()
             if(objectTransformation!=null)
                 listObjectTransformation.add( objectTransformation);//add each tranformation for each object
@@ -162,7 +161,7 @@ public class M3DPosController implements FaceLandmarkListener {
         requestRender();
     }
 
-     public void Scale(int w, int h) {
+   /*  public void Scale(int w, int h) {
         //zoom factor is the ratio of previous face and current detected face
         int max = Math.max(this.renderer.getWidth(), this.renderer.getHeight()); //max of render vaule
         M3DSceneLoader scene = this.surfaceView.getScene(); //get current scene
@@ -173,7 +172,7 @@ public class M3DPosController implements FaceLandmarkListener {
         Log.d("M3DPosController", ""+zoomFactor);
         camera.MoveCameraZ(zoomFactor);
         //this.surfaceView.requestRender();
-    }
+    }*/
     public void requestRender() {
         this.surfaceView.requestRender();
     }
