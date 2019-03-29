@@ -699,6 +699,7 @@ public class Object3DData {
 	public void center(float[] newPosition) {
 		// calculate a scale factor
 		Tuple3 center = modelDimensions.getCenter();
+
 		setPosition(new float[]{-center.getX() + newPosition[0], -center.getY() + newPosition[1], -center.getZ() + newPosition[2]});
 	}
 

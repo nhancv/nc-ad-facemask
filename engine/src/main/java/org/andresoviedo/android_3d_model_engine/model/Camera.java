@@ -49,8 +49,7 @@ public class Camera {
 
 	public Camera() {
 		// Initialize variables...
-		this(0, 0, 6, 0, 0, -1, 0, 1, 0);
-
+	this(0, 0, 6, 0, 0, -1, 0, 1, 0);
 	}
 
 	public Camera(float xPos, float yPos, float zPos, float xView, float yView, float zView, float xUp, float yUp,

@@ -69,7 +69,7 @@ public class M3DSceneLoader implements LoaderTask.Callback {
     /**
      * Light toggle feature: whether to draw using lights
      */
-    private boolean drawLighting = false;
+    private boolean drawLighting = true;
     /**
      * Animate model (dae only) or not
      */
@@ -93,7 +93,7 @@ public class M3DSceneLoader implements LoaderTask.Callback {
     /**
      * Initial light position
      */
-    private final float[] lightPosition = new float[]{0, 0, 6, 1};
+    private final float[] lightPosition = new float[]{0, 0, 20, 1};
     /**
      * Light bulb 3d data
      */

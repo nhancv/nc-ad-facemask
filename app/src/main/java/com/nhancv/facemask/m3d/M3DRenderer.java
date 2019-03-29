@@ -9,6 +9,7 @@ import org.andresoviedo.android_3d_model_engine.animation.Animator;
 import org.andresoviedo.android_3d_model_engine.drawer.DrawerFactory;
 import org.andresoviedo.android_3d_model_engine.drawer.Object3DImpl;
 import org.andresoviedo.android_3d_model_engine.model.AnimatedModel;
+import org.andresoviedo.android_3d_model_engine.model.BoundingBox;
 import org.andresoviedo.android_3d_model_engine.model.Camera;
 import org.andresoviedo.android_3d_model_engine.model.Object3D;
 import org.andresoviedo.android_3d_model_engine.model.Object3DData;
@@ -204,7 +205,7 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
         }
 
         // draw light
-/*       if (scene.isDrawLighting()) {
+       if (scene.isDrawLighting()) {
 
             Object3DImpl lightBulbDrawer = (Object3DImpl) drawer.getPointDrawer();
 
@@ -214,8 +215,8 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
             Matrix.multiplyMV(lightPosInEyeSpace, 0, lightModelViewMatrix, 0, scene.getLightPosition(), 0);
 
             // Draw a point that represents the light bulb
-            lightBulbDrawer.draw(scene.getLightBulb(), modelProjectionMatrix, modelViewMatrix, -1, lightPosInEyeSpace);
-        }*/
+            //lightBulbDrawer.draw(scene.getLightBulb(), modelProjectionMatrix, modelViewMatrix, -1, lightPosInEyeSpace);
+        }
       /*  Object3DData axis = Object3DBuilder.buildAxis().setId("axis");
         axis.setColor(new float[]{1.0f,0,0,1.0f});
         scene.addObject(axis);*/
@@ -227,11 +228,13 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
             try {
                 objData = objects.get(i);
                 objData.setVisible(visible);
+
                 if(objData.isVisible()) {
                     if (objectTransformationList != null && i < objectTransformationList.size()) {
                         transformation = objectTransformationList.get(i);
                         //perform tranformation with objectData using tranformation
                         performTranformation(objData, transformation);
+                        //objData.center
                     }
                     //objData.setColor(new float[]{1.0f,0,0,1.0f});
                     //objData.setPosition(new float[]{0,1.0f,0});
