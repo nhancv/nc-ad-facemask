@@ -48,6 +48,8 @@ import android.widget.Toast;
 
 import com.nhancv.facemask.m2d.M2DPosController;
 import com.nhancv.facemask.m3d.M3DPosController;
+import com.nhancv.facemask.m3d.M3DSceneLoader;
+import com.nhancv.facemask.m3d.M3DSurfaceView;
 import com.tzutalin.dlib.VisionDetRet;
 
 import java.io.File;
@@ -478,11 +480,11 @@ public class CameraFragment extends Fragment
         Uri uri = Uri.parse("assets://com.nhancv.facemask/models/nhancv.obj");
         //Log.d(TAG, "onResume: uri" + uri.getPath());
 
-//        M3DSceneLoader scene = new M3DSceneLoader(getActivity());
-//        M3DSurfaceView gLView = getActivity().findViewById(R.id.gLView);
-//        scene.init(uri, 0, gLView);
-//        gLView.setupScene(scene);
-//        m3DPosController = new M3DPosController(gLView);
+        M3DSceneLoader scene = new M3DSceneLoader(getActivity());
+        M3DSurfaceView gLView = getActivity().findViewById(R.id.gLView);
+        scene.init(uri, 0, gLView);
+        gLView.setupScene(scene);
+        m3DPosController = new M3DPosController(gLView);
         m2DPosController = new M2DPosController(getActivity().findViewById(R.id.landmarkView));
 
     }

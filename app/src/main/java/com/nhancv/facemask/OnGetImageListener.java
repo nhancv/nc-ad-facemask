@@ -194,7 +194,8 @@ public class OnGetImageListener implements OnImageAvailableListener {
                             long endTime = System.currentTimeMillis();
                             Log.d(TAG, "run: " + "Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
                             // Draw on bitmap
-                            if (results != null) {
+                            //bug here results is = 0
+                            if (results != null && results.size()>0) {
                                 // Notify results
                                 faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
                                 // Demo results

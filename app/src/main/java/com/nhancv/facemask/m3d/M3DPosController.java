@@ -28,6 +28,10 @@ public class M3DPosController implements FaceLandmarkListener {
     private int bmHeight;
     private List<ObjectTransformation> listObjectTransformation;
     private float resizeRatio = 1.0f;
+    private int surfaceWidth;
+    private int surfaceHeight;
+    private int centerX;
+    private int centerY;
 /*    private float previousX1 = 0;
     private float previousY1 = 0;
     private float dx1 = 0;
@@ -67,6 +71,10 @@ public class M3DPosController implements FaceLandmarkListener {
         this.renderer = surfaceView.getModelRenderer();
         this.listObjectTransformation = new ArrayList<ObjectTransformation>();
         this.bounds = new Rect();
+        this.surfaceWidth = surfaceView.getCurrentWidth();
+        this.surfaceHeight = surfaceView.getCurrentHeight();
+        this.centerX = this.surfaceWidth/2;
+        this.centerY = this.surfaceHeight/2;
     }
     private int getHeight(VisionDetRet ret,float resizeRatio)
     {
@@ -81,15 +89,29 @@ public class M3DPosController implements FaceLandmarkListener {
 
 
     private float getX(float x) {
-        return x/bmWidth * surfaceView.getCurrentWidth();
+        return x/bmWidth * this.surfaceWidth;
     }
-
+    private int faceCenterX(int w,int left)
+    {
+        return w/2 + left;
+    }
+    private int faceCenterY(int h, int top)
+    {
+        return h/2 + top;
+    }
+    private int objX(int w, int x){
+        return x - w/2;
+    }
+    private int objY(int h, int y){
+        return y - h/2;
+    }
     private float getY(float y) {
         return y/bmHeight * surfaceView.getCurrentHeight();
     }
 
     int i = -1;
     int curArea = 22500;
+
     @Override
     public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
         this.visionDetRetList = visionDetRetList;
@@ -107,61 +129,31 @@ public class M3DPosController implements FaceLandmarkListener {
 
         for (final VisionDetRet ret : visionDetRetList) {
             renderer.setObjectVisible(true);
+            int h = getHeight(ret,resizeRatio);
+            int w = getWidth(ret,resizeRatio);
 
             bounds.left = (int) (getX(ret.getLeft()));
             bounds.top = (int) (getY(ret.getTop()));
             bounds.right = (int) getX(ret.getRight());
             bounds.bottom = (int) getY(ret.getBottom());
 
-//            // Draw landmark
-//            ArrayList<Point> landmarks = ret.getFaceLandmarks();
-//            for (Point point : landmarks) {
-//                int pointX = (int) getX(point.x);
-//                int pointY = (int) getY(point.y);
-//                canvas.drawCircle(pointX, pointY, 2, mFaceLandmarkPaint);
-//            }
-            int h = getHeight(ret,resizeRatio);
-            int w = getWidth(ret,resizeRatio);
-            //assume: (x,y) : (
-            //translateWorld(100,0);
+            int centerX = faceCenterX(w,bounds.left);
+            int centerY = faceCenterY(h,bounds.top);
 
-            //Scale(w,h);
-            // Draw landmark
-          /*  ArrayList<Point> landmarks = ret.getFaceLandmarks();
-            for (Point point : landmarks) {
-                int pointX = (int) (point.x * resizeRatio);
-                int pointY = (int) (point.y * resizeRatio);
-            }*/
+            int objX = objX(w,centerX);
+            int objY = objY(h,centerY);
             ObjectTransformation objectTransformation;
-            i = i *-1;
-            if(i==1) {
-               // Translate(0, 1, 0);
-                //degrees
-                Rotation rotation = new Rotation(0,1,0);
-                Translation translation = new Translation(0,0,0);
-                Scale scale = new Scale(5,5,5);
+            //
+            Rotation rotation = new Rotation(0,0,0);
+            Translation translation = new Translation(objX,objY,0);
+            Scale scale = new Scale(1,1,1);
 
-                //Scale scale = new Scale(1,1,1);
-                //objectTransformation = new ObjectTransformation(rotation,scale,translation);
-                //Scale(160,160);
-                //Scale(1, 1, 0.9f);
-                objectTransformation = new ObjectTransformationBuilder().setRotation(rotation)
-                                                                        .setTranslation(translation)
-                                                                        .build();
-            }
-            else{
-                //Scale(150,150);
-                //Translate(0, -1, 0);
-                Rotation rotation = new Rotation(0,-1,0);
-                Translation translation = new Translation(0,0,0);
-                Scale scale = new Scale(5,5,5);
-                //Scale scale = new Scale(1,1,1);
-                objectTransformation = new ObjectTransformationBuilder().setRotation(rotation)
-                        .setTranslation(translation).setScale(scale)
-                        .build();
-                //Scale(1, 1, 1/0.9f);
-
-            }
+            //Scale scale = new Scale(1,1,1);
+            //objectTransformation = new ObjectTransformation(rotation,scale,translation);
+            //Scale(160,160);
+            //Scale(1, 1, 0.9f);
+            objectTransformation = new ObjectTransformationBuilder().setRotation(rotation)
+                                                                    .setTranslation(translation).build();
             //Scale scale = new Scale()
             if(objectTransformation!=null)
                 listObjectTransformation.add( objectTransformation);//add each tranformation for each object
@@ -169,6 +161,7 @@ public class M3DPosController implements FaceLandmarkListener {
         renderer.setObjectTransformationList(listObjectTransformation);
         requestRender();
     }
+
      public void Scale(int w, int h) {
         //zoom factor is the ratio of previous face and current detected face
         int max = Math.max(this.renderer.getWidth(), this.renderer.getHeight()); //max of render vaule
