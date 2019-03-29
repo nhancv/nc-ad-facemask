@@ -19,6 +19,10 @@ import hugo.weaving.DebugLog;
 
 public class M2DLandmarkView extends View {
 
+    private int mRatioWidth = 0;
+    private int mRatioHeight = 0;
+    private float offsetX = 0;
+    private float offsetY = 0;
     private List<VisionDetRet> visionDetRetList;
     private Paint mFaceLandmarkPaint;
     private Rect bounds;
@@ -60,18 +64,41 @@ public class M2DLandmarkView extends View {
     @DebugLog
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         currentWidth = MeasureSpec.getSize(widthMeasureSpec);
         currentHeight = MeasureSpec.getSize(heightMeasureSpec);
-        this.setMeasuredDimension(currentWidth, currentHeight);
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        if (0 == mRatioWidth || 0 == mRatioHeight) {
+            setMeasuredDimension(currentWidth, currentHeight);
+        } else {
+            if (currentWidth < currentHeight * mRatioWidth / mRatioHeight) {
+                setMeasuredDimension(currentWidth, currentWidth * mRatioHeight / mRatioWidth);
+            } else {
+                setMeasuredDimension(currentHeight * mRatioWidth / mRatioHeight, currentHeight);
+            }
+        }
+
+
+        offsetX = (currentWidth*0.5f -  mRatioWidth * 0.5f);
+        offsetY = (currentHeight*0.5f -  mRatioHeight * 0.5f);
+    }
+
+    @SuppressLint("LongLogTag")
+    @DebugLog
+    public void setAspectRatio(int width, int height) {
+        if (width < 0 || height < 0) {
+            throw new IllegalArgumentException("Size cannot be negative.");
+        }
+        mRatioWidth = width;
+        mRatioHeight = height;
+        requestLayout();
     }
 
     private float getX(float x) {
-        return x/bmWidth * currentWidth;
+        return x/bmWidth * mRatioWidth + offsetX;
     }
 
     private float getY(float y) {
-        return y/bmHeight * currentHeight;
+        return y/bmHeight * mRatioHeight + offsetY;
     }
 
     @Override

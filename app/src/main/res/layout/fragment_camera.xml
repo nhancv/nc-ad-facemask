@@ -10,6 +10,7 @@
         android:id="@+id/texture"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_centerInParent="true"
         />
 
     <ImageView
@@ -20,7 +21,7 @@
         android:layout_marginTop="50dp"
         android:layout_centerInParent="true"
         />
-    <!--android:scaleType="fitXY"-->
+
     <com.nhancv.facemask.m2d.M2DLandmarkView
         android:id="@+id/landmarkView"
         android:layout_width="match_parent"

@@ -46,6 +46,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.nhancv.facemask.m2d.M2DLandmarkView;
 import com.nhancv.facemask.m2d.M2DPosController;
 import com.nhancv.facemask.m3d.M3DPosController;
 import com.nhancv.facemask.m3d.M3DSceneLoader;
@@ -170,6 +171,8 @@ public class CameraFragment extends Fragment
      * An {@link AutoFitTextureView} for camera preview.
      */
     private AutoFitTextureView mTextureView;
+
+    private M2DLandmarkView landmarkView;
 
     /**
      * A {@link CameraCaptureSession } for camera preview.
@@ -467,7 +470,8 @@ public class CameraFragment extends Fragment
         view.findViewById(R.id.fragment_camera_ib_take_picture).setOnClickListener(this);
         view.findViewById(R.id.fragment_camera_ib_toggle_preview).setOnClickListener(this);
         view.findViewById(R.id.fragment_camera_ib_switch_camera).setOnClickListener(this);
-        mTextureView = (AutoFitTextureView) view.findViewById(R.id.texture);
+        mTextureView = view.findViewById(R.id.texture);
+        landmarkView = view.findViewById(R.id.landmarkView);
     }
 
     @Override
@@ -485,7 +489,7 @@ public class CameraFragment extends Fragment
         scene.init(uri, 0, gLView);
         gLView.setupScene(scene);
         m3DPosController = new M3DPosController(gLView);
-        m2DPosController = new M2DPosController(getActivity().findViewById(R.id.landmarkView));
+        m2DPosController = new M2DPosController(landmarkView);
 
     }
 
@@ -625,8 +629,12 @@ public class CameraFragment extends Fragment
                     if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
                         mTextureView.setAspectRatio(
                                 mPreviewSize.getWidth(), mPreviewSize.getHeight());
+                        landmarkView.setAspectRatio(
+                                mPreviewSize.getWidth(), mPreviewSize.getHeight());
                     } else {
                         mTextureView.setAspectRatio(
+                                mPreviewSize.getHeight(), mPreviewSize.getWidth());
+                        landmarkView.setAspectRatio(
                                 mPreviewSize.getHeight(), mPreviewSize.getWidth());
                     }
 
@@ -799,6 +807,8 @@ public class CameraFragment extends Fragment
 //                                // Flash is automatically enabled when necessary.
 //                                 setAutoFlash(mPreviewRequestBuilder);
 
+                                // Turn Off auto mode
+                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF);
                                 // Finally, we start displaying the camera preview.
                                 mPreviewRequest = mPreviewRequestBuilder.build();
                                 mCaptureSession.setRepeatingRequest(mPreviewRequest,
