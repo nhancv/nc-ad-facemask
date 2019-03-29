@@ -71,7 +71,7 @@ public class M3DPosController implements FaceLandmarkListener {
     int i = -1;
     int curArea = 22500;
     @Override
-    public void landmarkUpdate(List<VisionDetRet> visionDetRetList) {
+    public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
         Log.d(TAG, "landmarkUpdate: " + visionDetRetList.size());
         //Translation
         float ratio = 1.0f;

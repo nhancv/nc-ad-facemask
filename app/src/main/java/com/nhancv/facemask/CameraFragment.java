@@ -46,9 +46,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.nhancv.facemask.m2d.M2DPosController;
 import com.nhancv.facemask.m3d.M3DPosController;
-import com.nhancv.facemask.m3d.M3DSceneLoader;
-import com.nhancv.facemask.m3d.M3DSurfaceView;
+import com.tzutalin.dlib.VisionDetRet;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -66,7 +66,7 @@ import java.util.concurrent.TimeUnit;
 import hugo.weaving.DebugLog;
 
 public class CameraFragment extends Fragment
-        implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
+        implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback, FaceLandmarkListener {
 
     /**
      * Conversion from screen rotation to JPEG orientation.
@@ -128,12 +128,14 @@ public class CameraFragment extends Fragment
      */
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener
             = new TextureView.SurfaceTextureListener() {
-
+        @SuppressLint("LongLogTag")
+        @DebugLog
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
             openCamera(width, height);
         }
-
+        @SuppressLint("LongLogTag")
+        @DebugLog
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
             configureTransform(width, height);
@@ -258,7 +260,8 @@ public class CameraFragment extends Fragment
      */
     private ImageReader previewReader;
 
-    private FaceLandmarkListener faceLandmarkListener;
+    private M3DPosController m3DPosController;
+    private M2DPosController m2DPosController;
     /**
      * This is the output file for our picture.
      */
@@ -475,11 +478,12 @@ public class CameraFragment extends Fragment
         Uri uri = Uri.parse("assets://com.nhancv.facemask/models/nhancv.obj");
         //Log.d(TAG, "onResume: uri" + uri.getPath());
 
-        M3DSceneLoader scene = new M3DSceneLoader(getActivity());
-        M3DSurfaceView gLView = getActivity().findViewById(R.id.gLView);
-        scene.init(uri, 0, gLView);
-        gLView.setupScene(scene);
-        faceLandmarkListener = new M3DPosController(gLView);
+//        M3DSceneLoader scene = new M3DSceneLoader(getActivity());
+//        M3DSurfaceView gLView = getActivity().findViewById(R.id.gLView);
+//        scene.init(uri, 0, gLView);
+//        gLView.setupScene(scene);
+//        m3DPosController = new M3DPosController(gLView);
+        m2DPosController = new M2DPosController(getActivity().findViewById(R.id.landmarkView));
 
     }
 
@@ -609,9 +613,10 @@ public class CameraFragment extends Fragment
                     // Danger, W.R.! Attempting to use too large a preview size could  exceed the camera
                     // bus' bandwidth limitation, resulting in gorgeous previews but the storage of
                     // garbage capture data.
+                    Size aspectRatio = new Size(MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGHT);
                     mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
                             rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth,
-                            maxPreviewHeight, largest);
+                            maxPreviewHeight, aspectRatio);
 
                     // We fit the aspect ratio of TextureView to the size of preview we picked.
                     int orientation = getResources().getConfiguration().orientation;
@@ -769,10 +774,7 @@ public class CameraFragment extends Fragment
             mPreviewRequestBuilder.addTarget(surface);
 
             // Create the reader for the preview frames.
-            previewReader =
-                    ImageReader.newInstance(
-                            mPreviewSize.getWidth(), mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 2);
-
+            previewReader = ImageReader.newInstance(mPreviewSize.getWidth(), mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 2);
             previewReader.setOnImageAvailableListener(mOnGetPreviewListener, mBackgroundHandler);
             mPreviewRequestBuilder.addTarget(previewReader.getSurface());
 
@@ -790,11 +792,10 @@ public class CameraFragment extends Fragment
                             // When the session is ready, we start displaying the preview.
                             mCaptureSession = cameraCaptureSession;
                             try {
-                                // Auto focus should be continuous for camera preview.
-                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
-                                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-                                // Flash is automatically enabled when necessary.
-                                setAutoFlash(mPreviewRequestBuilder);
+//                                // Auto focus should be continuous for camera preview.
+//                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+//                                // Flash is automatically enabled when necessary.
+//                                 setAutoFlash(mPreviewRequestBuilder);
 
                                 // Finally, we start displaying the camera preview.
                                 mPreviewRequest = mPreviewRequestBuilder.build();
@@ -816,9 +817,7 @@ public class CameraFragment extends Fragment
             e.printStackTrace();
         }
         mOnGetPreviewListener.initialize(Objects.requireNonNull(getActivity()).getApplicationContext(),
-                mCameraId, getActivity().findViewById(R.id.fragment_camera_iv_preview), inferenceHandler, uiHandler,
-                faceLandmarkListener
-                );
+                mCameraId, getActivity().findViewById(R.id.fragment_camera_iv_preview), inferenceHandler, uiHandler, this);
     }
 
     /**
@@ -1033,6 +1032,12 @@ public class CameraFragment extends Fragment
             requestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                     CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
         }
+    }
+
+    @Override
+    public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
+//        m3DPosController.landmarkUpdate(visionDetRetList);
+        uiHandler.post(() -> m2DPosController.landmarkUpdate(visionDetRetList, bmW, bmH));
     }
 
     /**
