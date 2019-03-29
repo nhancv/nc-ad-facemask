@@ -53,6 +53,8 @@ import com.nhancv.facemask.m3d.M3DSceneLoader;
 import com.nhancv.facemask.m3d.M3DSurfaceView;
 import com.tzutalin.dlib.VisionDetRet;
 
+import org.andresoviedo.util.android.ContentUtils;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -481,9 +483,10 @@ public class CameraFragment extends Fragment
 
         //Asset path ex: assets://com.nhancv.facemask/models/ToyPlane.obj
         //Uri uri = Uri.parse("assets://" + getPackageName() + "/" + file);
-        Uri uri = Uri.parse("assets://com.nhancv.facemask/models/nhancv.obj");
+        Uri uri = Uri.parse("assets://com.nhancv.facemask/models/Mask.obj");
         //Log.d(TAG, "onResume: uri" + uri.getPath());
 
+        ContentUtils.provideAssets(getActivity());
         M3DSceneLoader scene = new M3DSceneLoader(getActivity());
         M3DSurfaceView gLView = getActivity().findViewById(R.id.gLView);
         scene.init(uri, 0, gLView);
@@ -807,8 +810,6 @@ public class CameraFragment extends Fragment
 //                                // Flash is automatically enabled when necessary.
 //                                 setAutoFlash(mPreviewRequestBuilder);
 
-                                // Turn Off auto mode
-                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF);
                                 // Finally, we start displaying the camera preview.
                                 mPreviewRequest = mPreviewRequestBuilder.build();
                                 mCaptureSession.setRepeatingRequest(mPreviewRequest,
@@ -1048,7 +1049,7 @@ public class CameraFragment extends Fragment
 
     @Override
     public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
-        m3DPosController.landmarkUpdate(visionDetRetList, bmW, bmH);
+//        m3DPosController.landmarkUpdate(visionDetRetList, bmW, bmH);
         uiHandler.post(() -> m2DPosController.landmarkUpdate(visionDetRetList, bmW, bmH));
     }
 
