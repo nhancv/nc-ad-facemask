@@ -18,6 +18,7 @@ public class M3DPosController implements FaceLandmarkListener {
     private M3DSurfaceView surfaceView;
     private M3DRenderer renderer;
     private List<ObjectTransformation> listObjectTransformation;
+    private float resizeRatio = 1.0f;
 /*    private float previousX1 = 0;
     private float previousY1 = 0;
     private float dx1 = 0;
@@ -49,6 +50,9 @@ public class M3DPosController implements FaceLandmarkListener {
             };
             handler.postDelayed(r,1000);*/
     Handler handler = new Handler();
+    public void setResizeRatio(float resizeRatio){
+        this.resizeRatio = resizeRatio;
+    }
     public M3DPosController(M3DSurfaceView surfaceView) {
         this.surfaceView = surfaceView;//receive the current surface view
         this.renderer = surfaceView.getModelRenderer();
@@ -102,6 +106,8 @@ public class M3DPosController implements FaceLandmarkListener {
                 //degrees
                 Rotation rotation = new Rotation(0,1,0);
                 Translation translation = new Translation(0,0,0);
+                Scale scale = new Scale(5,5,5);
+
                 //Scale scale = new Scale(1,1,1);
                 //objectTransformation = new ObjectTransformation(rotation,scale,translation);
                 //Scale(160,160);
@@ -115,9 +121,10 @@ public class M3DPosController implements FaceLandmarkListener {
                 //Translate(0, -1, 0);
                 Rotation rotation = new Rotation(0,-1,0);
                 Translation translation = new Translation(0,0,0);
+                Scale scale = new Scale(5,5,5);
                 //Scale scale = new Scale(1,1,1);
                 objectTransformation = new ObjectTransformationBuilder().setRotation(rotation)
-                        .setTranslation(translation)
+                        .setTranslation(translation).setScale(scale)
                         .build();
                 //Scale(1, 1, 1/0.9f);
 

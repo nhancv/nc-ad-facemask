@@ -223,6 +223,7 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
         for (int i=0; i<objects.size(); i++) {
             Object3DData objData = null;
             ObjectTransformation transformation = null;
+
             try {
                 objData = objects.get(i);
                 objData.setVisible(visible);
