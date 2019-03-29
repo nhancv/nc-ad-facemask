@@ -1,7 +1,10 @@
 package com.nhancv.facemask.m3d;
+import android.annotation.SuppressLint;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.util.Log;
+import android.view.View;
 
 import com.nhancv.facemask.FaceLandmarkListener;
 import com.nhancv.facemask.m3d.transformation.*;
@@ -12,11 +15,17 @@ import org.andresoviedo.android_3d_model_engine.model.Camera;
 import java.util.ArrayList;
 import java.util.List;
 
+import hugo.weaving.DebugLog;
+
 public class M3DPosController implements FaceLandmarkListener {
 
     private final static String TAG = M3DPosController.class.getName();
     private M3DSurfaceView surfaceView;
     private M3DRenderer renderer;
+    private List<VisionDetRet> visionDetRetList;
+    private Rect bounds;
+    private int bmWidth;
+    private int bmHeight;
     private List<ObjectTransformation> listObjectTransformation;
     private float resizeRatio = 1.0f;
 /*    private float previousX1 = 0;
@@ -57,6 +66,7 @@ public class M3DPosController implements FaceLandmarkListener {
         this.surfaceView = surfaceView;//receive the current surface view
         this.renderer = surfaceView.getModelRenderer();
         this.listObjectTransformation = new ArrayList<ObjectTransformation>();
+        this.bounds = new Rect();
     }
     private int getHeight(VisionDetRet ret,float resizeRatio)
     {
@@ -68,10 +78,25 @@ public class M3DPosController implements FaceLandmarkListener {
         int w =(int) (Math.abs(ret.getRight()-ret.getLeft())*resizeRatio);
         return w;
     }
+
+
+    private float getX(float x) {
+        return x/bmWidth * surfaceView.getCurrentWidth();
+    }
+
+    private float getY(float y) {
+        return y/bmHeight * surfaceView.getCurrentHeight();
+    }
+
     int i = -1;
     int curArea = 22500;
     @Override
     public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
+        this.visionDetRetList = visionDetRetList;
+        this.bmWidth = bmW;
+        this.bmHeight = bmH;
+        if (visionDetRetList == null) return;
+
         Log.d(TAG, "landmarkUpdate: " + visionDetRetList.size());
         //Translation
         float ratio = 1.0f;
@@ -79,14 +104,22 @@ public class M3DPosController implements FaceLandmarkListener {
         listObjectTransformation = new ArrayList<>();
 
         renderer.setObjectVisible(false);
+
         for (final VisionDetRet ret : visionDetRetList) {
             renderer.setObjectVisible(true);
-            float resizeRatio = 1.0f;
-            Rect bounds = new Rect();
-            bounds.left = (int) (ret.getLeft() * resizeRatio);
-            bounds.top = (int) (ret.getTop() * resizeRatio);
-            bounds.right = (int) (ret.getRight() * resizeRatio);
-            bounds.bottom = (int) (ret.getBottom() * resizeRatio);
+
+            bounds.left = (int) (getX(ret.getLeft()));
+            bounds.top = (int) (getY(ret.getTop()));
+            bounds.right = (int) getX(ret.getRight());
+            bounds.bottom = (int) getY(ret.getBottom());
+
+//            // Draw landmark
+//            ArrayList<Point> landmarks = ret.getFaceLandmarks();
+//            for (Point point : landmarks) {
+//                int pointX = (int) getX(point.x);
+//                int pointY = (int) getY(point.y);
+//                canvas.drawCircle(pointX, pointY, 2, mFaceLandmarkPaint);
+//            }
             int h = getHeight(ret,resizeRatio);
             int w = getWidth(ret,resizeRatio);
             //assume: (x,y) : (
@@ -174,4 +207,8 @@ public class M3DPosController implements FaceLandmarkListener {
 
         this.surfaceView.requestRender();
     }*/
+
+
+
+
 }

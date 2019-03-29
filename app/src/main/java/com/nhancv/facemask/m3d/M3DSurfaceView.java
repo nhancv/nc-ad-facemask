@@ -1,5 +1,6 @@
 package com.nhancv.facemask.m3d;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
@@ -7,8 +8,12 @@ import android.util.AttributeSet;
 
 import org.andresoviedo.android_3d_model_engine.model.Camera;
 
+import hugo.weaving.DebugLog;
+
 public class M3DSurfaceView extends GLSurfaceView {
 
+    private int currentWidth;
+    private int currentHeight;
     private M3DRenderer renderer;
 
     /**
@@ -57,5 +62,24 @@ public class M3DSurfaceView extends GLSurfaceView {
 
     public Camera getCamera() {
         return camera;
+    }
+
+
+    @SuppressLint("LongLogTag")
+    @DebugLog
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        currentWidth = MeasureSpec.getSize(widthMeasureSpec);
+        currentHeight = MeasureSpec.getSize(heightMeasureSpec);
+        this.setMeasuredDimension(currentWidth, currentHeight);
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
+    public int getCurrentWidth() {
+        return currentWidth;
+    }
+
+    public int getCurrentHeight() {
+        return currentHeight;
     }
 }

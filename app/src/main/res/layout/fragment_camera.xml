@@ -13,6 +13,7 @@
         />
 
     <ImageView
+        android:visibility="invisible"
         android:id="@+id/fragment_camera_iv_preview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -30,7 +31,7 @@
         android:id="@+id/gLView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="invisible"
+        android:visibility="visible"
         />
 
     <FrameLayout
