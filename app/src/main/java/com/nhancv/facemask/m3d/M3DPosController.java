@@ -176,7 +176,7 @@ public class M3DPosController implements FaceLandmarkListener {
             Log.d("M3DPositionController","x"+objX+ ",y"+objY+",z"+objZ);
             //
             Translation translation = new Translation(objX,objY,objZ);//translate back our scale will base on z
-            Scale scale = new Scale(5,5,5);//scale obj model
+            Scale scale = new Scale(5,5,3);//scale obj model
 
             //Scale scale = new Scale(1,1,1);
             //objectTransformation = new ObjectTransformation(rotation,scale,translation);
