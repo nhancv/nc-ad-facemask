@@ -64,7 +64,6 @@ public class M2DLandmarkView extends View {
     @DebugLog
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         currentWidth = MeasureSpec.getSize(widthMeasureSpec);
         currentHeight = MeasureSpec.getSize(heightMeasureSpec);
         if (0 == mRatioWidth || 0 == mRatioHeight) {
@@ -77,9 +76,9 @@ public class M2DLandmarkView extends View {
             }
         }
 
-
-        offsetX = (currentWidth*0.5f -  mRatioWidth * 0.5f);
-        offsetY = (currentHeight*0.5f -  mRatioHeight * 0.5f);
+        offsetX = (currentWidth * 0.5f - mRatioWidth * 0.5f);
+        offsetY = (currentHeight * 0.5f - mRatioHeight * 0.5f);
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
     @SuppressLint("LongLogTag")
@@ -90,15 +89,21 @@ public class M2DLandmarkView extends View {
         }
         mRatioWidth = width;
         mRatioHeight = height;
+
+        if (mRatioWidth * 1f / mRatioHeight == currentWidth * 1f / currentHeight) {
+            mRatioWidth = currentWidth;
+            mRatioHeight = currentHeight;
+        }
+
         requestLayout();
     }
 
     private float getX(float x) {
-        return x/bmWidth * mRatioWidth + offsetX;
+        return x / bmWidth * mRatioWidth + offsetX;
     }
 
     private float getY(float y) {
-        return y/bmHeight * mRatioHeight + offsetY;
+        return y / bmHeight * mRatioHeight + offsetY;
     }
 
     @Override
