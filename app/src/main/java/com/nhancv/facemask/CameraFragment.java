@@ -492,7 +492,7 @@ public class CameraFragment extends Fragment
         //Uri uri = Uri.parse("assets://" + getPackageName() + "/" + file);
         Uri uri = Uri.parse("assets://com.nhancv.facemask/models/nhancv.obj");
         //Log.d(TAG, "onResume: uri" + uri.getPath());
-        this.curOverlayImg = BitmapFactory.decodeResource(this.getResources(),R.drawable.leopard);
+        this.curOverlayImg = BitmapFactory.decodeResource(this.getResources(),R.drawable.nerd);
 
 /*        M3DSceneLoader scene = new M3DSceneLoader(getActivity());
         M3DSurfaceView gLView = getActivity().findViewById(R.id.gLView);
