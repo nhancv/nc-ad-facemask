@@ -9,6 +9,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
@@ -129,6 +131,13 @@ public class CameraFragment extends Fragment
      * {@link TextureView.SurfaceTextureListener} handles several lifecycle events on a
      * {@link TextureView}.
      */
+    /*
+    * Current overlay bitmap to draw on
+    * */
+    Bitmap curOverlayImg;
+    /*
+    * bitmap image change listener
+    * */
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener
             = new TextureView.SurfaceTextureListener() {
         @SuppressLint("LongLogTag")
@@ -483,13 +492,15 @@ public class CameraFragment extends Fragment
         //Uri uri = Uri.parse("assets://" + getPackageName() + "/" + file);
         Uri uri = Uri.parse("assets://com.nhancv.facemask/models/nhancv.obj");
         //Log.d(TAG, "onResume: uri" + uri.getPath());
+        this.curOverlayImg = BitmapFactory.decodeResource(this.getResources(),R.drawable.leopard);
 
-        M3DSceneLoader scene = new M3DSceneLoader(getActivity());
+/*        M3DSceneLoader scene = new M3DSceneLoader(getActivity());
         M3DSurfaceView gLView = getActivity().findViewById(R.id.gLView);
         scene.init(uri, 0, gLView);
         gLView.setupScene(scene);
-        m3DPosController = new M3DPosController(gLView);
+        m3DPosController = new M3DPosController(gLView);*/
         m2DPosController = new M2DPosController(landmarkView);
+        m2DPosController.update(this.curOverlayImg);//update overlayImage`
 
     }
 
@@ -1048,7 +1059,7 @@ public class CameraFragment extends Fragment
 
     @Override
     public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
-        m3DPosController.landmarkUpdate(visionDetRetList, bmW, bmH);
+       // m3DPosController.landmarkUpdate(visionDetRetList, bmW, bmH);
         uiHandler.post(() -> m2DPosController.landmarkUpdate(visionDetRetList, bmW, bmH));
     }
 
