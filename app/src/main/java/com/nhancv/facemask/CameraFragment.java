@@ -135,7 +135,7 @@ public class CameraFragment extends Fragment
     /*
     * Current overlay bitmap to draw on
     * */
-    List<Bitmap> curOverlayImg;
+    List<Bitmap> curOverlayImg = new ArrayList<Bitmap>();
     /*
     * bitmap image change listener
     * */
@@ -494,9 +494,9 @@ public class CameraFragment extends Fragment
     }
     public void loadImageOverlay()
     {
-        String name = "cat";
+        String name = "dog";
         for (int i = 0;i <10;i++) {
-            String str = name.concat("_").concat(String.format("%05",i));//padd zero with width = 5
+            String str = name.concat("_").concat(String.format("%05d",i));//padd zero with width = 5
             Log.d(TAG,str);
             int id =getId(str, R.drawable.class);
             this.curOverlayImg.add(BitmapFactory.decodeResource(this.getResources(), id));

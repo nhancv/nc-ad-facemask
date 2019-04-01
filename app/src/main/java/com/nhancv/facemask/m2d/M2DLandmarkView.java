@@ -46,6 +46,7 @@ public class M2DLandmarkView extends View {
     //private BitmapConversion bitmapConversion = new BitmapConversion();
     //private Mat curFace; //img1
     private Bitmap curFaceImg;
+    private Bitmap curOverayResized;
     //private Mat overlayMat; //img2
     //private Mat curFaceWarped;
 
@@ -159,9 +160,9 @@ public class M2DLandmarkView extends View {
             float faceW = bounds.right - bounds.left;
             float faceH = bounds.bottom - bounds.top;
             if(overlayImages.get(curOverlayImageIdx) != null){
-                resizeMask(overlayImages.get(curOverlayImageIdx),faceW,faceH);
-                PointF position = maskPosition(overlayImages.get(curOverlayImageIdx),centerX,centerY);
-                canvas.drawBitmap(overlayImages.get(curOverlayImageIdx),position.x,position.y,null);
+                curOverayResized = resizeMask(overlayImages.get(curOverlayImageIdx),faceW,faceH);
+                PointF position = maskPosition(curOverayResized,centerX,centerY);
+                canvas.drawBitmap(curOverayResized,position.x,position.y,null);
             }
             // Draw landmark
             for (Point point : landmarks) {
@@ -190,8 +191,8 @@ public class M2DLandmarkView extends View {
     private Bitmap resizeBitmap(Bitmap bmp,float newWidth,float newHeight){
         int width = bmp.getWidth();
         int height = bmp.getHeight();
-        float scaleWidth = (1.5f*newWidth) / width ;
-        float scaleHeight = (1.5f* newHeight) / height;
+        float scaleWidth = (2*newWidth) / width ;
+        float scaleHeight = (2*newHeight) / height;
         // CREATE A MATRIX FOR THE MANIPULATION
         Matrix matrix = new Matrix();
         // RESIZE THE BIT MAP
