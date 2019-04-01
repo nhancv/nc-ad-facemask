@@ -9,6 +9,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
@@ -53,11 +55,10 @@ import com.nhancv.facemask.m3d.M3DSceneLoader;
 import com.nhancv.facemask.m3d.M3DSurfaceView;
 import com.tzutalin.dlib.VisionDetRet;
 
-import org.andresoviedo.util.android.ContentUtils;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -131,6 +132,13 @@ public class CameraFragment extends Fragment
      * {@link TextureView.SurfaceTextureListener} handles several lifecycle events on a
      * {@link TextureView}.
      */
+    /*
+    * Current overlay bitmap to draw on
+    * */
+    List<Bitmap> curOverlayImg;
+    /*
+    * bitmap image change listener
+    * */
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener
             = new TextureView.SurfaceTextureListener() {
         @SuppressLint("LongLogTag")
@@ -475,7 +483,25 @@ public class CameraFragment extends Fragment
         mTextureView = view.findViewById(R.id.texture);
         landmarkView = view.findViewById(R.id.landmarkView);
     }
-
+    public static int getId(String resourceName, Class<?> c) {
+        try {
+            Field idField = c.getDeclaredField(resourceName);
+            return idField.getInt(idField);
+        } catch (Exception e) {
+            throw new RuntimeException("No resource ID found for: "
+                    + resourceName + " / " + c, e);
+        }
+    }
+    public void loadImageOverlay()
+    {
+        String name = "cat";
+        for (int i = 0;i <10;i++) {
+            String str = name.concat("_").concat(String.format("%05",i));//padd zero with width = 5
+            Log.d(TAG,str);
+            int id =getId(str, R.drawable.class);
+            this.curOverlayImg.add(BitmapFactory.decodeResource(this.getResources(), id));
+        }
+    }
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -483,17 +509,17 @@ public class CameraFragment extends Fragment
 
         //Asset path ex: assets://com.nhancv.facemask/models/ToyPlane.obj
         //Uri uri = Uri.parse("assets://" + getPackageName() + "/" + file);
-        Uri uri = Uri.parse("assets://com.nhancv.facemask/models/Mask.obj");
+        Uri uri = Uri.parse("assets://com.nhancv.facemask/models/nhancv.obj");
         //Log.d(TAG, "onResume: uri" + uri.getPath());
+        loadImageOverlay();
 
-        ContentUtils.provideAssets(getActivity());
-        M3DSceneLoader scene = new M3DSceneLoader(getActivity());
+/*        M3DSceneLoader scene = new M3DSceneLoader(getActivity());
         M3DSurfaceView gLView = getActivity().findViewById(R.id.gLView);
         scene.init(uri, 0, gLView);
         gLView.setupScene(scene);
-        m3DPosController = new M3DPosController(gLView);
+        m3DPosController = new M3DPosController(gLView);*/
         m2DPosController = new M2DPosController(landmarkView);
-
+        m2DPosController.update(curOverlayImg);//update overlayImage
     }
 
     @Override
@@ -810,6 +836,8 @@ public class CameraFragment extends Fragment
 //                                // Flash is automatically enabled when necessary.
 //                                 setAutoFlash(mPreviewRequestBuilder);
 
+                                // Turn Off auto mode
+                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF);
                                 // Finally, we start displaying the camera preview.
                                 mPreviewRequest = mPreviewRequestBuilder.build();
                                 mCaptureSession.setRepeatingRequest(mPreviewRequest,
@@ -1049,7 +1077,7 @@ public class CameraFragment extends Fragment
 
     @Override
     public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
-//        m3DPosController.landmarkUpdate(visionDetRetList, bmW, bmH);
+       // m3DPosController.landmarkUpdate(visionDetRetList, bmW, bmH);
         uiHandler.post(() -> m2DPosController.landmarkUpdate(visionDetRetList, bmW, bmH));
     }
 
