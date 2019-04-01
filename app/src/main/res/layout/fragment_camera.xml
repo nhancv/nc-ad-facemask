@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
+    android:background="@android:color/black"
     >
 
     <com.nhancv.facemask.AutoFitTextureView
@@ -35,14 +35,70 @@
         />
     <HorizontalScrollView
         android:layout_width="wrap_content"
+        android:layout_alignParentBottom="true"
         android:layout_height="wrap_content">
 
         <LinearLayout
+            android:background="#00ffffff"
             android:id="@+id/mask_filter_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
+            <ImageButton
+                android:background="#00ffffff"
+                android:layout_width="0dp"
+                android:layout_height="150dp"
+                android:id="@+id/btn_filter_cat"
+                android:layout_marginBottom="5dp"
+                android:layout_marginTop="0dp"
+                android:layout_weight="1"
+                android:adjustViewBounds="true"
+                android:padding="20dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/cat_00000"
+                />
+            <ImageButton
+                android:background="#00ffffff"
+                android:layout_width="0dp"
+                android:layout_height="150dp"
+                android:layout_marginTop="0dp"
+                android:layout_weight="1"
+                android:adjustViewBounds="true"
+                android:padding="20dp"
+                android:scaleType="fitCenter"
+                android:id="@+id/btn_filter_dog"
+                android:src="@drawable/dog_00000"
 
+                />
+            <ImageButton
+                android:background="#00ffffff"
+                android:layout_width="0dp"
+                android:layout_height="150dp"
+                android:layout_marginBottom="5dp"
+                android:layout_marginTop="0dp"
+                android:layout_weight="1"
+                android:adjustViewBounds="true"
+                android:padding="20dp"
+                android:scaleType="fitCenter"
+                android:id="@+id/btn_filter_hamster"
+                android:src="@drawable/hamster_00000"
+
+                />
+            <ImageButton
+                android:background="#00ffffff"
+
+                android:layout_width="0dp"
+                android:layout_height="150dp"
+                android:layout_marginBottom="5dp"
+                android:layout_marginTop="0dp"
+                android:layout_weight="1"
+                android:adjustViewBounds="true"
+                android:padding="20dp"
+                android:scaleType="fitCenter"
+                android:id="@+id/btn_filter_nerd"
+                android:src="@drawable/nerd_00000"
+
+                />
         </LinearLayout>
     </HorizontalScrollView>
 
@@ -53,6 +109,7 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
         android:background="#3Ae6e6e6"
+        android:visibility="invisible"
         >
 
         <Button

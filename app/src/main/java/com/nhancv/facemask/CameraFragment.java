@@ -46,6 +46,8 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.nhancv.facemask.m2d.M2DLandmarkView;
@@ -202,7 +204,14 @@ public class CameraFragment extends Fragment
      * The {@link android.util.Size} of camera preview.
      */
     private Size mPreviewSize;
-
+    //private LinearLayout maskFilterLayout;
+    /**
+     * Set of Image button filter
+     * */
+    ImageButton dogBtn;
+    ImageButton catBtn;
+    ImageButton nerdBtn;
+    ImageButton hamsterBtn;
     /**
      * {@link CameraDevice.StateCallback} is called when {@link CameraDevice} changes its state.
      */
@@ -486,7 +495,17 @@ public class CameraFragment extends Fragment
         view.findViewById(R.id.fragment_camera_ib_switch_camera).setOnClickListener(this);
         mTextureView = view.findViewById(R.id.texture);
         landmarkView = view.findViewById(R.id.landmarkView);
+        this.dogBtn = view.findViewById(R.id.btn_filter_dog);
+        this.dogBtn.setOnClickListener(this);
+        this.catBtn = view.findViewById(R.id.btn_filter_cat);
+        this.catBtn.setOnClickListener(this);
+        this.hamsterBtn = view.findViewById(R.id.btn_filter_hamster);
+        this.hamsterBtn.setOnClickListener(this);
+        this.nerdBtn = view.findViewById(R.id.btn_filter_nerd);
+        this.nerdBtn.setOnClickListener(this);
+
     }
+
     public static int getId(String resourceName, Class<?> c) {
         try {
             Field idField = c.getDeclaredField(resourceName);
@@ -500,7 +519,7 @@ public class CameraFragment extends Fragment
     public void loadImageOverlay() {
         for (final String name : this.maskFilters) {
             this.curOverlayImg = new ArrayList<Bitmap>();
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 5; i++) {
                 String str = name.concat("_").concat(String.format("%05d", i));//padd zero with width = 5
                 Log.d(TAG, str);
                 int id = getId(str, R.drawable.class);
@@ -509,6 +528,7 @@ public class CameraFragment extends Fragment
             this.maskFilterMap.put(name,this.curOverlayImg);
         }
     }
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -516,7 +536,7 @@ public class CameraFragment extends Fragment
 
         //Asset path ex: assets://com.nhancv.facemask/models/ToyPlane.obj
         //Uri uri = Uri.parse("assets://" + getPackageName() + "/" + file);
-        Uri uri = Uri.parse("assets://com.nhancv.facemask/models/nhancv.obj");
+        //Uri uri = Uri.parse("assets://com.nhancv.facemask/models/nhancv.obj");
         //Log.d(TAG, "onResume: uri" + uri.getPath());
         loadImageOverlay();
 /*
@@ -527,7 +547,6 @@ public class CameraFragment extends Fragment
         gLView.setupScene(scene);
         m3DPosController = new M3DPosController(gLView);*/
         m2DPosController = new M2DPosController(landmarkView);
-        m2DPosController.update(this.maskFilterMap.get("cat"));//update overlayImage
     }
 
     @Override
@@ -1033,6 +1052,18 @@ public class CameraFragment extends Fragment
     public void onClick(final View view) {
         view.setEnabled(false);
         switch (view.getId()) {
+            case R.id.btn_filter_cat:
+                m2DPosController.update(this.maskFilterMap.get("cat"));//update overlayImage
+                break;
+            case R.id.btn_filter_dog:
+                m2DPosController.update(this.maskFilterMap.get("dog"));//update overlayImage
+                break;
+            case R.id.btn_filter_hamster:
+                m2DPosController.update(this.maskFilterMap.get("hamster"));//update overlayImage
+                break;
+            case R.id.btn_filter_nerd:
+                m2DPosController.update(this.maskFilterMap.get("nerd"));//update overlayImage
+                break;
             case R.id.fragment_camera_ib_toggle_preview:
                 View v = Objects.requireNonNull(getActivity()).findViewById(R.id.fragment_camera_iv_preview);
                 if(v.getVisibility() == View.VISIBLE) {

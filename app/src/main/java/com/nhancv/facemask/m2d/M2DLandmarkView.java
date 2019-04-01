@@ -133,11 +133,11 @@ public class M2DLandmarkView extends View {
     }
     private float faceCenterX(int left,int right)
     {
-        return (left+right)/2;
+        return (left+right)/2f;
     }
     private float faceCenterY(int top, int bottom)
     {
-        return (top+bottom)/2;
+        return (top+bottom)/2f;
     }
 
     @Override
@@ -162,28 +162,32 @@ public class M2DLandmarkView extends View {
             float centerY = faceCenterY(bounds.top,bounds.bottom);
             float faceW = bounds.right - bounds.left;
             float faceH = bounds.bottom - bounds.top;
-            if(overlayImages.get(curOverlayImageIdx) != null){
-                curOverlayResized = resizeMask(overlayImages.get(curOverlayImageIdx),faceW,faceH);
-                PointF position = maskPosition(curOverlayResized,centerX,centerY);
-                canvas.drawBitmap(curOverlayResized,position.x,position.y,null);
+            if(overlayImages!=null) {
+                if (overlayImages.get(curOverlayImageIdx) != null) {
+                    curOverlayResized = resizeMask(overlayImages.get(curOverlayImageIdx), faceW, faceH);
+                    PointF position = maskPosition(curOverlayResized, centerX, centerY);
+                    canvas.drawBitmap(curOverlayResized, position.x, position.y, null);
+                }
             }
             // Draw landmark
-            for (Point point : landmarks) {
+/*            for (Point point : landmarks) {
                 int pointX = (int) getX(point.x);
                 int pointY = (int) getY(point.y);
                 canvas.drawCircle(pointX, pointY, 2, mFaceLandmarkPaint);
-            }
+            }*/
         }
-        curOverlayImageIdx +=1;
-        if(curOverlayImageIdx==overlayImages.size()){
-            curOverlayImageIdx = 0;
+        if(overlayImages!=null) {
+            curOverlayImageIdx += 1;
+            if (curOverlayImageIdx == overlayImages.size()) {
+                curOverlayImageIdx = 0;
+            }
         }
     }
 
     private PointF maskPosition(Bitmap overlayImg,float centerX,float centerY){
         PointF position = new PointF();
-        position.x = centerX - overlayImg.getWidth()/2;
-        position.y = centerY - overlayImg.getHeight()/2;
+        position.x = centerX - overlayImg.getWidth()/2f;
+        position.y = centerY - overlayImg.getHeight()/2f;
         return position;
 
     }
