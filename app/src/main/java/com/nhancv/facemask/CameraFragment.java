@@ -51,11 +51,7 @@ import android.widget.Toast;
 import com.nhancv.facemask.m2d.M2DLandmarkView;
 import com.nhancv.facemask.m2d.M2DPosController;
 import com.nhancv.facemask.m3d.M3DPosController;
-import com.nhancv.facemask.m3d.M3DSceneLoader;
-import com.nhancv.facemask.m3d.M3DSurfaceView;
 import com.tzutalin.dlib.VisionDetRet;
-
-import org.andresoviedo.util.android.ContentUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -795,7 +791,7 @@ public class CameraFragment extends Fragment
             // We set up a CaptureRequest.Builder with the output Surface.
             mPreviewRequestBuilder
                     = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            mPreviewRequestBuilder.addTarget(surface);
+//            mPreviewRequestBuilder.addTarget(surface);
 
             // Create the reader for the preview frames.
             previewReader = ImageReader.newInstance(mPreviewSize.getWidth(), mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 2);

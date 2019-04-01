@@ -199,7 +199,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                                 // Notify results
                                 faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
                                 // Demo results
-//                                drawOnResults(results);
+                                drawOnResults(results);
                             }
                             mIsComputing = false;
                         }
