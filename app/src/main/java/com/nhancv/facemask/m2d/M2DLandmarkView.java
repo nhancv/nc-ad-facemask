@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.util.AttributeSet;
@@ -18,6 +19,13 @@ import com.tzutalin.dlib.VisionDetRet;
 import java.util.List;
 
 import hugo.weaving.DebugLog;
+
+//import org.opencv.core.CvType;
+//import org.opencv.core.Mat;
+//import org.opencv.core.MatOfInt;
+//import org.opencv.core.MatOfPoint;
+//import org.opencv.core.Scalar;
+//import org.opencv.imgproc.Imgproc;
 
 public class M2DLandmarkView extends View {
 
@@ -32,7 +40,14 @@ public class M2DLandmarkView extends View {
     private int bmHeight;
     private int currentWidth;
     private int currentHeight;
-    private Bitmap overlayImg = null;
+    private List<Bitmap> overlayImages = null;
+    private int curOverlayImageIdx;
+    //private BitmapConversion bitmapConversion = new BitmapConversion();
+    //private Mat curFace; //img1
+    private Bitmap curFaceImg;
+    private Bitmap curOverayResized;
+    //private Mat overlayMat; //img2
+    //private Mat curFaceWarped;
 
     public M2DLandmarkView(Context context) {
         this(context, null, 0, 0);
@@ -62,9 +77,15 @@ public class M2DLandmarkView extends View {
         this.bmWidth = bmWidth;
         this.bmHeight = bmHeight;
     }
-    public void updateOverlayImage(Bitmap src){
+    public void updateOverlayImage(List<Bitmap> src){
         Log.d("M2DLandmarkView","img load");
-        this.overlayImg = src;
+        this.overlayImages = src;
+        this.curOverlayImageIdx = 0;//start again
+        //this.overlayMat = bitmapConversion.convertBitmap2Mat(this.overlayImg);
+        //this.curFaceWarped = this.overlayMat.clone(); //image
+        //this.curFaceWarped.convertTo(this.curFaceWarped, CvType.CV_32F);//convert the curFaceWarp to
+
+
     }
     @SuppressLint("LongLogTag")
     @DebugLog
@@ -119,10 +140,20 @@ public class M2DLandmarkView extends View {
     {
         return (top+bottom)/2;
     }
+
     @Override
     protected void onDraw(Canvas canvas) {
+
         if (visionDetRetList == null) return;
         for (final VisionDetRet ret : visionDetRetList) {
+            //curFace = bitmapConversion.convertBitmap2Mat(this.curFaceImg);//convert bitmap face to matrix
+            List<Point> landmarks = ret.getFaceLandmarks();
+     /*       MatOfPoint points1 = new MatOfPoint();
+            points1.fromList(landmarks);
+            MatOfInt hullIndex = new MatOfInt();
+            points1.fromList();
+            Imgproc.convexHull(points1, false);*/
+            //
             bounds.left = (int) (getX(ret.getLeft()));
             bounds.top = (int) (getY(ret.getTop()));
             bounds.right = (int) getX(ret.getRight());
@@ -132,36 +163,40 @@ public class M2DLandmarkView extends View {
             float centerY = faceCenterY(bounds.top,bounds.bottom);
             float faceW = bounds.right - bounds.left;
             float faceH = bounds.bottom - bounds.top;
-            if(overlayImg != null){
-                resizeMask(faceW,faceH);
-                PointF position = maskPosition(centerX,centerY);
-                canvas.drawBitmap(overlayImg,position.x,position.y,null);
+            if(overlayImages.get(curOverlayImageIdx) != null){
+                curOverayResized = resizeMask(overlayImages.get(curOverlayImageIdx),faceW,faceH);
+                PointF position = maskPosition(curOverayResized,centerX,centerY);
+                canvas.drawBitmap(curOverayResized,position.x,position.y,null);
             }
             // Draw landmark
-           /* ArrayList<Point> landmarks = ret.getFaceLandmarks();
             for (Point point : landmarks) {
                 int pointX = (int) getX(point.x);
                 int pointY = (int) getY(point.y);
                 canvas.drawCircle(pointX, pointY, 2, mFaceLandmarkPaint);
-            }*/
+            }
+        }
+        curOverlayImageIdx +=1;
+        if(curOverlayImageIdx==overlayImages.size()){
+            curOverlayImageIdx = 0;
         }
     }
 
-    private PointF maskPosition(float centerX,float centerY){
+    private PointF maskPosition(Bitmap overlayImg,float centerX,float centerY){
         PointF position = new PointF();
         position.x = centerX - overlayImg.getWidth()/2;
         position.y = centerY - overlayImg.getHeight()/2;
         return position;
 
     }
-    private void resizeMask(float faceWidth,float faceHeight){
-        this.overlayImg = resizeBitmap(this.overlayImg,faceWidth,faceHeight);
+    private Bitmap resizeMask(Bitmap overlayImg, float faceWidth,float faceHeight){
+        overlayImg = resizeBitmap(overlayImg,faceWidth,faceHeight);
+        return overlayImg;
     }
     private Bitmap resizeBitmap(Bitmap bmp,float newWidth,float newHeight){
         int width = bmp.getWidth();
         int height = bmp.getHeight();
-        float scaleWidth = (1.5f*newWidth) / width ;
-        float scaleHeight = (1.5f* newHeight) / height;
+        float scaleWidth = (2*newWidth) / width ;
+        float scaleHeight = (2*newHeight) / height;
         // CREATE A MATRIX FOR THE MANIPULATION
         Matrix matrix = new Matrix();
         // RESIZE THE BIT MAP
@@ -170,7 +205,7 @@ public class M2DLandmarkView extends View {
         // "RECREATE" THE NEW BITMAP
         Bitmap resizedBitmap = Bitmap.createBitmap(
                 bmp, 0, 0, width, height, matrix, false);
-        bmp.recycle();
         return resizedBitmap;
     }
+
 }

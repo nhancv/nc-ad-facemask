@@ -2,6 +2,8 @@ package com.nhancv.facemask;
 
 import android.graphics.Bitmap;
 
+import java.util.List;
+
 public interface OverlayImageListener {
-    void update(Bitmap overlayImg);
+    public void update(List<Bitmap> overlayImg);
 }

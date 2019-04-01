@@ -39,7 +39,7 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'com.github.dexafree:materiallist:3.0.1'
     implementation 'com.jakewharton.timber:timber:4.5.1'
-//    implementation project(':opencv')
+    //implementation project(':opencv')
     implementation project(':dlib')
     implementation project(':engine')
 

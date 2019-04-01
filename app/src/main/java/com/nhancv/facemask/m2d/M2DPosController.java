@@ -25,7 +25,7 @@ public class M2DPosController implements FaceLandmarkListener, OverlayImageListe
     }
 
     @Override
-    public void update(Bitmap overlayImg) {
+    public void update(List<Bitmap> overlayImg) {
         landmarkView.updateOverlayImage(overlayImg);
     }
 }
