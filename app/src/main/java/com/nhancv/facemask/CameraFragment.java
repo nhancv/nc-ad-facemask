@@ -62,6 +62,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Semaphore;
@@ -137,6 +138,11 @@ public class CameraFragment extends Fragment
     /*
     * bitmap image change listener
     * */
+    /*
+    * List of list Bitmap
+    * */
+    String [] maskFilters = new String[]{"cat","dog","nerd","hamster"};
+    HashMap<String,List<Bitmap>> maskFilterMap = new HashMap<String,List<Bitmap>>();
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener
             = new TextureView.SurfaceTextureListener() {
         @SuppressLint("LongLogTag")
@@ -490,14 +496,17 @@ public class CameraFragment extends Fragment
                     + resourceName + " / " + c, e);
         }
     }
-    public void loadImageOverlay()
-    {
-        String name = "dog";
-        for (int i = 0;i <10;i++) {
-            String str = name.concat("_").concat(String.format("%05d",i));//padd zero with width = 5
-            Log.d(TAG,str);
-            int id =getId(str, R.drawable.class);
-            this.curOverlayImg.add(BitmapFactory.decodeResource(this.getResources(), id));
+
+    public void loadImageOverlay() {
+        for (final String name : this.maskFilters) {
+            this.curOverlayImg = new ArrayList<Bitmap>();
+            for (int i = 0; i < 10; i++) {
+                String str = name.concat("_").concat(String.format("%05d", i));//padd zero with width = 5
+                Log.d(TAG, str);
+                int id = getId(str, R.drawable.class);
+                this.curOverlayImg.add(BitmapFactory.decodeResource(this.getResources(), id));
+            }
+            this.maskFilterMap.put(name,this.curOverlayImg);
         }
     }
     @Override
@@ -518,7 +527,7 @@ public class CameraFragment extends Fragment
         gLView.setupScene(scene);
         m3DPosController = new M3DPosController(gLView);*/
         m2DPosController = new M2DPosController(landmarkView);
-        m2DPosController.update(curOverlayImg);//update overlayImage
+        m2DPosController.update(this.maskFilterMap.get("cat"));//update overlayImage
     }
 
     @Override

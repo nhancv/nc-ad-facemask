@@ -42,10 +42,9 @@ public class M2DLandmarkView extends View {
     private int currentHeight;
     private List<Bitmap> overlayImages = null;
     private int curOverlayImageIdx;
-    //private BitmapConversion bitmapConversion = new BitmapConversion();
-    //private Mat curFace; //img1
+
     private Bitmap curFaceImg;
-    private Bitmap curOverayResized;
+    private Bitmap curOverlayResized;
     //private Mat overlayMat; //img2
     //private Mat curFaceWarped;
 
@@ -164,9 +163,9 @@ public class M2DLandmarkView extends View {
             float faceW = bounds.right - bounds.left;
             float faceH = bounds.bottom - bounds.top;
             if(overlayImages.get(curOverlayImageIdx) != null){
-                curOverayResized = resizeMask(overlayImages.get(curOverlayImageIdx),faceW,faceH);
-                PointF position = maskPosition(curOverayResized,centerX,centerY);
-                canvas.drawBitmap(curOverayResized,position.x,position.y,null);
+                curOverlayResized = resizeMask(overlayImages.get(curOverlayImageIdx),faceW,faceH);
+                PointF position = maskPosition(curOverlayResized,centerX,centerY);
+                canvas.drawBitmap(curOverlayResized,position.x,position.y,null);
             }
             // Draw landmark
             for (Point point : landmarks) {

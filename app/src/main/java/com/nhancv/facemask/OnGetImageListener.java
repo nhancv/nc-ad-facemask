@@ -18,11 +18,14 @@ import android.os.Trace;
 import android.util.Log;
 import android.widget.ImageView;
 
+//import com.nhancv.facemask.m2d.BitmapConversion;
 import com.tzutalin.dlib.Constants;
 import com.tzutalin.dlib.FaceDet;
 import com.tzutalin.dlib.VisionDetRet;
 import com.tzutalin.dlibtest.FileUtils;
 import com.tzutalin.dlibtest.ImageUtils;
+
+//import org.opencv.core.Mat;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -57,6 +60,11 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private String cameraId;
     private FaceLandmarkListener faceLandmarkListener;
     private List<VisionDetRet> results;
+    //private BitmapConversion bitmapConversion = new BitmapConversion();
+    //private Mat curFace; //img1
+    //private Mat overlayMat; //img2
+   // private Mat curFaceWarped;
+    //private Bitmap overlayImage;
     /**
      * 0 forback camera
      * 1 for front camera
@@ -95,7 +103,11 @@ public class OnGetImageListener implements OnImageAvailableListener {
             }
         }
     }
-
+/*    public void setOverlayImage(Bitmap overlayImage){
+        this.overlayImage = overlayImage;
+        //convert from bitmap to matrix
+        this.overlayMat = bitmapConversion.convertBitmap2Mat(this.overlayImage);
+    }*/
     @Override
     public void onImageAvailable(final ImageReader reader) {
         Image image = null;
@@ -195,6 +207,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                             Log.d(TAG, "run: " + "Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
                             // Draw on bitmap
                             //bug here results is = 0
+
                             if (results != null) {
                                 // Notify results
                                 faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
@@ -209,7 +222,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
     }
 
     private void drawOnResults(List<VisionDetRet> results) {
-        for (final VisionDetRet ret : results) {
+      /*  for (final VisionDetRet ret : results) {
             float resizeRatio = 1.0f;
             Rect bounds = new Rect();
             bounds.left = (int) (ret.getLeft() * resizeRatio);
@@ -226,7 +239,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 int pointY = (int) (point.y * resizeRatio);
                 canvas.drawCircle(pointX, pointY, 2, mFaceLandmarkPaint);
             }
-        }
+        }*/
 
         mUIHandler.post(() -> {
             mWindow.setImageBitmap(mCroppedBitmap);
