@@ -17,7 +17,9 @@ import android.os.Handler;
 import android.os.Trace;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.TextView;
 
+import com.nhancv.facemask.fps.StableFps;
 import com.tzutalin.dlib.Constants;
 import com.tzutalin.dlib.FaceDet;
 import com.tzutalin.dlib.VisionDetRet;
@@ -53,6 +55,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private Context mContext;
     private FaceDet mFaceDet;
     private ImageView mWindow;
+    private TextView tvFps;
     private Paint mFaceLandmarkPaint;
     private String cameraId;
     private FaceLandmarkListener faceLandmarkListener;
@@ -65,11 +68,17 @@ public class OnGetImageListener implements OnImageAvailableListener {
     public static final String CAMERA_FRONT = "1";
     public static final String CAMERA_BACK = "0";
 
+    private StableFps stableFps;
+    public OnGetImageListener() {
+        stableFps = new StableFps(30);
+    }
+
     @DebugLog
     public void initialize(
             final Context context,
             final String cameraId,
             final ImageView imageView,
+            final TextView tvFps,
             final Handler handler,
             final Handler mUIHandler,
             final FaceLandmarkListener faceLandmarkListener) {
@@ -80,6 +89,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
         this.faceLandmarkListener = faceLandmarkListener;
         mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
         mWindow = imageView;
+        this.tvFps = tvFps;
 
         mFaceLandmarkPaint = new Paint();
         mFaceLandmarkPaint.setColor(Color.GREEN);
@@ -93,11 +103,29 @@ public class OnGetImageListener implements OnImageAvailableListener {
             if (mFaceDet != null) {
                 mFaceDet.release();
             }
+            stableFps.stop();
         }
     }
 
     @Override
     public void onImageAvailable(final ImageReader reader) {
+        if(!stableFps.isStarted()) {
+            stableFps.start(fps -> {
+                String log = String.format("Fps: %d", fps);
+
+                if (faceLandmarkListener != null && results != null && mCroppedBitmap != null && tvFps != null) {
+                    faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
+                    if (mUIHandler != null) {
+                        mUIHandler.post(() -> {
+                            tvFps.setText(log);
+//                            mWindow.setImageBitmap(mCroppedBitmap);
+                        });
+
+                    }
+                }
+
+            });
+        }
         Image image = null;
         try {
             image = reader.acquireLatestImage();
@@ -197,9 +225,9 @@ public class OnGetImageListener implements OnImageAvailableListener {
                             //bug here results is = 0
                             if (results != null) {
                                 // Notify results
-                                faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
+//                                faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
                                 // Demo results
-                                drawOnResults(results);
+//                                drawOnResults(results);
                             }
                             mIsComputing = false;
                         }
@@ -228,8 +256,8 @@ public class OnGetImageListener implements OnImageAvailableListener {
             }
         }
 
-        mUIHandler.post(() -> {
-            mWindow.setImageBitmap(mCroppedBitmap);
-        });
+//        mUIHandler.post(() -> {
+//            mWindow.setImageBitmap(mCroppedBitmap);
+//        });
     }
 }
