@@ -492,13 +492,14 @@ public class CameraFragment extends Fragment
     }
     public void loadImageOverlay()
     {
-        String name = "dog";
-        for (int i = 0;i <10;i++) {
-            String str = name.concat("_").concat(String.format("%05d",i));//padd zero with width = 5
-            Log.d(TAG,str);
-            int id =getId(str, R.drawable.class);
-            this.curOverlayImg.add(BitmapFactory.decodeResource(this.getResources(), id));
-        }
+//        String name = "cat";
+//        for (int i = 0;i <1;i++) {
+//            String str = name.concat("_").concat(String.format("%05d",i));//padd zero with width = 5
+//            Log.d(TAG,str);
+//            int id =getId(str, R.drawable.class);
+//            this.curOverlayImg.add(BitmapFactory.decodeResource(this.getResources(), id));
+//        }
+        this.curOverlayImg.add(BitmapFactory.decodeResource(this.getResources(), R.drawable.cat_00000));
     }
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {

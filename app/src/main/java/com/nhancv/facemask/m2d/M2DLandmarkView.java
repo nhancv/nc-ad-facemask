@@ -159,15 +159,15 @@ public class M2DLandmarkView extends View {
             bounds.right = (int) getX(ret.getRight());
             bounds.bottom = (int) getY(ret.getBottom());
             //canvas.drawRect(bounds, mFaceLandmarkPaint);
-//            float centerX = faceCenterX(bounds.left, bounds.right);
-//            float centerY = faceCenterY(bounds.top,bounds.bottom);
-//            float faceW = bounds.right - bounds.left;
-//            float faceH = bounds.bottom - bounds.top;
-//            if(overlayImages.get(curOverlayImageIdx) != null){
-//                curOverayResized = resizeMask(overlayImages.get(curOverlayImageIdx),faceW,faceH);
-//                PointF position = maskPosition(curOverayResized,centerX,centerY);
-//                canvas.drawBitmap(curOverayResized,position.x,position.y,null);
-//            }
+            float centerX = faceCenterX(bounds.left, bounds.right);
+            float centerY = faceCenterY(bounds.top,bounds.bottom);
+            float faceW = bounds.right - bounds.left;
+            float faceH = bounds.bottom - bounds.top;
+            if(overlayImages.get(curOverlayImageIdx) != null){
+                curOverayResized = resizeMask(overlayImages.get(curOverlayImageIdx),faceW,faceH);
+                PointF position = maskPosition(curOverayResized,centerX,centerY);
+                canvas.drawBitmap(curOverayResized,position.x,position.y,null);
+            }
             // Draw landmark
             for (Point point : landmarks) {
                 int pointX = (int) getX(point.x);
