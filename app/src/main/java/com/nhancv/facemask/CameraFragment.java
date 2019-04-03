@@ -53,7 +53,12 @@ import android.widget.Toast;
 import com.nhancv.facemask.m2d.M2DLandmarkView;
 import com.nhancv.facemask.m2d.M2DPosController;
 import com.nhancv.facemask.m3d.M3DPosController;
+import com.nhancv.facemask.m3d.M3DSceneLoader;
+import com.nhancv.facemask.m3d.M3DSurfaceView;
+import com.nhancv.facemask.m3d.transformation.RealTimeRotation;
 import com.tzutalin.dlib.VisionDetRet;
+
+import org.andresoviedo.util.android.ContentUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -215,6 +220,7 @@ public class CameraFragment extends Fragment
     /**
      * {@link CameraDevice.StateCallback} is called when {@link CameraDevice} changes its state.
      */
+    private RealTimeRotation rotationInstance = RealTimeRotation.getInstance();
     private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
 
         @Override
@@ -536,17 +542,16 @@ public class CameraFragment extends Fragment
 
         //Asset path ex: assets://com.nhancv.facemask/models/ToyPlane.obj
         //Uri uri = Uri.parse("assets://" + getPackageName() + "/" + file);
-        //Uri uri = Uri.parse("assets://com.nhancv.facemask/models/nhancv.obj");
+        Uri uri = Uri.parse("assets://com.nhancv.facemask/models/nhancv.obj");
         //Log.d(TAG, "onResume: uri" + uri.getPath());
-        loadImageOverlay();
-/*
+        //loadImageOverlay();
         ContentUtils.provideAssets(getActivity());
         M3DSceneLoader scene = new M3DSceneLoader(getActivity());
         M3DSurfaceView gLView = getActivity().findViewById(R.id.gLView);
         scene.init(uri, 0, gLView);
         gLView.setupScene(scene);
-        m3DPosController = new M3DPosController(gLView);*/
-        m2DPosController = new M2DPosController(landmarkView);
+        m3DPosController = new M3DPosController(gLView);
+        //m2DPosController = new M2DPosController(landmarkView);
     }
 
     @Override
@@ -569,6 +574,7 @@ public class CameraFragment extends Fragment
     public void onPause() {
         closeCamera();
         stopBackgroundThread();
+        m3DPosController.releaseMat();
         super.onPause();
     }
 
@@ -697,7 +703,10 @@ public class CameraFragment extends Fragment
                     // Check if the flash is supported.
                     Boolean available = characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
                     mFlashSupported = available == null ? false : available;
-
+                    //get previewWidth Height to set to CameraMatrix
+                    rotationInstance.setUpCamMatrix(new Point(mPreviewSize.getWidth()/2,mPreviewSize.getHeight()/2));
+                    rotationInstance.setUpWorldPoints();
+                    m3DPosController.setMatrix();
                 }
             }
         } catch (CameraAccessException e) {
@@ -837,7 +846,7 @@ public class CameraFragment extends Fragment
             // We set up a CaptureRequest.Builder with the output Surface.
             mPreviewRequestBuilder
                     = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-//            mPreviewRequestBuilder.addTarget(surface);
+            mPreviewRequestBuilder.addTarget(surface);
 
             // Create the reader for the preview frames.
             previewReader = ImageReader.newInstance(mPreviewSize.getWidth(), mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 2);
@@ -1052,7 +1061,7 @@ public class CameraFragment extends Fragment
     public void onClick(final View view) {
         view.setEnabled(false);
         switch (view.getId()) {
-            case R.id.btn_filter_cat:
+           /* case R.id.btn_filter_cat:
                 m2DPosController.update(this.maskFilterMap.get("cat"));//update overlayImage
                 break;
             case R.id.btn_filter_dog:
@@ -1063,7 +1072,7 @@ public class CameraFragment extends Fragment
                 break;
             case R.id.btn_filter_nerd:
                 m2DPosController.update(this.maskFilterMap.get("nerd"));//update overlayImage
-                break;
+                break;*/
             case R.id.fragment_camera_ib_toggle_preview:
                 View v = Objects.requireNonNull(getActivity()).findViewById(R.id.fragment_camera_iv_preview);
                 if(v.getVisibility() == View.VISIBLE) {
@@ -1118,8 +1127,8 @@ public class CameraFragment extends Fragment
 
     @Override
     public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
-       // m3DPosController.landmarkUpdate(visionDetRetList, bmW, bmH);
-        uiHandler.post(() -> m2DPosController.landmarkUpdate(visionDetRetList, bmW, bmH));
+        m3DPosController.landmarkUpdate(visionDetRetList, bmW, bmH);
+        //uiHandler.post(() -> m2DPosController.landmarkUpdate(visionDetRetList, bmW, bmH));
     }
 
     /**

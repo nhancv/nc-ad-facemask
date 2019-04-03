@@ -13,10 +13,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Display;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+
 import hugo.weaving.DebugLog;
 
 public class CameraActivity extends AppCompatActivity {
 
+    static {
+        OpenCVLoader.initDebug();
+    }
     private static final String TAG = CameraActivity.class.getSimpleName();
 
     private static final int REQUEST_CODE_PERMISSION = 2;
@@ -26,7 +33,19 @@ public class CameraActivity extends AppCompatActivity {
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.CAMERA
     };
+    BaseLoaderCallback baseLoaderCallBack = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status){
+                case BaseLoaderCallback.SUCCESS:
+                    break;
+                default:
+                    super.onManagerConnected(status); //try to access camera again
+                    break;
+            }
 
+        }
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

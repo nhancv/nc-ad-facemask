@@ -39,7 +39,7 @@ public class FaceDet {
 
     public FaceDet(String landMarkPath) {
         mLandMarkPath = landMarkPath;
-        jniInit(mLandMarkPath);
+        jniInit(mLandMarkPath); //Using the landmarkPath to init the the landmark Detector
     }
 
     @Nullable
@@ -79,5 +79,5 @@ public class FaceDet {
     private synchronized native VisionDetRet[] jniBitmapDetect(Bitmap bitmap);
 
     @Keep
-    private synchronized native VisionDetRet[] jniDetect(String path);
+    private synchronized native VisionDetRet[] jniDetect(String path); //
 }
