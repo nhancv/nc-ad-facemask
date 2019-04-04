@@ -17,8 +17,9 @@ import android.os.Handler;
 import android.os.Trace;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.TextView;
 
-//import com.nhancv.facemask.m2d.BitmapConversion;
+import com.nhancv.facemask.fps.StableFps;
 import com.tzutalin.dlib.Constants;
 import com.tzutalin.dlib.FaceDet;
 import com.tzutalin.dlib.VisionDetRet;
@@ -56,6 +57,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private Context mContext;
     private FaceDet mFaceDet;
     private ImageView mWindow;
+    private TextView tvFps;
     private Paint mFaceLandmarkPaint;
     private String cameraId;
     private FaceLandmarkListener faceLandmarkListener;
@@ -73,11 +75,17 @@ public class OnGetImageListener implements OnImageAvailableListener {
     public static final String CAMERA_FRONT = "1";
     public static final String CAMERA_BACK = "0";
 
+    private StableFps stableFps;
+    public OnGetImageListener() {
+        stableFps = new StableFps(30);
+    }
+
     @DebugLog
     public void initialize(
             final Context context,
             final String cameraId,
             final ImageView imageView,
+            final TextView tvFps,
             final Handler handler,
             final Handler mUIHandler,
             final FaceLandmarkListener faceLandmarkListener) {
@@ -88,6 +96,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
         this.faceLandmarkListener = faceLandmarkListener;
         mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
         mWindow = imageView;
+        this.tvFps = tvFps;
 
         mFaceLandmarkPaint = new Paint();
         mFaceLandmarkPaint.setColor(Color.GREEN);
@@ -101,15 +110,46 @@ public class OnGetImageListener implements OnImageAvailableListener {
             if (mFaceDet != null) {
                 mFaceDet.release();
             }
+            stableFps.stop();
         }
     }
+
 /*    public void setOverlayImage(Bitmap overlayImage){
         this.overlayImage = overlayImage;
         //convert from bitmap to matrix
         this.overlayMat = bitmapConversion.convertBitmap2Mat(this.overlayImage);
     }*/
+
+    private long lastTime = 0;
     @Override
     public void onImageAvailable(final ImageReader reader) {
+        if(!stableFps.isStarted()) {
+            stableFps.start(fps -> {
+
+                String log = "";
+//                if(lastTime == 0) {
+//                    lastTime = System.currentTimeMillis();
+//                    log = String.format("Fps: %d", fps);
+//                } else {
+//                    long endTime = System.currentTimeMillis();
+//                    log = String.format("Fps: %d", 1000 / (endTime - lastTime));
+//                    lastTime = endTime;
+//                }
+
+                if (faceLandmarkListener != null && results != null && mCroppedBitmap != null && tvFps != null) {
+                    faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
+//                    drawOnResults(results);
+                    if (mUIHandler != null) {
+                        mUIHandler.post(() -> {
+//                            tvFps.setText(log);
+//                            mWindow.setImageBitmap(mCroppedBitmap);
+                        });
+
+                    }
+                }
+
+            });
+        }
         Image image = null;
         try {
             image = reader.acquireLatestImage();
@@ -197,13 +237,14 @@ public class OnGetImageListener implements OnImageAvailableListener {
                         public void run() {
                             if (!new File(Constants.getFaceShapeModelPath()).exists()) {
                                 FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
+                                FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_5_face_landmarks, Constants.getFaceShapeModelPath());
                             }
 
                             long startTime = System.currentTimeMillis();
 
-                            synchronized (OnGetImageListener.this) {
+//                            synchronized (OnGetImageListener.this) {
                                 results = mFaceDet.detect(mCroppedBitmap);
-                            }
+//                            }
 
                             long endTime = System.currentTimeMillis();
                             Log.d(TAG, "run: " + "Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
@@ -212,9 +253,10 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
                             if (results != null) {
                                 // Notify results
-                                faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
+//                                faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
                                 // Demo results
-                                //drawOnResults(results);
+//                                drawOnResults(results);
+
                             }
                             mIsComputing = false;
                         }
@@ -243,8 +285,8 @@ public class OnGetImageListener implements OnImageAvailableListener {
             }
         }*/
 
-        mUIHandler.post(() -> {
-            mWindow.setImageBitmap(mCroppedBitmap);
-        });
+//        mUIHandler.post(() -> {
+//            mWindow.setImageBitmap(mCroppedBitmap);
+//        });
     }
 }

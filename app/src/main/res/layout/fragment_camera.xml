@@ -143,4 +143,13 @@
             style="@android:style/Widget.Material.Light.Button.Borderless"
             />
     </FrameLayout>
+
+    <TextView
+        android:id="@+id/fragment_camera_tv_fps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:layout_marginStart="15dp"
+        android:visibility="visible"
+        />
 </RelativeLayout>

@@ -195,12 +195,10 @@ public class M2DLandmarkView extends View {
                 canvas.drawCircle(pointX, pointY, 2, mFaceLandmarkPaint);
             }*/
         }
-    /*    if(overlayImages!=null) {
-            curOverlayImageIdx += 1;
-            if (curOverlayImageIdx == overlayImages.size()) {
-                curOverlayImageIdx = 0;
-            }
-        }*/
+//        curOverlayImageIdx +=1;
+//        if(curOverlayImageIdx==overlayImages.size()){
+//            curOverlayImageIdx = 0;
+//        }
     }
 
     private PointF maskPosition(Bitmap overlayImg,float centerX,float centerY){

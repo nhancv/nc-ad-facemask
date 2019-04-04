@@ -533,6 +533,7 @@ public class CameraFragment extends Fragment
             }
             this.maskFilterMap.put(name,this.curOverlayImg);
         }
+
     }
 
     @Override
@@ -896,7 +897,10 @@ public class CameraFragment extends Fragment
             e.printStackTrace();
         }
         mOnGetPreviewListener.initialize(Objects.requireNonNull(getActivity()).getApplicationContext(),
-                mCameraId, getActivity().findViewById(R.id.fragment_camera_iv_preview), inferenceHandler, uiHandler, this);
+                mCameraId,
+                getActivity().findViewById(R.id.fragment_camera_iv_preview),
+                getActivity().findViewById(R.id.fragment_camera_tv_fps),
+                inferenceHandler, uiHandler, this);
     }
 
     /**
