@@ -47,18 +47,13 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.nhancv.facemask.m2d.M2DLandmarkView;
 import com.nhancv.facemask.m2d.M2DPosController;
 import com.nhancv.facemask.m3d.M3DPosController;
-import com.nhancv.facemask.m3d.M3DSceneLoader;
-import com.nhancv.facemask.m3d.M3DSurfaceView;
 import com.nhancv.facemask.m3d.transformation.RealTimeRotation;
 import com.tzutalin.dlib.VisionDetRet;
-
-import org.andresoviedo.util.android.ContentUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -525,16 +520,18 @@ public class CameraFragment extends Fragment
     }
 
     public void loadImageOverlay() {
-        for (final String name : this.maskFilters) {
-            this.curOverlayImg = new ArrayList<Bitmap>();
-            for (int i = 0; i < 1; i++) {
-                String str = name.concat("_").concat(String.format("%05d", i));//padd zero with width = 5
-                Log.d(TAG, str);
-                int id = getId(str, R.drawable.class);
-                this.curOverlayImg.add(BitmapFactory.decodeResource(this.getResources(), id));
-            }
-            this.maskFilterMap.put(name,this.curOverlayImg);
-        }
+//        for (final String name : this.maskFilters) {
+//            this.curOverlayImg = new ArrayList<Bitmap>();
+//            for (int i = 0; i < 1; i++) {
+//                String str = name.concat("_").concat(String.format("%05d", i));//padd zero with width = 5
+//                Log.d(TAG, str);
+//                int id = getId(str, R.drawable.class);
+//                this.curOverlayImg.add(BitmapFactory.decodeResource(this.getResources(), id));
+//            }
+//            this.maskFilterMap.put(name,this.curOverlayImg);
+//        }
+        this.curOverlayImg.add(BitmapFactory.decodeResource(this.getResources(), R.drawable.cat_00000));
+        this.maskFilterMap.put("cat",this.curOverlayImg);
 
     }
 

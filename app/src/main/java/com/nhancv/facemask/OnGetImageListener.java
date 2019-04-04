@@ -26,13 +26,13 @@ import com.tzutalin.dlib.VisionDetRet;
 import com.tzutalin.dlibtest.FileUtils;
 import com.tzutalin.dlibtest.ImageUtils;
 
-//import org.opencv.core.Mat;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import hugo.weaving.DebugLog;
+
+//import org.opencv.core.Mat;
 
 /**
  * Class that takes in preview frames and converts the image to Bitmaps to process with dlib lib.
@@ -127,17 +127,17 @@ public class OnGetImageListener implements OnImageAvailableListener {
             stableFps.start(fps -> {
 
                 final String log;
-                if(lastTime == 0) {
+                long endTime = System.currentTimeMillis();
+                if(lastTime == 0 || endTime == lastTime) {
                     lastTime = System.currentTimeMillis();
                     log = String.format("Fps: %d", fps);
                 } else {
-                    long endTime = System.currentTimeMillis();
                     log = String.format("Fps: %d", 1000 / (endTime - lastTime));
                     lastTime = endTime;
                 }
 
                 if (faceLandmarkListener != null && results != null && mCroppedBitmap != null && tvFps != null) {
-                    faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
+//                    faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
 //                    drawOnResults(results);
                     if (mUIHandler != null) {
                         mUIHandler.post(() -> {
@@ -266,7 +266,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
     }
 
     private void drawOnResults(List<VisionDetRet> results) {
-      /*  for (final VisionDetRet ret : results) {
+        for (final VisionDetRet ret : results) {
             float resizeRatio = 1.0f;
             Rect bounds = new Rect();
             bounds.left = (int) (ret.getLeft() * resizeRatio);
@@ -283,7 +283,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 int pointY = (int) (point.y * resizeRatio);
                 canvas.drawCircle(pointX, pointY, 2, mFaceLandmarkPaint);
             }
-        }*/
+        }
 
 //        mUIHandler.post(() -> {
 //            mWindow.setImageBitmap(mCroppedBitmap);
