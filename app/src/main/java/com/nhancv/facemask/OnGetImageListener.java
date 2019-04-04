@@ -41,7 +41,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
     private static final String TAG = "OnGetImageListener";
 
-    private static final int BM_FACE_W = 150;
+    private static final int BM_FACE_W = 120;
     private static int BM_FACE_H = BM_FACE_W;
     private int mPreviewWidth = 0;
     private int mPreviewHeight = 0;
@@ -126,22 +126,22 @@ public class OnGetImageListener implements OnImageAvailableListener {
         if(!stableFps.isStarted()) {
             stableFps.start(fps -> {
 
-                String log = "";
-//                if(lastTime == 0) {
-//                    lastTime = System.currentTimeMillis();
-//                    log = String.format("Fps: %d", fps);
-//                } else {
-//                    long endTime = System.currentTimeMillis();
-//                    log = String.format("Fps: %d", 1000 / (endTime - lastTime));
-//                    lastTime = endTime;
-//                }
+                final String log;
+                if(lastTime == 0) {
+                    lastTime = System.currentTimeMillis();
+                    log = String.format("Fps: %d", fps);
+                } else {
+                    long endTime = System.currentTimeMillis();
+                    log = String.format("Fps: %d", 1000 / (endTime - lastTime));
+                    lastTime = endTime;
+                }
 
                 if (faceLandmarkListener != null && results != null && mCroppedBitmap != null && tvFps != null) {
                     faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
 //                    drawOnResults(results);
                     if (mUIHandler != null) {
                         mUIHandler.post(() -> {
-//                            tvFps.setText(log);
+                            tvFps.setText(log);
 //                            mWindow.setImageBitmap(mCroppedBitmap);
                         });
 
