@@ -114,12 +114,6 @@ public class OnGetImageListener implements OnImageAvailableListener {
         }
     }
 
-/*    public void setOverlayImage(Bitmap overlayImage){
-        this.overlayImage = overlayImage;
-        //convert from bitmap to matrix
-        this.overlayMat = bitmapConversion.convertBitmap2Mat(this.overlayImage);
-    }*/
-
     private long lastTime = 0;
     @Override
     public void onImageAvailable(final ImageReader reader) {
@@ -130,14 +124,14 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 long endTime = System.currentTimeMillis();
                 if(lastTime == 0 || endTime == lastTime) {
                     lastTime = System.currentTimeMillis();
-                    log = String.format("Fps: %d", fps);
+                    log = "Fps: %d" + fps;
                 } else {
-                    log = String.format("Fps: %d", 1000 / (endTime - lastTime));
+                    log = "Fps: %d" + 1000 / (endTime - lastTime);
                     lastTime = endTime;
                 }
 
                 if (faceLandmarkListener != null && results != null && mCroppedBitmap != null && tvFps != null) {
-//                    faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
+                    faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
 //                    drawOnResults(results);
                     if (mUIHandler != null) {
                         mUIHandler.post(() -> {
@@ -242,9 +236,11 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
                             long startTime = System.currentTimeMillis();
 
-//                            synchronized (OnGetImageListener.this) {
+                            synchronized (OnGetImageListener.this) {
                                 results = mFaceDet.detect(mCroppedBitmap);
-//                            }
+                            }
+
+
 
                             long endTime = System.currentTimeMillis();
                             Log.d(TAG, "run: " + "Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");

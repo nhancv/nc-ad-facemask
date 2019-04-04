@@ -39,7 +39,7 @@
         android:layout_height="wrap_content">
 
         <LinearLayout
-            android:background="#00ffffff"
+            android:background="@android:color/white"
             android:id="@+id/mask_filter_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

@@ -123,13 +123,13 @@ public class CameraFragment extends Fragment
      * Max preview width that is guaranteed by Camera2 API
      */
 //    private static final int MAX_PREVIEW_WIDTH = 1920;
-    private static final int MAX_PREVIEW_WIDTH = 720;
+    private static final int MAX_PREVIEW_WIDTH = 640;
 
     /**
      * Max preview height that is guaranteed by Camera2 API
      */
 //    private static final int MAX_PREVIEW_HEIGHT = 1080;
-    private static final int MAX_PREVIEW_HEIGHT = 720;
+    private static final int MAX_PREVIEW_HEIGHT = 480;
 
     /**
      * {@link TextureView.SurfaceTextureListener} handles several lifecycle events on a
