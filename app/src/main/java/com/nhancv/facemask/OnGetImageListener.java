@@ -107,17 +107,28 @@ public class OnGetImageListener implements OnImageAvailableListener {
         }
     }
 
+    private long lastTime = 0;
     @Override
     public void onImageAvailable(final ImageReader reader) {
         if(!stableFps.isStarted()) {
             stableFps.start(fps -> {
-                String log = String.format("Fps: %d", fps);
+
+                String log = "";
+//                if(lastTime == 0) {
+//                    lastTime = System.currentTimeMillis();
+//                    log = String.format("Fps: %d", fps);
+//                } else {
+//                    long endTime = System.currentTimeMillis();
+//                    log = String.format("Fps: %d", 1000 / (endTime - lastTime));
+//                    lastTime = endTime;
+//                }
 
                 if (faceLandmarkListener != null && results != null && mCroppedBitmap != null && tvFps != null) {
                     faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
+//                    drawOnResults(results);
                     if (mUIHandler != null) {
                         mUIHandler.post(() -> {
-                            tvFps.setText(log);
+//                            tvFps.setText(log);
 //                            mWindow.setImageBitmap(mCroppedBitmap);
                         });
 
@@ -213,12 +224,13 @@ public class OnGetImageListener implements OnImageAvailableListener {
                         public void run() {
                             if (!new File(Constants.getFaceShapeModelPath()).exists()) {
                                 FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
+                                FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_5_face_landmarks, Constants.getFaceShapeModelPath());
                             }
 
                             long startTime = System.currentTimeMillis();
-                            synchronized (OnGetImageListener.this) {
+//                            synchronized (OnGetImageListener.this) {
                                 results = mFaceDet.detect(mCroppedBitmap);
-                            }
+//                            }
                             long endTime = System.currentTimeMillis();
                             Log.d(TAG, "run: " + "Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
                             // Draw on bitmap
