@@ -41,7 +41,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
     private static final String TAG = "OnGetImageListener";
 
-    private static final int BM_FACE_W = 200;
+    private static final int BM_FACE_W = 150;
     private static int BM_FACE_H = BM_FACE_W;
     private int mPreviewWidth = 0;
     private int mPreviewHeight = 0;
@@ -173,6 +173,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 mRGBframeBitmap = Bitmap.createBitmap(mPreviewWidth, mPreviewHeight, Config.ARGB_8888);
                 float scaleInputRate = Math.max(mPreviewWidth, mPreviewHeight) * 1f / Math.min(mPreviewWidth, mPreviewHeight);
                 BM_FACE_H = (int) (BM_FACE_W * scaleInputRate);
+                mCroppedBitmap = Bitmap.createBitmap(mRGBframeBitmap, 0, 0, mPreviewWidth, mPreviewHeight);
                 mYUVBytes = new byte[planes.length][];
                 for (int i = 0; i < planes.length; ++i) {
                     mYUVBytes[i] = new byte[planes[i].getBuffer().capacity()];
@@ -223,6 +224,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
             matrix.postTranslate(BM_FACE_H, 0);//scale image back
         }
 
+        if(mCroppedBitmap.isRecycled()) mCroppedBitmap.recycle();
         mCroppedBitmap = Bitmap.createBitmap(mRGBframeBitmap, 0, 0, mPreviewWidth, mPreviewHeight, matrix, false);
 
         if (mInferenceHandler != null)
@@ -240,8 +242,6 @@ public class OnGetImageListener implements OnImageAvailableListener {
                             synchronized (OnGetImageListener.this) {
                                 results = mFaceDet.detect(mCroppedBitmap);
                             }
-
-
 
                             long endTime = System.currentTimeMillis();
                             Log.d(TAG, "run: " + "Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");

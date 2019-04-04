@@ -165,7 +165,7 @@ public class M2DLandmarkView extends View {
         for (final VisionDetRet ret : visionDetRetList) {
             //curFace = bitmapConversion.convertBitmap2Mat(this.curFaceImg);//convert bitmap face to matrix
             List<Point> landmarks = ret.getFaceLandmarks();
-            List<Point> normLandmark = this.normalizePoint(landmarks);
+//            List<Point> normLandmark = this.normalizePoint(landmarks);
      /*       MatOfPoint points1 = new MatOfPoint();
             points1.fromList(landmarks);
             MatOfInt hullIndex = new MatOfInt();
@@ -176,28 +176,28 @@ public class M2DLandmarkView extends View {
             bounds.top = (int) (getY(ret.getTop()));
             bounds.right = (int) getX(ret.getRight());
             bounds.bottom = (int) getY(ret.getBottom());
-            //canvas.drawRect(bounds, mFaceLandmarkPaint);
-            float centerX = faceCenterX(bounds.left, bounds.right);
-            float centerY = faceCenterY(bounds.top,bounds.bottom);
-            float faceW = bounds.right - bounds.left;
-            float faceH = bounds.bottom - bounds.top;
-            if(overlayImages!=null) {
-                if (overlayImages.get(curOverlayImageIdx) != null) {
-                    //curOverlayResized = resizeMask(overlayImages.get(curOverlayImageIdx), faceW, faceH);
-                    curMask = maskController.defineMask(normLandmark,faceW,faceH,overlayImages.get(curOverlayImageIdx)); //get Mask Position info
-                    //PointF position = maskPosition(curOverlayResized, centerX, centerY);
-                    PointF position = curMask.getPositionOnFace();
-                    curOverlayResized = curMask.getBmMask();
-                    canvas.drawBitmap(curOverlayResized, position.x, position.y, null);
-                }
-            }
+            canvas.drawRect(bounds, mFaceLandmarkPaint);
+//            float centerX = faceCenterX(bounds.left, bounds.right);
+//            float centerY = faceCenterY(bounds.top,bounds.bottom);
+//            float faceW = bounds.right - bounds.left;
+//            float faceH = bounds.bottom - bounds.top;
+//            if(overlayImages!=null) {
+//                if (overlayImages.get(curOverlayImageIdx) != null) {
+//                    //curOverlayResized = resizeMask(overlayImages.get(curOverlayImageIdx), faceW, faceH);
+//                    curMask = maskController.defineMask(normLandmark,faceW,faceH,overlayImages.get(curOverlayImageIdx)); //get Mask Position info
+//                    //PointF position = maskPosition(curOverlayResized, centerX, centerY);
+//                    PointF position = curMask.getPositionOnFace();
+//                    curOverlayResized = curMask.getBmMask();
+//                    canvas.drawBitmap(curOverlayResized, position.x, position.y, null);
+//                }
+//            }
             //canvas.drawLine(f);
             // Draw landmark
-/*            for (Point point : landmarks) {
+           for (Point point : landmarks) {
                 int pointX = (int) getX(point.x);
                 int pointY = (int) getY(point.y);
                 canvas.drawCircle(pointX, pointY, 2, mFaceLandmarkPaint);
-            }*/
+            }
         }
 //        curOverlayImageIdx +=1;
 //        if(curOverlayImageIdx==overlayImages.size()){
