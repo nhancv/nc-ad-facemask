@@ -148,7 +148,7 @@ public class CameraFragment extends Fragment
     /*
     * List of list Bitmap
     * */
-    String [] maskFilters = new String[]{"cat","dog","nerd","hamster"};
+    String [] maskFilters = new String[]{"cat"};//,"dog","nerd","hamster"};
     HashMap<String,List<Bitmap>> maskFilterMap = new HashMap<String,List<Bitmap>>();
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener
             = new TextureView.SurfaceTextureListener() {
@@ -525,7 +525,7 @@ public class CameraFragment extends Fragment
     public void loadImageOverlay() {
         for (final String name : this.maskFilters) {
             this.curOverlayImg = new ArrayList<Bitmap>();
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 1; i++) {
                 String str = name.concat("_").concat(String.format("%05d", i));//padd zero with width = 5
                 Log.d(TAG, str);
                 int id = getId(str, R.drawable.class);
@@ -544,14 +544,14 @@ public class CameraFragment extends Fragment
         //Uri uri = Uri.parse("assets://" + getPackageName() + "/" + file);
         Uri uri = Uri.parse("assets://com.nhancv.facemask/models/nhancv.obj");
         //Log.d(TAG, "onResume: uri" + uri.getPath());
-        //loadImageOverlay();
-        ContentUtils.provideAssets(getActivity());
+        loadImageOverlay();
+       /* ContentUtils.provideAssets(getActivity());
         M3DSceneLoader scene = new M3DSceneLoader(getActivity());
         M3DSurfaceView gLView = getActivity().findViewById(R.id.gLView);
         scene.init(uri, 0, gLView);
         gLView.setupScene(scene);
-        m3DPosController = new M3DPosController(gLView);
-        //m2DPosController = new M2DPosController(landmarkView);
+        m3DPosController = new M3DPosController(gLView);*/
+        m2DPosController = new M2DPosController(landmarkView);
     }
 
     @Override
@@ -574,7 +574,7 @@ public class CameraFragment extends Fragment
     public void onPause() {
         closeCamera();
         stopBackgroundThread();
-        m3DPosController.releaseMat();
+        //m3DPosController.releaseMat();
         super.onPause();
     }
 
@@ -706,7 +706,7 @@ public class CameraFragment extends Fragment
                     //get previewWidth Height to set to CameraMatrix
                     rotationInstance.setUpCamMatrix(new Point(mPreviewSize.getWidth()/2,mPreviewSize.getHeight()/2));
                     rotationInstance.setUpWorldPoints();
-                    m3DPosController.setMatrix();
+                    //m3DPosController.setMatrix();
                 }
             }
         } catch (CameraAccessException e) {
@@ -990,7 +990,7 @@ public class CameraFragment extends Fragment
             // This is the CaptureRequest.Builder that we use to take a picture.
             final CaptureRequest.Builder captureBuilder =
                     mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-            captureBuilder.addTarget(mImageReader.getSurface());
+//            captureBuilder.addTarget(mImageReader.getSurface());
 
             // Use the same AE and AF modes as the preview.
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE,
@@ -1061,10 +1061,10 @@ public class CameraFragment extends Fragment
     public void onClick(final View view) {
         view.setEnabled(false);
         switch (view.getId()) {
-           /* case R.id.btn_filter_cat:
+            case R.id.btn_filter_cat:
                 m2DPosController.update(this.maskFilterMap.get("cat"));//update overlayImage
                 break;
-            case R.id.btn_filter_dog:
+           /* case R.id.btn_filter_dog:
                 m2DPosController.update(this.maskFilterMap.get("dog"));//update overlayImage
                 break;
             case R.id.btn_filter_hamster:
@@ -1127,8 +1127,8 @@ public class CameraFragment extends Fragment
 
     @Override
     public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
-        m3DPosController.landmarkUpdate(visionDetRetList, bmW, bmH);
-        //uiHandler.post(() -> m2DPosController.landmarkUpdate(visionDetRetList, bmW, bmH));
+        //m3DPosController.landmarkUpdate(visionDetRetList, bmW, bmH);
+        uiHandler.post(() -> m2DPosController.landmarkUpdate(visionDetRetList, bmW, bmH));
     }
 
     /**

@@ -200,9 +200,11 @@ public class OnGetImageListener implements OnImageAvailableListener {
                             }
 
                             long startTime = System.currentTimeMillis();
+
                             synchronized (OnGetImageListener.this) {
                                 results = mFaceDet.detect(mCroppedBitmap);
                             }
+
                             long endTime = System.currentTimeMillis();
                             Log.d(TAG, "run: " + "Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
                             // Draw on bitmap

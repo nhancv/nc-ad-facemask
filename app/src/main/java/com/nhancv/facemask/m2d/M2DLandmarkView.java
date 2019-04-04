@@ -14,8 +14,14 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
+import com.nhancv.facemask.m2d.mask.Eye;
+import com.nhancv.facemask.m2d.mask.IMaskStrategy;
+import com.nhancv.facemask.m2d.mask.Mask;
+import com.nhancv.facemask.m2d.mask.MaskController;
+import com.nhancv.facemask.m2d.mask.Mustache;
 import com.tzutalin.dlib.VisionDetRet;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import hugo.weaving.DebugLog;
@@ -41,13 +47,14 @@ public class M2DLandmarkView extends View {
     private int currentWidth;
     private int currentHeight;
     private List<Bitmap> overlayImages = null;
-    private int curOverlayImageIdx;
+    private int curOverlayImageIdx = 0;
 
     private Bitmap curFaceImg;
     private Bitmap curOverlayResized;
     //private Mat overlayMat; //img2
     //private Mat curFaceWarped;
-
+    private Mask curMask;
+    private MaskController maskController;
     public M2DLandmarkView(Context context) {
         this(context, null, 0, 0);
     }
@@ -79,12 +86,11 @@ public class M2DLandmarkView extends View {
     public void updateOverlayImage(List<Bitmap> src){
         Log.d("M2DLandmarkView","img load");
         this.overlayImages = src;
+        maskController = new MaskController(new Mustache());
         this.curOverlayImageIdx = 0;//start again
         //this.overlayMat = bitmapConversion.convertBitmap2Mat(this.overlayImg);
         //this.curFaceWarped = this.overlayMat.clone(); //image
         //this.curFaceWarped.convertTo(this.curFaceWarped, CvType.CV_32F);//convert the curFaceWarp to
-
-
     }
     @SuppressLint("LongLogTag")
     @DebugLog
@@ -139,7 +145,15 @@ public class M2DLandmarkView extends View {
     {
         return (top+bottom)/2f;
     }
-
+    private List<Point> normalizePoint(List<Point> landmarks){
+        List<Point> normLandmarks = new ArrayList<>();
+        for (Point point : landmarks) {
+            int pointX = (int) getX(point.x);
+            int pointY = (int) getY(point.y);
+            normLandmarks.add(new Point(pointX,pointY));
+        }
+        return normLandmarks;
+    }
     @Override
     protected void onDraw(Canvas canvas) {
 
@@ -147,6 +161,7 @@ public class M2DLandmarkView extends View {
         for (final VisionDetRet ret : visionDetRetList) {
             //curFace = bitmapConversion.convertBitmap2Mat(this.curFaceImg);//convert bitmap face to matrix
             List<Point> landmarks = ret.getFaceLandmarks();
+            List<Point> normLandmark = this.normalizePoint(landmarks);
      /*       MatOfPoint points1 = new MatOfPoint();
             points1.fromList(landmarks);
             MatOfInt hullIndex = new MatOfInt();
@@ -164,11 +179,15 @@ public class M2DLandmarkView extends View {
             float faceH = bounds.bottom - bounds.top;
             if(overlayImages!=null) {
                 if (overlayImages.get(curOverlayImageIdx) != null) {
-                    curOverlayResized = resizeMask(overlayImages.get(curOverlayImageIdx), faceW, faceH);
-                    PointF position = maskPosition(curOverlayResized, centerX, centerY);
+                    //curOverlayResized = resizeMask(overlayImages.get(curOverlayImageIdx), faceW, faceH);
+                    curMask = maskController.defineMask(normLandmark,overlayImages.get(curOverlayImageIdx)); //get Mask Position info
+                    //PointF position = maskPosition(curOverlayResized, centerX, centerY);
+                    PointF position = curMask.getPositionOnFace();
+                    curOverlayResized = curMask.getBmMask();
                     canvas.drawBitmap(curOverlayResized, position.x, position.y, null);
                 }
             }
+            //canvas.drawLine(f);
             // Draw landmark
 /*            for (Point point : landmarks) {
                 int pointX = (int) getX(point.x);
@@ -176,12 +195,12 @@ public class M2DLandmarkView extends View {
                 canvas.drawCircle(pointX, pointY, 2, mFaceLandmarkPaint);
             }*/
         }
-        if(overlayImages!=null) {
+    /*    if(overlayImages!=null) {
             curOverlayImageIdx += 1;
             if (curOverlayImageIdx == overlayImages.size()) {
                 curOverlayImageIdx = 0;
             }
-        }
+        }*/
     }
 
     private PointF maskPosition(Bitmap overlayImg,float centerX,float centerY){

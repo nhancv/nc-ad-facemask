@@ -117,6 +117,7 @@ public class M3DPosController implements FaceLandmarkListener {
         //this.focal_length = 543.45f;//pixels
         setUpDistCoeff();
         //this.distCoeffs = new MatOfDouble();
+        this.focal_length = realTimeRotation.getFocalLength();
 
     }
     public void setMatrix()
@@ -182,7 +183,13 @@ public class M3DPosController implements FaceLandmarkListener {
         objPoints.add(new org.opencv.core.Point(landmarks.get(54).x,landmarks.get(54).y));
         imagePoints.fromList(objPoints);
         return imagePoints;
-
+    }
+    private MatOfPoint3f getProjectPoints(){
+        MatOfPoint3f projectPoints = new MatOfPoint3f();
+        List<org.opencv.core.Point3> objPoints = new ArrayList<org.opencv.core.Point3>();
+        objPoints.add(new org.opencv.core.Point3(0f,0f,1000.0f) );
+        projectPoints.fromList(objPoints);
+        return projectPoints;
     }
     @Override
     public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
@@ -240,14 +247,19 @@ public class M3DPosController implements FaceLandmarkListener {
             double[] ry = this.rotationVector.get(1,0);
             double[] rz = this.rotationVector.get(2,0);
             Log.d(TAG,"Radian"+rx+","+ry+","+rz);
-            float dx = rotationHelper.normalizeRange((float)rx[0],2);
-            float dy = rotationHelper.normalizeRange((float) ry[0],8);
-            float dz = rotationHelper.normalizeRange((float) rz[0],8);
+            float dx = rotationHelper.normalizeRange((float)rx[0],10);
+            float dy = rotationHelper.normalizeRange((float) ry[0],45);
+            float dz = rotationHelper.normalizeRange((float) rz[0],45);
             Log.d(TAG,"Degree"+dx+","+dy+","+dz);
 
             Rotation rotation = new Rotation(dx, dy, dz);//rotationValues[curRotationIdx][0],rotationValues[curRotationIdx][1],rotationValues[curRotationIdx][2]);
             Log.d("M3DPositionController","x"+objX+ ",y"+objY+",z"+objZ);
             //
+            MatOfPoint3f projectPoints = this.getProjectPoints();
+            MatOfPoint2f noseEndPoints = new MatOfPoint2f();
+            Mat jacobian = new Mat();
+            Calib3d.projectPoints(projectPoints,rotationVector,translationVector,camMatrix,distCoeffs,noseEndPoints,jacobian);
+
             Translation translation = new Translation(objX,objY,objZ);//translate back our scale will base on z
             Scale scale = new Scale(5,5,3);//scale obj model
 
@@ -258,6 +270,7 @@ public class M3DPosController implements FaceLandmarkListener {
 
             objectTransformation = new ObjectTransformationBuilder().setRotation(rotation)
                                                                     .setTranslation(translation).setScale(scale).build();
+
             //Scale scale = new Scale()
             if(objectTransformation!=null)
                 listObjectTransformation.add( objectTransformation);//add each tranformation for each object
