@@ -124,9 +124,9 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 long endTime = System.currentTimeMillis();
                 if(lastTime == 0 || endTime == lastTime) {
                     lastTime = System.currentTimeMillis();
-                    log = "Fps: %d" + fps;
+                    log = "Fps: " + fps;
                 } else {
-                    log = "Fps: %d" + 1000 / (endTime - lastTime);
+                    log = "Fps: " + 1000 / (endTime - lastTime);
                     lastTime = endTime;
                 }
 
@@ -136,7 +136,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                     if (mUIHandler != null) {
                         mUIHandler.post(() -> {
                             tvFps.setText(log);
-                            mWindow.setImageBitmap(mCroppedBitmap);
+//                            mWindow.setImageBitmap(mCroppedBitmap);
                         });
 
                     }
