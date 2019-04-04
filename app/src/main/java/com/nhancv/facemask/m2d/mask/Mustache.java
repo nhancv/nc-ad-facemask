@@ -9,7 +9,7 @@ import java.util.List;
 public class Mustache implements IMaskStrategy {
     DistanceHelper distanceHelper = new DistanceHelper();
     @Override
-    public Mask definePosition(List<Point> landmarks, Bitmap mask) {
+    public Mask definePosition(List<Point> landmarks, float faceWidth,float faceHeight, Bitmap mask) {
         float originHeight = mask.getHeight();
         float originWidth = mask.getWidth();
         float noseWidth = distanceHelper.distance(landmarks.get(35),landmarks.get(31));
@@ -25,7 +25,7 @@ public class Mustache implements IMaskStrategy {
         mustacheWidth = x2 - x1;
         mustacheHeight = y2 - y1;
         Bitmap preMask = distanceHelper.resizeMask(mask,mustacheWidth,mustacheHeight);
-        PointF position = distanceHelper.imagePosition(landmarks.get(33),mustacheWidth,mustacheHeight);
+        PointF position = distanceHelper.imagePosition(new PointF(landmarks.get(33).x,landmarks.get(33).y),mustacheWidth,mustacheHeight);
         Mask maskResult = new MaskBuilder().setBmMask(preMask).setPositionOnFace(position).build();
 
         return maskResult;

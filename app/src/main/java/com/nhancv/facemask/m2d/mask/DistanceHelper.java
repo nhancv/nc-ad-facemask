@@ -30,7 +30,7 @@ public class DistanceHelper {
                 bmp, 0, 0, width, height, matrix, false);
         return resizedBitmap;
     }
-    public PointF imagePosition(Point center, float objWidth, float objHeight){
+    public PointF imagePosition(PointF center, float objWidth, float objHeight){
         float x =center.x - objWidth/2;
         float y = center.y - objHeight/2;
         PointF result = new PointF(x,y);

@@ -10,8 +10,8 @@ public class MaskController {
     public MaskController( IMaskStrategy maskStrategy){
         this.maskStrategy = maskStrategy;
     }
-    public Mask defineMask(List<Point> landmarks, Bitmap mask){
-        return this.maskStrategy.definePosition(landmarks,mask);
+    public Mask defineMask(List<Point> landmarks,float faceWidth,float faceHeight, Bitmap mask){
+        return this.maskStrategy.definePosition(landmarks,faceWidth,faceHeight,mask);
     }
     public void setMaskStrategy(IMaskStrategy iMaskStrategy){
         this.maskStrategy = iMaskStrategy;

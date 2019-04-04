@@ -15,11 +15,15 @@ import android.util.Log;
 import android.view.View;
 
 import com.nhancv.facemask.m2d.mask.Eye;
+import com.nhancv.facemask.m2d.mask.Eye5;
 import com.nhancv.facemask.m2d.mask.IMaskStrategy;
 import com.nhancv.facemask.m2d.mask.Mask;
 import com.nhancv.facemask.m2d.mask.MaskController;
 import com.nhancv.facemask.m2d.mask.Mustache;
+import com.nhancv.facemask.m2d.mask.Mustache5;
 import com.tzutalin.dlib.VisionDetRet;
+
+import org.opencv.objdetect.CascadeClassifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,7 +90,7 @@ public class M2DLandmarkView extends View {
     public void updateOverlayImage(List<Bitmap> src){
         Log.d("M2DLandmarkView","img load");
         this.overlayImages = src;
-        maskController = new MaskController(new Mustache());
+        maskController = new MaskController(new Mustache5());
         this.curOverlayImageIdx = 0;//start again
         //this.overlayMat = bitmapConversion.convertBitmap2Mat(this.overlayImg);
         //this.curFaceWarped = this.overlayMat.clone(); //image
@@ -180,7 +184,7 @@ public class M2DLandmarkView extends View {
             if(overlayImages!=null) {
                 if (overlayImages.get(curOverlayImageIdx) != null) {
                     //curOverlayResized = resizeMask(overlayImages.get(curOverlayImageIdx), faceW, faceH);
-                    curMask = maskController.defineMask(normLandmark,overlayImages.get(curOverlayImageIdx)); //get Mask Position info
+                    curMask = maskController.defineMask(normLandmark,faceW,faceH,overlayImages.get(curOverlayImageIdx)); //get Mask Position info
                     //PointF position = maskPosition(curOverlayResized, centerX, centerY);
                     PointF position = curMask.getPositionOnFace();
                     curOverlayResized = curMask.getBmMask();

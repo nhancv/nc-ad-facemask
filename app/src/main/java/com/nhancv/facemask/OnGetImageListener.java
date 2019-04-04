@@ -41,7 +41,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
     private static final String TAG = "OnGetImageListener";
 
-    private static final int BM_FACE_W = 120;
+    private static final int BM_FACE_W = 200;
     private static int BM_FACE_H = BM_FACE_W;
     private int mPreviewWidth = 0;
     private int mPreviewHeight = 0;
@@ -136,7 +136,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                     if (mUIHandler != null) {
                         mUIHandler.post(() -> {
                             tvFps.setText(log);
-//                            mWindow.setImageBitmap(mCroppedBitmap);
+                            mWindow.setImageBitmap(mCroppedBitmap);
                         });
 
                     }
@@ -222,6 +222,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
             matrix.postScale(-1, 1);
             matrix.postTranslate(BM_FACE_H, 0);//scale image back
         }
+
         mCroppedBitmap = Bitmap.createBitmap(mRGBframeBitmap, 0, 0, mPreviewWidth, mPreviewHeight, matrix, false);
 
         if (mInferenceHandler != null)
