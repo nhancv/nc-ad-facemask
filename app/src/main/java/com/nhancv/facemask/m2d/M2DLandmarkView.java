@@ -14,6 +14,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
+import com.nhancv.facemask.m2d.mask.DistanceHelper;
 import com.nhancv.facemask.m2d.mask.Eye;
 import com.nhancv.facemask.m2d.mask.Eye5;
 import com.nhancv.facemask.m2d.mask.Head5;
@@ -57,13 +58,15 @@ public class M2DLandmarkView extends View {
     private List<Bitmap> overlayImages = null;
     private HashMap<String,Bitmap> overlayElements;
     private int curOverlayImageIdx = 0;
-
+    private DistanceHelper distanceHelper = new DistanceHelper();
     private Bitmap curFaceImg;
     private Bitmap curOverlayResized;
     //private Mat overlayMat; //img2
     //private Mat curFaceWarped;
     private Mask curMask;
     private MaskController maskController;
+    private List<Point> oldLandMarks = new ArrayList<>(); //landmarks that have been normalized
+    float radius = 30;
     public M2DLandmarkView(Context context) {
         this(context, null, 0, 0);
     }
@@ -164,15 +167,45 @@ public class M2DLandmarkView extends View {
     {
         return (top+bottom)/2f;
     }
+    private boolean firstTime = true;
+    private boolean isPointValid(Point point1, Point point2){
+        float distance = distanceHelper.distance(point1,point2);
+        if(distance<radius)
+            return true;
+        return false;
+    }
+
     private List<Point> normalizePoint(List<Point> landmarks){
         List<Point> normLandmarks = new ArrayList<>();
-        for (Point point : landmarks) {
-            int pointX = (int) getX(point.x);
-            int pointY = (int) getY(point.y);
-            normLandmarks.add(new Point(pointX,pointY));
+        //the first frame detect with a empty oldLandMarks
+        if(oldLandMarks.isEmpty()) {
+            for (Point point : landmarks) {
+                int pointX = (int) getX(point.x);
+                int pointY = (int) getY(point.y);
+                normLandmarks.add(new Point(pointX,pointY)); //norm Value
+            }
         }
+       else{
+            int i = 0;
+            for (Point point : landmarks) {
+                int pointX = (int) getX(point.x);
+                int pointY = (int) getY(point.y);
+                Point newPoint = new Point(pointX,pointY);
+                //If the new point is not noise
+                if(!isPointValid(newPoint,oldLandMarks.get(i))){
+                    normLandmarks.add(newPoint);
+                }
+                //if the new point is noise
+                else{
+                    normLandmarks.add(oldLandMarks.get(i));
+                }
+                i+=1;
+            }
+        }
+        oldLandMarks = normLandmarks;
         return normLandmarks;
     }
+
     @Override
     protected void onDraw(Canvas canvas) {
 

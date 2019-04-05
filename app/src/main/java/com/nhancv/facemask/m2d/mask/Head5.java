@@ -19,11 +19,12 @@ public class Head5 implements  IMaskStrategy{
         //float posX =
         float oEarHeight = mask.getHeight();
         float oEarWidth = mask.getWidth();
-        float maskWidth = 4f/3*faceWidth;//maskWidth
+        float eyeWidth = distanceHelper.distance(landmarks.get(0),landmarks.get(2));
+        float maskWidth = 2*eyeWidth;//maskWidth
         float maskHeight = maskWidth*(oEarHeight/oEarWidth);//maskHeight
         float centerEyeX = landmarks.get(4).x;
         float centerEyeY = landmarks.get(3).y;
-        float maskY = centerEyeY - 1f/3*faceHeight -maskHeight/2.0f;
+        float maskY = centerEyeY - eyeWidth/2.0f -maskHeight/2.0f;
         PointF centerMask = new PointF(centerEyeX, maskY);
 
         Bitmap preMask = distanceHelper.resizeMask(mask,maskWidth,maskHeight);

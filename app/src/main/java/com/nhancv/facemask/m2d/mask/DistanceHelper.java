@@ -36,10 +36,13 @@ public class DistanceHelper {
         PointF result = new PointF(x,y);
         return result;
     }
-    public Bitmap rotateBitmap(Bitmap bmp,float degree){
+  /*  public Bitmap rotateBitmap(Bitmap bmp,float degree){
         if(degree == 0){
             return bmp;
         }
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degree);
+        bmp = Bitmap.createBitmap(bmp,)
         return bmp;
-    }
+    }*/
 }
