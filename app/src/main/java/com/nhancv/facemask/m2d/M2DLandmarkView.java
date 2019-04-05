@@ -21,6 +21,7 @@ import com.nhancv.facemask.m2d.mask.Mask;
 import com.nhancv.facemask.m2d.mask.MaskController;
 import com.nhancv.facemask.m2d.mask.Mustache;
 import com.nhancv.facemask.m2d.mask.Mustache5;
+import com.nhancv.facemask.m2d.mask.Nose5;
 import com.tzutalin.dlib.VisionDetRet;
 
 import org.opencv.objdetect.CascadeClassifier;
@@ -90,7 +91,7 @@ public class M2DLandmarkView extends View {
     public void updateOverlayImage(List<Bitmap> src){
         Log.d("M2DLandmarkView","img load");
         this.overlayImages = src;
-        maskController = new MaskController(new Mustache5());
+        maskController = new MaskController(new Nose5());
         this.curOverlayImageIdx = 0;//start again
         //this.overlayMat = bitmapConversion.convertBitmap2Mat(this.overlayImg);
         //this.curFaceWarped = this.overlayMat.clone(); //image

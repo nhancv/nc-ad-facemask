@@ -19,5 +19,6 @@ public class Eye5 implements IMaskStrategy {
         float centerY = ((float)landmarks.get(1).y + (float)landmarks.get(3).y)/2;
         PointF result  = distanceHelper.imagePosition(new PointF(centerX,centerY),eye_width,eye_height);
         Mask maskResult = new MaskBuilder().setBmMask(preMask).setPositionOnFace(result).build();
-        return maskResult;    }
+        return maskResult;
+    }
 }
