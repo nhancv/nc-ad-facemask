@@ -20,6 +20,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.nhancv.facemask.fps.StableFps;
+import com.nhancv.facemask.m2d.BitmapConversion;
 import com.tzutalin.dlib.Constants;
 import com.tzutalin.dlib.FaceDet;
 import com.tzutalin.dlib.VisionDetRet;
@@ -32,6 +33,10 @@ import java.util.List;
 
 import hugo.weaving.DebugLog;
 
+import org.opencv.core.Mat;
+import org.opencv.core.Rect2d;
+import org.opencv.tracking.Tracker;
+import org.opencv.tracking.TrackerMOSSE;
 //import org.opencv.core.Mat;
 
 /**
@@ -62,7 +67,8 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private String cameraId;
     private FaceLandmarkListener faceLandmarkListener;
     private List<VisionDetRet> results;
-    //private BitmapConversion bitmapConversion = new BitmapConversion();
+    private BitmapConversion bitmapConversion = new BitmapConversion();
+    private Mat croppedMat;
     //private Mat curFace; //img1
     //private Mat overlayMat; //img2
    // private Mat curFaceWarped;
@@ -72,6 +78,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
      * 1 for front camera
      * Initlity default camera is front camera
      */
+    Tracker mosse = TrackerMOSSE.create();
     public static final String CAMERA_FRONT = "1";
     public static final String CAMERA_BACK = "0";
 
@@ -115,6 +122,11 @@ public class OnGetImageListener implements OnImageAvailableListener {
     }
 
     private long lastTime = 0;
+    Rect2d boundingBox;
+    private boolean detectDlib;
+    int countF = 6;
+    boolean isValid = false;
+
     @Override
     public void onImageAvailable(final ImageReader reader) {
         if(!stableFps.isStarted()) {
@@ -131,15 +143,28 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 }
 
                 if (faceLandmarkListener != null && results != null && mCroppedBitmap != null && tvFps != null) {
-                    faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
 //                    drawOnResults(results);
-                    if (mUIHandler != null) {
-                        mUIHandler.post(() -> {
-                            tvFps.setText(log);
-//                            mWindow.setImageBitmap(mCroppedBitmap);
-                        });
-
+                    if(boundingBox == null && !results.isEmpty()) {
+                        VisionDetRet ret = results.get(0);
+                        float x = ret.getLeft();
+                        float y = ret.getTop();
+                        float w = ret.getRight() - x;
+                        float h = ret.getBottom() - y;
+                        boundingBox = new Rect2d(x,y,w,h);
                     }
+                    if(boundingBox!= null)  {
+                        drawOnResultsByBoundingBox(boundingBox);
+                        if (mUIHandler != null) {
+                            mUIHandler.post(() -> {
+                                tvFps.setText(log);
+                                mWindow.setImageBitmap(mCroppedBitmap);
+                            });
+
+                        }
+                    }
+//                    faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
+
+
                 }
 
             });
@@ -240,7 +265,30 @@ public class OnGetImageListener implements OnImageAvailableListener {
                             long startTime = System.currentTimeMillis();
 
                             synchronized (OnGetImageListener.this) {
-                                results = mFaceDet.detect(mCroppedBitmap);
+
+                                if(results == null || results.size() == 0) {
+                                    results = mFaceDet.detect(mCroppedBitmap);
+                                } else {
+                                    croppedMat = bitmapConversion.convertBitmap2Mat(mCroppedBitmap);
+                                    if(boundingBox!=null) {
+                                        mosse.init(croppedMat,boundingBox );
+                                        boolean isValid= mosse.update(croppedMat,boundingBox);
+                                    }
+                                }
+
+
+//                                croppedMat = bitmapConversion.convertBitmap2Mat(mCroppedBitmap);
+//                                if(boundingBox!=null &&countF<=5) {
+//                                    if(detectDlib&&countF ==0)
+//                                        mosse.init(croppedMat,boundingBox );
+//                                    boolean isValid= mosse.update(croppedMat,boundingBox);
+//                                    countF+=1;
+//                                }
+//                                else {
+//                                    countF = 0;
+//
+//                                    detectDlib = true;
+//                                }
                             }
 
                             long endTime = System.currentTimeMillis();
@@ -285,5 +333,18 @@ public class OnGetImageListener implements OnImageAvailableListener {
 //        mUIHandler.post(() -> {
 //            mWindow.setImageBitmap(mCroppedBitmap);
 //        });
+    }
+
+    private void drawOnResultsByBoundingBox(Rect2d boundingBox) {
+
+        float resizeRatio = 1.0f;
+        Rect bounds = new Rect();
+        bounds.left = (int) (boundingBox.x * resizeRatio);
+        bounds.top = (int) (boundingBox.y * resizeRatio);
+        bounds.right = (int) ((boundingBox.x + boundingBox.width) * resizeRatio);
+        bounds.bottom = (int) ((boundingBox.y + boundingBox.height) * resizeRatio);
+        Canvas canvas = new Canvas(mCroppedBitmap);
+        canvas.drawRect(bounds, mFaceLandmarkPaint);
+
     }
 }

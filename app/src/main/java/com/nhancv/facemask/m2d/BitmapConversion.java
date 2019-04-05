@@ -1,4 +1,3 @@
-/*
 package com.nhancv.facemask.m2d;
 
 import android.graphics.Bitmap;
@@ -50,4 +49,3 @@ public class BitmapConversion {
         return rgbMat;
     }
 }
-*/
