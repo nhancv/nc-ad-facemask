@@ -26,13 +26,13 @@ import com.tzutalin.dlib.VisionDetRet;
 import com.tzutalin.dlibtest.FileUtils;
 import com.tzutalin.dlibtest.ImageUtils;
 
-//import org.opencv.core.Mat;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import hugo.weaving.DebugLog;
+
+//import org.opencv.core.Mat;
 
 /**
  * Class that takes in preview frames and converts the image to Bitmaps to process with dlib lib.
@@ -41,7 +41,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
     private static final String TAG = "OnGetImageListener";
 
-    private static final int BM_FACE_W = 200;
+    private static final int BM_FACE_W = 150;
     private static int BM_FACE_H = BM_FACE_W;
     private int mPreviewWidth = 0;
     private int mPreviewHeight = 0;
@@ -114,12 +114,6 @@ public class OnGetImageListener implements OnImageAvailableListener {
         }
     }
 
-/*    public void setOverlayImage(Bitmap overlayImage){
-        this.overlayImage = overlayImage;
-        //convert from bitmap to matrix
-        this.overlayMat = bitmapConversion.convertBitmap2Mat(this.overlayImage);
-    }*/
-
     private long lastTime = 0;
     @Override
     public void onImageAvailable(final ImageReader reader) {
@@ -127,12 +121,12 @@ public class OnGetImageListener implements OnImageAvailableListener {
             stableFps.start(fps -> {
 
                 final String log;
-                if(lastTime == 0) {
+                long endTime = System.currentTimeMillis();
+                if(lastTime == 0 || endTime == lastTime) {
                     lastTime = System.currentTimeMillis();
-                    log = String.format("Fps: %d", fps);
+                    log = "Fps: " + fps;
                 } else {
-                    long endTime = System.currentTimeMillis();
-                    log = String.format("Fps: %d", 1000 / (endTime - lastTime));
+                    log = "Fps: " + 1000 / (endTime - lastTime);
                     lastTime = endTime;
                 }
 
@@ -142,7 +136,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                     if (mUIHandler != null) {
                         mUIHandler.post(() -> {
                             tvFps.setText(log);
-                            mWindow.setImageBitmap(mCroppedBitmap);
+//                            mWindow.setImageBitmap(mCroppedBitmap);
                         });
 
                     }
@@ -179,6 +173,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 mRGBframeBitmap = Bitmap.createBitmap(mPreviewWidth, mPreviewHeight, Config.ARGB_8888);
                 float scaleInputRate = Math.max(mPreviewWidth, mPreviewHeight) * 1f / Math.min(mPreviewWidth, mPreviewHeight);
                 BM_FACE_H = (int) (BM_FACE_W * scaleInputRate);
+                mCroppedBitmap = Bitmap.createBitmap(mRGBframeBitmap, 0, 0, mPreviewWidth, mPreviewHeight);
                 mYUVBytes = new byte[planes.length][];
                 for (int i = 0; i < planes.length; ++i) {
                     mYUVBytes[i] = new byte[planes[i].getBuffer().capacity()];
@@ -229,6 +224,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
             matrix.postTranslate(BM_FACE_H, 0);//scale image back
         }
 
+        if(mCroppedBitmap.isRecycled()) mCroppedBitmap.recycle();
         mCroppedBitmap = Bitmap.createBitmap(mRGBframeBitmap, 0, 0, mPreviewWidth, mPreviewHeight, matrix, false);
 
         if (mInferenceHandler != null)
@@ -243,9 +239,9 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
                             long startTime = System.currentTimeMillis();
 
-//                            synchronized (OnGetImageListener.this) {
+                            synchronized (OnGetImageListener.this) {
                                 results = mFaceDet.detect(mCroppedBitmap);
-//                            }
+                            }
 
                             long endTime = System.currentTimeMillis();
                             Log.d(TAG, "run: " + "Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
@@ -267,7 +263,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
     }
 
     private void drawOnResults(List<VisionDetRet> results) {
-      /*  for (final VisionDetRet ret : results) {
+        for (final VisionDetRet ret : results) {
             float resizeRatio = 1.0f;
             Rect bounds = new Rect();
             bounds.left = (int) (ret.getLeft() * resizeRatio);
@@ -284,7 +280,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 int pointY = (int) (point.y * resizeRatio);
                 canvas.drawCircle(pointX, pointY, 2, mFaceLandmarkPaint);
             }
-        }*/
+        }
 
 //        mUIHandler.post(() -> {
 //            mWindow.setImageBitmap(mCroppedBitmap);
