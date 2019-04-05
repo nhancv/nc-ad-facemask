@@ -139,6 +139,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
         String label = "p1";
         float right = (float)(boundingBox.x + boundingBox.width);
         float bottom = (float)(boundingBox.y+ boundingBox.height);
+        //new result of VisionDetRet
         result = new VisionDetRet(label,100f,(int)x,(int)y,(int)right,(int)bottom);
         int offsetX =(int) (x - oldX);
         int offsetY =(int) (y - oldY);
@@ -172,7 +173,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                         float w = ret.getRight() - x;
                         float h = ret.getBottom() - y;
                         boundingBox = new Rect2d(x,y,w,h);
-                        oldBoundingBox = boundingBox;
+                        oldBoundingBox = new Rect2d(boundingBox.x,boundingBox.y,boundingBox.width,boundingBox.height);
                     }
                     if(boundingBox!= null &&!results.isEmpty())  {
                         drawOnResultsByBoundingBox(boundingBox);
@@ -183,13 +184,13 @@ public class OnGetImageListener implements OnImageAvailableListener {
                             });
 
                         }
-                        if(boundingBox.x!=oldBoundingBox.x ||boundingBox.y!=oldBoundingBox.y) {
+                        //if(boundingBox.x!=oldBoundingBox.x ||boundingBox.y!=oldBoundingBox.y) {
                             ret = results.get(0); //get the old ret face
                             VisionDetRet newRet = normResult(ret, boundingBox);//using old ret to get landmarks and the new boundingbox
+                            oldBoundingBox = new Rect2d(boundingBox.x,boundingBox.y,boundingBox.width,boundingBox.height);
                             results = new ArrayList<>();
                             results.add(0, newRet); //add ret value to results
-                            oldBoundingBox = boundingBox;
-                        }
+                        //}
                     }
                     faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
 
@@ -301,7 +302,10 @@ public class OnGetImageListener implements OnImageAvailableListener {
                                     croppedMat = bitmapConversion.convertBitmap2Mat(mCroppedBitmap);
                                     if(boundingBox!=null) {
                                         mosse.init(croppedMat,boundingBox );
-                                        boolean isValid= mosse.update(croppedMat,boundingBox);
+                                        //synchronized (boundingBox) {
+                                            boolean isValid = mosse.update(croppedMat, boundingBox);
+
+                                        //}
                                     }
                                 }
 
