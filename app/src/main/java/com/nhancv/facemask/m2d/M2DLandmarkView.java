@@ -24,11 +24,13 @@ import com.nhancv.facemask.m2d.mask.Mustache;
 import com.nhancv.facemask.m2d.mask.Mustache5;
 import com.nhancv.facemask.m2d.mask.Nose5;
 import com.tzutalin.dlib.VisionDetRet;
-
+import org.opencv.core.Algorithm;
 import org.opencv.objdetect.CascadeClassifier;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import hugo.weaving.DebugLog;
 
@@ -53,6 +55,7 @@ public class M2DLandmarkView extends View {
     private int currentWidth;
     private int currentHeight;
     private List<Bitmap> overlayImages = null;
+    private HashMap<String,Bitmap> overlayElements;
     private int curOverlayImageIdx = 0;
 
     private Bitmap curFaceImg;
@@ -94,6 +97,16 @@ public class M2DLandmarkView extends View {
         this.overlayImages = src;
         maskController = new MaskController(new Head5());
         this.curOverlayImageIdx = 0;//start again
+        //this.overlayMat = bitmapConversion.convertBitmap2Mat(this.overlayImg);
+        //this.curFaceWarped = this.overlayMat.clone(); //image
+        //this.curFaceWarped.convertTo(this.curFaceWarped, CvType.CV_32F);//convert the curFaceWarp to
+    }
+    public void updateOverlayImage(HashMap<String,Bitmap> elements){
+        Log.d("M2DLandmarkView","img load");
+        this.overlayElements = elements;
+//        maskController = new MaskController(new Head5());
+        maskController = new MaskController();
+        //this.curOverlayImageIdx = 0;//start again
         //this.overlayMat = bitmapConversion.convertBitmap2Mat(this.overlayImg);
         //this.curFaceWarped = this.overlayMat.clone(); //image
         //this.curFaceWarped.convertTo(this.curFaceWarped, CvType.CV_32F);//convert the curFaceWarp to
@@ -183,11 +196,32 @@ public class M2DLandmarkView extends View {
             float centerY = faceCenterY(bounds.top,bounds.bottom);
             float faceW = bounds.right - bounds.left;
             float faceH = bounds.bottom - bounds.top;
-            if(overlayImages!=null) {
-                if (overlayImages.get(curOverlayImageIdx) != null) {
-                    //curOverlayResized = resizeMask(overlayImages.get(curOverlayImageIdx), faceW, faceH);
-                    curMask = maskController.defineMask(normLandmark,faceW,faceH,overlayImages.get(curOverlayImageIdx)); //get Mask Position info
-                    //PointF position = maskPosition(curOverlayResized, centerX, centerY);
+//            if(overlayImages!=null) {
+//                if (overlayImages.get(curOverlayImageIdx) != null) {
+//                    //curOverlayResized = resizeMask(overlayImages.get(curOverlayImageIdx), faceW, faceH);
+//
+//                    curMask = maskController.defineMask(normLandmark,faceW,faceH,overlayImages.get(curOverlayImageIdx)); //get Mask Position info
+//                    //PointF position = maskPosition(curOverlayResized, centerX, centerY);
+//                    PointF position = curMask.getPositionOnFace();
+//                    curOverlayResized = curMask.getBmMask();
+//                    canvas.drawBitmap(curOverlayResized, position.x, position.y, null);
+//                }
+//            }
+            if(overlayElements!=null)
+            {
+                for (Map.Entry<String,Bitmap> entry: overlayElements.entrySet()){
+                    String elements= entry.getKey();
+                    switch (elements){
+                        case "head":
+                            maskController.setMaskStrategy(new Head5());
+                            break;
+                        case "nose":
+                            maskController.setMaskStrategy(new Nose5());
+                            break;
+                        case "eye":
+                            maskController.setMaskStrategy(new Eye5());
+                    }
+                    curMask = maskController.defineMask(normLandmark,faceW,faceH,entry.getValue());
                     PointF position = curMask.getPositionOnFace();
                     curOverlayResized = curMask.getBmMask();
                     canvas.drawBitmap(curOverlayResized, position.x, position.y, null);

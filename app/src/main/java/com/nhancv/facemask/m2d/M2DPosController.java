@@ -6,6 +6,7 @@ import com.nhancv.facemask.FaceLandmarkListener;
 import com.nhancv.facemask.OverlayImageListener;
 import com.tzutalin.dlib.VisionDetRet;
 
+import java.util.HashMap;
 import java.util.List;
 
 public class M2DPosController implements FaceLandmarkListener, OverlayImageListener {
@@ -27,5 +28,10 @@ public class M2DPosController implements FaceLandmarkListener, OverlayImageListe
     @Override
     public void update(List<Bitmap> overlayImg) {
         landmarkView.updateOverlayImage(overlayImg);
+    }
+
+    @Override
+    public void update(HashMap<String, Bitmap> overlayElements) {
+        landmarkView.updateOverlayImage(overlayElements);
     }
 }

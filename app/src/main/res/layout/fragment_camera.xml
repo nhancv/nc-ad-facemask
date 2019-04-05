@@ -55,7 +55,7 @@
                 android:adjustViewBounds="true"
                 android:padding="20dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/cat_00000"
+                android:src="@drawable/cat_00002"
                 />
             <ImageButton
                 android:background="#00ffffff"
@@ -67,7 +67,7 @@
                 android:padding="20dp"
                 android:scaleType="fitCenter"
                 android:id="@+id/btn_filter_dog"
-                android:src="@drawable/dog_00000"
+                android:src="@drawable/dog_00002"
 
                 />
             <ImageButton
@@ -81,7 +81,7 @@
                 android:padding="20dp"
                 android:scaleType="fitCenter"
                 android:id="@+id/btn_filter_hamster"
-                android:src="@drawable/hamster_00000"
+                android:src="@drawable/hamster_00002"
 
                 />
             <ImageButton
@@ -96,7 +96,7 @@
                 android:padding="20dp"
                 android:scaleType="fitCenter"
                 android:id="@+id/btn_filter_nerd"
-                android:src="@drawable/nerd_00000"
+                android:src="@drawable/nerd_00002"
 
                 />
         </LinearLayout>

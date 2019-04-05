@@ -7,6 +7,9 @@ import java.util.List;
 
 public class MaskController {
     IMaskStrategy maskStrategy;
+    public MaskController(){
+
+    }
     public MaskController( IMaskStrategy maskStrategy){
         this.maskStrategy = maskStrategy;
     }

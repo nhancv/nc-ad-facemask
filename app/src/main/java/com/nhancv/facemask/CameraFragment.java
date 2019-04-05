@@ -145,8 +145,9 @@ public class CameraFragment extends Fragment
     /*
     * List of list Bitmap
     * */
-    String [] maskFilters = new String[]{"cat"};//,"dog","nerd","hamster"};
+    String [] maskFilters = new String[]{"cat","dog","nerd","hamster"};
     HashMap<String,List<Bitmap>> maskFilterMap = new HashMap<String,List<Bitmap>>();
+    HashMap<String,HashMap<String,Bitmap>> maskFilterElements = new HashMap<>();
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener
             = new TextureView.SurfaceTextureListener() {
         @SuppressLint("LongLogTag")
@@ -530,9 +531,31 @@ public class CameraFragment extends Fragment
 //            }
 //            this.maskFilterMap.put(name,this.curOverlayImg);
 //        }
-        this.curOverlayImg.add(BitmapFactory.decodeResource(this.getResources(), R.drawable.cat_00000));
-        this.maskFilterMap.put("cat",this.curOverlayImg);
+//        this.curOverlayImg.add(BitmapFactory.decodeResource(this.getResources(), R.drawable.cat_00000));
+//        this.maskFilterMap.put("cat",this.curOverlayImg);
+        for(final String name : this.maskFilters){
+            HashMap<String,Bitmap> elements= new HashMap<>();
+            for(int i = 0;i<2;i++)
+            {
+                String str = name.concat("_").concat(String.format("%05d", i));//padd zero with width = 5
+                Log.d(TAG, str);
+                int id = getId(str, R.drawable.class);
+                if(i==0) {
+                    if(name.equals("nerd"))
+                    {
+                        elements.put("eye",BitmapFactory.decodeResource(this.getResources(), id));
+                    }
+                    else {
+                        elements.put("head", BitmapFactory.decodeResource(this.getResources(), id));
+                    }
+                }
+                else{
+                    elements.put("nose",BitmapFactory.decodeResource(this.getResources(), id));
+                }
 
+            }
+            maskFilterElements.put(name,elements);
+        }
     }
 
     @Override
@@ -1065,17 +1088,17 @@ public class CameraFragment extends Fragment
         view.setEnabled(false);
         switch (view.getId()) {
             case R.id.btn_filter_cat:
-                m2DPosController.update(this.maskFilterMap.get("cat"));//update overlayImage
+                m2DPosController.update(this.maskFilterElements.get("cat"));//update overlayImage
                 break;
-           /* case R.id.btn_filter_dog:
-                m2DPosController.update(this.maskFilterMap.get("dog"));//update overlayImage
+            case R.id.btn_filter_dog:
+                m2DPosController.update(this.maskFilterElements.get("dog"));//update overlayImage
                 break;
             case R.id.btn_filter_hamster:
-                m2DPosController.update(this.maskFilterMap.get("hamster"));//update overlayImage
+                m2DPosController.update(this.maskFilterElements.get("hamster"));//update overlayImage
                 break;
             case R.id.btn_filter_nerd:
-                m2DPosController.update(this.maskFilterMap.get("nerd"));//update overlayImage
-                break;*/
+                m2DPosController.update(this.maskFilterElements.get("nerd"));//update overlayImage
+                break;
             case R.id.fragment_camera_ib_toggle_preview:
                 View v = Objects.requireNonNull(getActivity()).findViewById(R.id.fragment_camera_iv_preview);
                 if(v.getVisibility() == View.VISIBLE) {

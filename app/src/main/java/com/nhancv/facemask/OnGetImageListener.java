@@ -233,7 +233,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                         @Override
                         public void run() {
                             if (!new File(Constants.getFaceShapeModelPath()).exists()) {
-                                FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
+                                //FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
                                 FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_5_face_landmarks, Constants.getFaceShapeModelPath());
                             }
 
@@ -250,7 +250,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
                             if (results != null) {
                                 // Notify results
-//                                faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
+                                //faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
                                 // Demo results
 //                                drawOnResults(results);
 
