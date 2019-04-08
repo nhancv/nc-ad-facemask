@@ -78,63 +78,18 @@ public class M3DPosController implements FaceLandmarkListener {
     {
         return knownWidth*focalLength/perWidth;
     }
-/*    private float previousX1 = 0;
-    private float previousY1 = 0;
-    private float dx1 = 0;
-    private float dy1 = 0;
-    */
- /* final Runnable r = new Runnable() {
-                @Override
-                public void run() {
 
-                    i = i *-1;
-                    if(i==1) {
-                        //Translate(3, 0, 0);
-                        //degrees
-                        // Rotate(3, 0, 1, 0);
-                        Scale(160,160);
-
-                        //Scale(0.9f, 1, 1);
-                    }
-                    else{
-                        Scale(150,150);
-                        //Translate(-3, 0, 0);
-                        //Rotate(-3, 0, 1, 0);
-
-                    }
-                    requestRender();
-                    handler.postDelayed(this, 1000);
-                }
-                //Scale(1/0.9f, 1, 1);
-            };
-            handler.postDelayed(r,1000);*/
     Handler handler = new Handler();
     public M3DPosController(M3DSurfaceView surfaceView) {
         this.surfaceView = surfaceView;//receive the current surface view
         this.renderer = surfaceView.getModelRenderer();
         this.listObjectTransformation = new ArrayList<ObjectTransformation>();
         this.bounds = new Rect();
-        //this.focal_length = 543.45f;//pixels
         setUpDistCoeff();
-        //this.distCoeffs = new MatOfDouble();
         this.focal_length = realTimeRotation.getFocalLength();
 
     }
-    public void setMatrix()
-    {
-        this.objPointMat = realTimeRotation.getObjPointsMat();
-        this.camMatrix = realTimeRotation.getCamMatrix();
-    }
-    private int getHeight(VisionDetRet ret)
-    {
-        int h =(int) (Math.abs(ret.getBottom()-ret.getTop()));
-        return h;
-    }
-    private int getWidth(VisionDetRet ret)
-    {
-        int w =(int) (Math.abs(ret.getRight()-ret.getLeft()));
-        return w;
-    }
+
 
 
     private float getX(float x) {
@@ -263,10 +218,6 @@ public class M3DPosController implements FaceLandmarkListener {
             Translation translation = new Translation(objX,objY,objZ);//translate back our scale will base on z
             Scale scale = new Scale(5,5,3);//scale obj model
 
-            //Scale scale = new Scale(1,1,1);
-            //objectTransformation = new ObjectTransformation(rotation,scale,translation);
-            //Scale(160,160);
-            //Scale(1, 1, 0.9f);
 
             objectTransformation = new ObjectTransformationBuilder().setRotation(rotation)
                                                                     .setTranslation(translation).setScale(scale).build();
@@ -277,48 +228,16 @@ public class M3DPosController implements FaceLandmarkListener {
             this.rotationVector.release();//release rotation vector
             this.translationVector.release();//release translation vector
         }
-       /* curRotationIdx +=1;
-        if(curRotationIdx ==rotationValues.length)
-        {
-            curRotationIdx = 0;
-        }*/
+
         renderer.setObjectTransformationList(listObjectTransformation);
 
         requestRender();
     }
 
-   /*  public void Scale(int w, int h) {
-        //zoom factor is the ratio of previous face and current detected face
-        int max = Math.max(this.renderer.getWidth(), this.renderer.getHeight()); //max of render vaule
-        M3DSceneLoader scene = this.surfaceView.getScene(); //get current scene
-        Camera camera = scene.getCamera();
-        float preArea = curArea;
-        curArea = w*h;
-        float zoomFactor = 1 ;
-        Log.d("M3DPosController", ""+zoomFactor);
-        camera.MoveCameraZ(zoomFactor);
-        //this.surfaceView.requestRender();
-    }*/
+
     public void requestRender() {
         this.surfaceView.requestRender();
     }
-
-/*    public void translateWorld(float x, float y){
-        dx1 = x - previousX1;
-        dy1 = y - previousY1;
-        int max = Math.max(this.renderer.getWidth(), this.renderer.getHeight());
-
-        M3DSceneLoader scene = this.surfaceView.getScene(); //get current scene
-        Camera camera = scene.getCamera();
-        //camera.translateCameraImpl(100, 100);
-        dx1 = (float)(dx1 / max * Math.PI * 2);
-        dy1 = (float)(dy1 / max * Math.PI * 2);
-        camera.translateCamera(dx1,dy1);
-
-        this.surfaceView.requestRender();
-    }*/
-
-
 
 
 }

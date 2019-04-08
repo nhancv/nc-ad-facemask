@@ -487,9 +487,6 @@ public class CameraFragment extends Fragment
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
-        view.findViewById(R.id.fragment_camera_ib_take_picture).setOnClickListener(this);
-        view.findViewById(R.id.fragment_camera_ib_toggle_preview).setOnClickListener(this);
-        view.findViewById(R.id.fragment_camera_ib_switch_camera).setOnClickListener(this);
         mTextureView = view.findViewById(R.id.texture);
         landmarkView = view.findViewById(R.id.landmarkView);
     }
@@ -933,13 +930,6 @@ public class CameraFragment extends Fragment
     }
 
     /**
-     * Initiate a still image capture.
-     */
-    private void takePicture() {
-        lockFocus();
-    }
-
-    /**
      * Lock the focus as the first step for a still image capture.
      */
     private void lockFocus() {
@@ -1057,51 +1047,10 @@ public class CameraFragment extends Fragment
     @Override
     public void onClick(final View view) {
         view.setEnabled(false);
-        switch (view.getId()) {
-            case R.id.fragment_camera_ib_toggle_preview:
-                View v = Objects.requireNonNull(getActivity()).findViewById(R.id.fragment_camera_iv_preview);
-                if(v.getVisibility() == View.VISIBLE) {
-                    v.setVisibility(View.INVISIBLE);
-                } else {
-                    v.setVisibility(View.VISIBLE);
-                }
-                break;
-            case R.id.fragment_camera_ib_take_picture: {
-                takePicture();
-                break;
-            }
-            case R.id.fragment_camera_ib_switch_camera: {
-                switchCamera();
-                break;
-            }
-        }
         view.postDelayed(() -> view.setEnabled(true), 500);
 
     }
 
-    private synchronized void switchCamera() {
-        if (mCameraId.equals(CAMERA_FRONT)) {
-            mCameraId = CAMERA_BACK;
-            closeCamera();
-            stopBackgroundThread();
-            reopenCamera();
-        } else if (mCameraId.equals(CAMERA_BACK)) {
-            mCameraId = CAMERA_FRONT;
-            closeCamera();
-            stopBackgroundThread();
-            reopenCamera();
-
-        }
-    }
-
-    private void reopenCamera() {
-        startBackgroundThread();
-        if (mTextureView.isAvailable()) {
-            openCamera(mTextureView.getWidth(), mTextureView.getHeight());
-        } else {
-            mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
-        }
-    }
 
     private void setAutoFlash(CaptureRequest.Builder requestBuilder) {
         if (mFlashSupported) {
