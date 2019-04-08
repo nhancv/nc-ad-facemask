@@ -1,7 +1,6 @@
 package com.nhancv.facemask.m2d.mask;
 
 import android.graphics.Bitmap;
-import android.graphics.Point;
 import android.graphics.PointF;
 
 public class Mask {

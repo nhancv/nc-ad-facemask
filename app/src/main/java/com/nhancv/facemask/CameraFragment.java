@@ -142,11 +142,11 @@ public class CameraFragment extends Fragment
     /*
     * bitmap image change listener
     * */
+
+    String [] maskFilters = new String[]{"cat"};
     /*
-    * List of list Bitmap
-    * */
-    String [] maskFilters = new String[]{"cat","dog","nerd","hamster"};
-    HashMap<String,List<Bitmap>> maskFilterMap = new HashMap<String,List<Bitmap>>();
+     * Hash map that includes id and bitmaps
+     * */
     HashMap<String,HashMap<String,Bitmap>> maskFilterElements = new HashMap<>();
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener
             = new TextureView.SurfaceTextureListener() {
@@ -207,14 +207,7 @@ public class CameraFragment extends Fragment
      * The {@link android.util.Size} of camera preview.
      */
     private Size mPreviewSize;
-    //private LinearLayout maskFilterLayout;
-    /**
-     * Set of Image button filter
-     * */
-    ImageButton dogBtn;
-    ImageButton catBtn;
-    ImageButton nerdBtn;
-    ImageButton hamsterBtn;
+
     /**
      * {@link CameraDevice.StateCallback} is called when {@link CameraDevice} changes its state.
      */
@@ -499,15 +492,6 @@ public class CameraFragment extends Fragment
         view.findViewById(R.id.fragment_camera_ib_switch_camera).setOnClickListener(this);
         mTextureView = view.findViewById(R.id.texture);
         landmarkView = view.findViewById(R.id.landmarkView);
-        this.dogBtn = view.findViewById(R.id.btn_filter_dog);
-        this.dogBtn.setOnClickListener(this);
-        this.catBtn = view.findViewById(R.id.btn_filter_cat);
-        this.catBtn.setOnClickListener(this);
-        this.hamsterBtn = view.findViewById(R.id.btn_filter_hamster);
-        this.hamsterBtn.setOnClickListener(this);
-        this.nerdBtn = view.findViewById(R.id.btn_filter_nerd);
-        this.nerdBtn.setOnClickListener(this);
-
     }
 
     public static int getId(String resourceName, Class<?> c) {
@@ -521,18 +505,7 @@ public class CameraFragment extends Fragment
     }
 
     public void loadImageOverlay() {
-//        for (final String name : this.maskFilters) {
-//            this.curOverlayImg = new ArrayList<Bitmap>();
-//            for (int i = 0; i < 1; i++) {
-//                String str = name.concat("_").concat(String.format("%05d", i));//padd zero with width = 5
-//                Log.d(TAG, str);
-//                int id = getId(str, R.drawable.class);
-//                this.curOverlayImg.add(BitmapFactory.decodeResource(this.getResources(), id));
-//            }
-//            this.maskFilterMap.put(name,this.curOverlayImg);
-//        }
-//        this.curOverlayImg.add(BitmapFactory.decodeResource(this.getResources(), R.drawable.cat_00000));
-//        this.maskFilterMap.put("cat",this.curOverlayImg);
+
         for(final String name : this.maskFilters){
             HashMap<String,Bitmap> elements= new HashMap<>();
             for(int i = 0;i<2;i++)
@@ -540,15 +513,11 @@ public class CameraFragment extends Fragment
                 String str = name.concat("_").concat(String.format("%05d", i));//padd zero with width = 5
                 Log.d(TAG, str);
                 int id = getId(str, R.drawable.class);
+                //add eye bitmap
                 if(i==0) {
-                    if(name.equals("nerd"))
-                    {
-                        elements.put("eye",BitmapFactory.decodeResource(this.getResources(), id));
-                    }
-                    else {
-                        elements.put("head", BitmapFactory.decodeResource(this.getResources(), id));
-                    }
+                    elements.put("head",BitmapFactory.decodeResource(this.getResources(), id));
                 }
+                //add nose bitmap
                 else{
                     elements.put("nose",BitmapFactory.decodeResource(this.getResources(), id));
                 }
@@ -575,6 +544,8 @@ public class CameraFragment extends Fragment
         gLView.setupScene(scene);
         m3DPosController = new M3DPosController(gLView);*/
         m2DPosController = new M2DPosController(landmarkView);
+        //apply only 1 filter effects
+        m2DPosController.update(this.maskFilterElements.get("cat"));//update overlayImage
     }
 
     @Override
@@ -1087,18 +1058,6 @@ public class CameraFragment extends Fragment
     public void onClick(final View view) {
         view.setEnabled(false);
         switch (view.getId()) {
-            case R.id.btn_filter_cat:
-                m2DPosController.update(this.maskFilterElements.get("cat"));//update overlayImage
-                break;
-            case R.id.btn_filter_dog:
-                m2DPosController.update(this.maskFilterElements.get("dog"));//update overlayImage
-                break;
-            case R.id.btn_filter_hamster:
-                m2DPosController.update(this.maskFilterElements.get("hamster"));//update overlayImage
-                break;
-            case R.id.btn_filter_nerd:
-                m2DPosController.update(this.maskFilterElements.get("nerd"));//update overlayImage
-                break;
             case R.id.fragment_camera_ib_toggle_preview:
                 View v = Objects.requireNonNull(getActivity()).findViewById(R.id.fragment_camera_iv_preview);
                 if(v.getVisibility() == View.VISIBLE) {

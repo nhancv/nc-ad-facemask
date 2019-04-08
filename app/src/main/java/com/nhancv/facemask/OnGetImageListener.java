@@ -30,6 +30,7 @@ import com.tzutalin.dlibtest.ImageUtils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 import hugo.weaving.DebugLog;
 
@@ -38,6 +39,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.Rect2d;
 import org.opencv.tracking.Tracker;
 import org.opencv.tracking.TrackerMOSSE;
+import org.opencv.video.SparsePyrLKOpticalFlow;
 //import org.opencv.core.Mat;
 
 /**
@@ -70,9 +72,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private List<VisionDetRet> results;
     private BitmapConversion bitmapConversion = new BitmapConversion();
     private Mat croppedMat;
-    //private Mat curFace; //img1
-    //private Mat overlayMat; //img2
-   // private Mat curFaceWarped;
+
     //private Bitmap overlayImage;
     /**
      * 0 forback camera
@@ -124,9 +124,6 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
     private long lastTime = 0;
     Rect2d boundingBox;
-    private boolean detectDlib;
-    int countF = 6;
-    boolean isValid = false;
     Rect2d oldBoundingBox;
     VisionDetRet ret;//our origin
 
@@ -165,7 +162,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 }
 
                 if (faceLandmarkListener != null && results != null && mCroppedBitmap != null && tvFps != null) {
-//                    drawOnResults(results);
+
                     if(boundingBox == null && !results.isEmpty()) {
                         ret = results.get(0);
                         float x = ret.getLeft();
@@ -176,7 +173,6 @@ public class OnGetImageListener implements OnImageAvailableListener {
                         oldBoundingBox = new Rect2d(boundingBox.x,boundingBox.y,boundingBox.width,boundingBox.height);
                     }
                     if(boundingBox!= null &&!results.isEmpty())  {
-                        drawOnResultsByBoundingBox(boundingBox);
                         if (mUIHandler != null) {
                             mUIHandler.post(() -> {
                                 tvFps.setText(log);
@@ -184,13 +180,11 @@ public class OnGetImageListener implements OnImageAvailableListener {
                             });
 
                         }
-                        //if(boundingBox.x!=oldBoundingBox.x ||boundingBox.y!=oldBoundingBox.y) {
-                            ret = results.get(0); //get the old ret face
-                            VisionDetRet newRet = normResult(ret, boundingBox);//using old ret to get landmarks and the new boundingbox
-                            oldBoundingBox = new Rect2d(boundingBox.x,boundingBox.y,boundingBox.width,boundingBox.height);
-                            results = new ArrayList<>();
-                            results.add(0, newRet); //add ret value to results
-                        //}
+                        ret = results.get(0); //get the old ret face
+                        VisionDetRet newRet = normResult(ret, boundingBox);//using old ret to get landmarks and the new boundingbox
+                        oldBoundingBox = new Rect2d(boundingBox.x,boundingBox.y,boundingBox.width,boundingBox.height);
+                        results = new ArrayList<>();
+                        results.add(0, newRet); //add ret value to results
                     }
                     faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
 
@@ -303,25 +297,11 @@ public class OnGetImageListener implements OnImageAvailableListener {
                                     if(boundingBox!=null) {
                                         mosse.init(croppedMat,boundingBox );
                                         //synchronized (boundingBox) {
-                                            boolean isValid = mosse.update(croppedMat, boundingBox);
+                                        boolean isValid = mosse.update(croppedMat, boundingBox);
 
                                         //}
                                     }
                                 }
-
-
-//                                croppedMat = bitmapConversion.convertBitmap2Mat(mCroppedBitmap);
-//                                if(boundingBox!=null &&countF<=5) {
-//                                    if(detectDlib&&countF ==0)
-//                                        mosse.init(croppedMat,boundingBox );
-//                                    boolean isValid= mosse.update(croppedMat,boundingBox);
-//                                    countF+=1;
-//                                }
-//                                else {
-//                                    countF = 0;
-//
-//                                    detectDlib = true;
-//                                }
                             }
 
                             long endTime = System.currentTimeMillis();
@@ -329,13 +309,6 @@ public class OnGetImageListener implements OnImageAvailableListener {
                             // Draw on bitmap
                             //bug here results is = 0
 
-                            if (results != null) {
-                                // Notify results
-                                //faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
-                                // Demo results
-//                                drawOnResults(results);
-
-                            }
                             mIsComputing = false;
                         }
                     });
@@ -343,41 +316,4 @@ public class OnGetImageListener implements OnImageAvailableListener {
         Trace.endSection();
     }
 
-    private void drawOnResults(List<VisionDetRet> results) {
-        for (final VisionDetRet ret : results) {
-            float resizeRatio = 1.0f;
-            Rect bounds = new Rect();
-            bounds.left = (int) (ret.getLeft() * resizeRatio);
-            bounds.top = (int) (ret.getTop() * resizeRatio);
-            bounds.right = (int) (ret.getRight() * resizeRatio);
-            bounds.bottom = (int) (ret.getBottom() * resizeRatio);
-            Canvas canvas = new Canvas(mCroppedBitmap);
-            canvas.drawRect(bounds, mFaceLandmarkPaint);
-
-            // Draw landmark
-            ArrayList<Point> landmarks = ret.getFaceLandmarks();
-            for (Point point : landmarks) {
-                int pointX = (int) (point.x * resizeRatio);
-                int pointY = (int) (point.y * resizeRatio);
-                canvas.drawCircle(pointX, pointY, 2, mFaceLandmarkPaint);
-            }
-        }
-
-//        mUIHandler.post(() -> {
-//            mWindow.setImageBitmap(mCroppedBitmap);
-//        });
-    }
-
-    private void drawOnResultsByBoundingBox(Rect2d boundingBox) {
-
-        float resizeRatio = 1.0f;
-        Rect bounds = new Rect();
-        bounds.left = (int) (boundingBox.x * resizeRatio);
-        bounds.top = (int) (boundingBox.y * resizeRatio);
-        bounds.right = (int) ((boundingBox.x + boundingBox.width) * resizeRatio);
-        bounds.bottom = (int) ((boundingBox.y + boundingBox.height) * resizeRatio);
-        Canvas canvas = new Canvas(mCroppedBitmap);
-        canvas.drawRect(bounds, mFaceLandmarkPaint);
-
-    }
 }
