@@ -84,8 +84,11 @@ public class OnGetImageListener implements OnImageAvailableListener {
     public static final String CAMERA_BACK = "0";
 
     private StableFps stableFps;
+    private StableFps detectFps;
+
     public OnGetImageListener() {
         stableFps = new StableFps(30);
+        detectFps = new StableFps(1);
     }
 
     @DebugLog
@@ -113,6 +116,10 @@ public class OnGetImageListener implements OnImageAvailableListener {
         mFaceLandmarkPaint.setColor(Color.GREEN);
         mFaceLandmarkPaint.setStrokeWidth(2);
         mFaceLandmarkPaint.setStyle(Paint.Style.STROKE);
+        if (!new File(Constants.getFaceShapeModelPath()).exists()) {
+            //FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
+            FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_5_face_landmarks, Constants.getFaceShapeModelPath());
+        }
     }
 
     @DebugLog
@@ -130,32 +137,70 @@ public class OnGetImageListener implements OnImageAvailableListener {
     Rect2d oldBoundingBox;
     VisionDetRet ret;//our origin
 
-    public VisionDetRet normResult(VisionDetRet ret,Rect2d boundingBox){
+    public VisionDetRet normResult(VisionDetRet ret, Rect2d boundingBox) {
         VisionDetRet result;
         float x = (float) boundingBox.x;
         float y = (float) boundingBox.y;
         float oldX = (float) oldBoundingBox.x;
         float oldY = (float) oldBoundingBox.y;
         String label = "p1";
-        float right = (float)(boundingBox.x + boundingBox.width);
-        float bottom = (float)(boundingBox.y+ boundingBox.height);
+        float right = (float) (boundingBox.x + boundingBox.width);
+        float bottom = (float) (boundingBox.y + boundingBox.height);
         //new result of VisionDetRet
-        result = new VisionDetRet(label,100f,(int)x,(int)y,(int)right,(int)bottom);
-        int offsetX =(int) (x - oldX);
-        int offsetY =(int) (y - oldY);
+        result = new VisionDetRet(label, 100f, (int) x, (int) y, (int) right, (int) bottom);
+        int offsetX = (int) (x - oldX);
+        int offsetY = (int) (y - oldY);
         List<Point> oldLandmarks = ret.getFaceLandmarks();
-        for(int i = 0; i< oldLandmarks.size();i++){
-            result.addLandmark(oldLandmarks.get(i).x +offsetX,oldLandmarks.get(i).y+offsetY);
+        for (int i = 0; i < oldLandmarks.size(); i++) {
+            result.addLandmark(oldLandmarks.get(i).x + offsetX, oldLandmarks.get(i).y + offsetY);
         }
         return result;
     }
+
     @Override
     public void onImageAvailable(final ImageReader reader) {
-        if(mPostImageHandler!=null) {
-            mPostImageHandler.post(() -> {
-                if (!stableFps.isStarted()) {
-                    stableFps.start(fps -> {
+        // Fps for detect face
+        if (!detectFps.isStarted()) {
+            detectFps.start(fps -> {
 
+                if (mFaceDetectionHandler != null) {
+                    mFaceDetectionHandler.post(
+                            () -> {
+                                long startTime = System.currentTimeMillis();
+
+                                synchronized (OnGetImageListener.this) {
+                                    results = mFaceDet.detect(mCroppedBitmap);
+                                }
+
+                                long endTime = System.currentTimeMillis();
+                                Log.d(TAG, "run: " + "Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
+                                // Draw on bitmap
+                                //bug here results is = 0
+
+                                if (results.size() > 0 && croppedMat != null && !croppedMat.size().empty() && boundingBox != null) {
+                                    Log.d(TAG,"Tracking using MOSSE");
+                                    mFaceDetectionHandler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            mosse.init(croppedMat, boundingBox);
+                                        }
+                                    });
+                                }
+
+                                mIsComputing = false;
+                            });
+                }
+
+            });
+        }
+
+
+        // Fps for render to ui thread
+        if (!stableFps.isStarted()) {
+            stableFps.start(fps -> {
+
+                if (mPostImageHandler != null) {
+                    mPostImageHandler.post(() -> {
                         final String log;
                         long endTime = System.currentTimeMillis();
                         if (lastTime == 0 || endTime == lastTime) {
@@ -167,7 +212,6 @@ public class OnGetImageListener implements OnImageAvailableListener {
                         }
 
                         if (faceLandmarkListener != null && results != null && mCroppedBitmap != null && tvFps != null) {
-
                             if (boundingBox == null && !results.isEmpty()) {
                                 ret = results.get(0);
                                 float x = ret.getLeft();
@@ -178,10 +222,12 @@ public class OnGetImageListener implements OnImageAvailableListener {
                                 oldBoundingBox = new Rect2d(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
                             }
                             if (boundingBox != null && !results.isEmpty()) {
+                                drawOnResultBoundingBox(boundingBox);
+                                Log.d(TAG,"draw bounding box");
                                 if (mUIHandler != null) {
                                     mUIHandler.post(() -> {
                                         tvFps.setText(log);
-//                                mWindow.setImageBitmap(mCroppedBitmap);
+//                                        mWindow.setImageBitmap(mCroppedBitmap);
                                     });
 
                                 }
@@ -190,16 +236,18 @@ public class OnGetImageListener implements OnImageAvailableListener {
                                 oldBoundingBox = new Rect2d(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
                                 results = new ArrayList<>();
                                 results.add(0, newRet); //add ret value to results
+                                Log.d(TAG,results+"");
                             }
                             faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
 
                         }
-
                     });
                 }
-            });
 
+            });
         }
+
+
         Image image = null;
         try {
             image = reader.acquireLatestImage();
@@ -282,42 +330,28 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
         if (mCroppedBitmap.isRecycled()) mCroppedBitmap.recycle();
         mCroppedBitmap = Bitmap.createBitmap(mRGBframeBitmap, 0, 0, mPreviewWidth, mPreviewHeight, matrix, false);
-        if (mFaceDetectionHandler != null)
-            mFaceDetectionHandler.post(
-                    () -> {
-                        if (!new File(Constants.getFaceShapeModelPath()).exists()) {
-                            //FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
-                            FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_5_face_landmarks, Constants.getFaceShapeModelPath());
-                        }
 
-                        long startTime = System.currentTimeMillis();
+        if (results != null && results.size() > 0) {
+            croppedMat = bitmapConversion.convertBitmap2Mat(mCroppedBitmap);
+            Log.d(TAG,"valid tracking"+results);
+            if (boundingBox != null) {
+                //synchronized (boundingBox) {
+                boolean isValid = mosse.update(croppedMat, boundingBox);
 
-                        synchronized (OnGetImageListener.this) {
+                //}
+            }
 
-                            if(results == null || results.size() == 0) {
-                                results = mFaceDet.detect(mCroppedBitmap);
-
-                            } else {
-                                croppedMat = bitmapConversion.convertBitmap2Mat(mCroppedBitmap);
-                                if(boundingBox!=null) {
-                                    mosse.init(croppedMat,boundingBox );
-                                    //synchronized (boundingBox) {
-                                    boolean isValid = mosse.update(croppedMat, boundingBox);
-
-                                    //}
-                                }
-                            }
-                        }
-
-                        long endTime = System.currentTimeMillis();
-                        Log.d(TAG, "run: " + "Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
-                        // Draw on bitmap
-                        //bug here results is = 0
-
-                        mIsComputing = false;
-                    });
+        }
 
         Trace.endSection();
     }
-
+    private void drawOnResultBoundingBox(Rect2d boundingBox){
+        Rect bounds = new Rect();
+        bounds.left = (int)boundingBox.x;
+        bounds.top = (int) boundingBox.y;
+        bounds.bottom = (int) (boundingBox.y + boundingBox.height);
+        bounds.right = (int) (boundingBox.x  + boundingBox.width);
+        Canvas canvas = new Canvas(mCroppedBitmap);
+        canvas.drawRect(bounds,mFaceLandmarkPaint);
+    }
 }
