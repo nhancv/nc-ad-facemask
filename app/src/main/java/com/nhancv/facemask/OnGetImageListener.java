@@ -14,6 +14,7 @@ import android.media.Image.Plane;
 import android.media.ImageReader;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Trace;
 import android.util.Log;
 import android.widget.ImageView;
@@ -58,7 +59,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private Bitmap mRGBframeBitmap = null;
     private Bitmap mCroppedBitmap = null;
 
-    private boolean mIsComputing = false;
+    private Handler trackingHandler;
     private Handler mFaceDetectionHandler;
     private Handler mUIHandler;
     private Handler mPostImageHandler;
@@ -97,13 +98,15 @@ public class OnGetImageListener implements OnImageAvailableListener {
             final String cameraId,
             final ImageView imageView,
             final TextView tvFps,
-            final Handler handler,
+            final Handler trackingHandler,
+            final Handler faceDetectionHandler,
             final Handler mUIHandler,
             final Handler mPostImageHandler,
             final FaceLandmarkListener faceLandmarkListener) {
         this.mContext = context;
         this.cameraId = cameraId;
-        this.mFaceDetectionHandler = handler;
+        this.trackingHandler = trackingHandler;
+        this.mFaceDetectionHandler = faceDetectionHandler;
         this.mUIHandler = mUIHandler;
         this.mPostImageHandler = mPostImageHandler;
 
@@ -129,6 +132,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 mFaceDet.release();
             }
             stableFps.stop();
+            detectFps.stop();
         }
     }
 
@@ -163,23 +167,27 @@ public class OnGetImageListener implements OnImageAvailableListener {
         if (!detectFps.isStarted()) {
             detectFps.start(fps -> {
 
-                if (mFaceDetectionHandler != null) {
+                if (mFaceDetectionHandler != null && mCroppedBitmap != null) {
                     mFaceDetectionHandler.post(
                             () -> {
                                 long startTime = System.currentTimeMillis();
 
-                                synchronized (OnGetImageListener.this) {
-                                    results = mFaceDet.detect(mCroppedBitmap);
-                                }
+                                results = mFaceDet.detect(mCroppedBitmap.copy(mCroppedBitmap.getConfig(), true));
 
                                 long endTime = System.currentTimeMillis();
-                                Log.d(TAG, "run: " + "Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
+                                Log.d(TAG, "Detect face time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
                                 // Draw on bitmap
                                 //bug here results is = 0
+                                if (results.size() > 0
+                                        && croppedMat != null && !croppedMat.size().empty()) {
+                                    ret = results.get(0);
+                                    float x = ret.getLeft();
+                                    float y = ret.getTop();
+                                    float w = ret.getRight() - x;
+                                    float h = ret.getBottom() - y;
+                                    boundingBox = new Rect2d(x, y, w, h);
 
-                                if (results.size() > 0 && croppedMat != null && !croppedMat.size().empty() && boundingBox != null) {
-                                    Log.d(TAG,"Tracking using MOSSE");
-                                    mFaceDetectionHandler.post(new Runnable() {
+                                    trackingHandler.post(new Runnable() {
                                         @Override
                                         public void run() {
                                             mosse.init(croppedMat, boundingBox);
@@ -187,7 +195,6 @@ public class OnGetImageListener implements OnImageAvailableListener {
                                     });
                                 }
 
-                                mIsComputing = false;
                             });
                 }
 
@@ -223,7 +230,6 @@ public class OnGetImageListener implements OnImageAvailableListener {
                             }
                             if (boundingBox != null && !results.isEmpty()) {
                                 drawOnResultBoundingBox(boundingBox);
-                                Log.d(TAG,"draw bounding box");
                                 if (mUIHandler != null) {
                                     mUIHandler.post(() -> {
                                         tvFps.setText(log);
@@ -236,7 +242,6 @@ public class OnGetImageListener implements OnImageAvailableListener {
                                 oldBoundingBox = new Rect2d(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
                                 results = new ArrayList<>();
                                 results.add(0, newRet); //add ret value to results
-                                Log.d(TAG,results+"");
                             }
                             faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
 
@@ -255,15 +260,6 @@ public class OnGetImageListener implements OnImageAvailableListener {
             if (image == null) {
                 return;
             }
-
-            // No mutex needed as this method is not reentrant.
-            if (mIsComputing) {
-                image.close();
-                return;
-            }
-            mIsComputing = true;
-
-            Trace.beginSection("imageAvailable");
 
             final Plane[] planes = image.getPlanes();
 
@@ -309,10 +305,8 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 image.close();
             }
             Log.e(TAG, "Exception!", e);
-            Trace.endSection();
             return;
         }
-
         mRGBframeBitmap.setPixels(mRGBBytes, 0, mPreviewWidth, 0, 0, mPreviewWidth, mPreviewHeight);
 
         // Resized mRGBframeBitmap
@@ -328,30 +322,35 @@ public class OnGetImageListener implements OnImageAvailableListener {
             matrix.postTranslate(BM_FACE_H, 0);//scale image back
         }
 
-        if (mCroppedBitmap.isRecycled()) mCroppedBitmap.recycle();
         mCroppedBitmap = Bitmap.createBitmap(mRGBframeBitmap, 0, 0, mPreviewWidth, mPreviewHeight, matrix, false);
 
         if (results != null && results.size() > 0) {
             croppedMat = bitmapConversion.convertBitmap2Mat(mCroppedBitmap);
-            Log.d(TAG,"valid tracking"+results);
-            if (boundingBox != null) {
-                //synchronized (boundingBox) {
-                boolean isValid = mosse.update(croppedMat, boundingBox);
 
-                //}
-            }
+            trackingHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (boundingBox != null && !boundingBox.size().empty()) {
+                        long startTime = System.currentTimeMillis();
+                        mosse.update(croppedMat, boundingBox);
+                        long endTime = System.currentTimeMillis();
+                        Log.d(TAG, "Tracking time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
 
+
+                    }
+                }
+            });
         }
 
-        Trace.endSection();
     }
-    private void drawOnResultBoundingBox(Rect2d boundingBox){
+
+    private void drawOnResultBoundingBox(Rect2d boundingBox) {
         Rect bounds = new Rect();
-        bounds.left = (int)boundingBox.x;
+        bounds.left = (int) boundingBox.x;
         bounds.top = (int) boundingBox.y;
         bounds.bottom = (int) (boundingBox.y + boundingBox.height);
-        bounds.right = (int) (boundingBox.x  + boundingBox.width);
+        bounds.right = (int) (boundingBox.x + boundingBox.width);
         Canvas canvas = new Canvas(mCroppedBitmap);
-        canvas.drawRect(bounds,mFaceLandmarkPaint);
+        canvas.drawRect(bounds, mFaceLandmarkPaint);
     }
 }
