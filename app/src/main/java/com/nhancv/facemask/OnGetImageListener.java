@@ -59,9 +59,9 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private Bitmap mCroppedBitmap = null;
 
     private boolean mIsComputing = false;
-    private Handler mInferenceHandler;
+    private Handler mFaceDetectionHandler;
     private Handler mUIHandler;
-
+    private Handler mPostImageHandler;
     private Context mContext;
     private FaceDet mFaceDet;
     private ImageView mWindow;
@@ -96,11 +96,14 @@ public class OnGetImageListener implements OnImageAvailableListener {
             final TextView tvFps,
             final Handler handler,
             final Handler mUIHandler,
+            final Handler mPostImageHandler,
             final FaceLandmarkListener faceLandmarkListener) {
         this.mContext = context;
         this.cameraId = cameraId;
-        this.mInferenceHandler = handler;
+        this.mFaceDetectionHandler = handler;
         this.mUIHandler = mUIHandler;
+        this.mPostImageHandler = mPostImageHandler;
+
         this.faceLandmarkListener = faceLandmarkListener;
         mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
         mWindow = imageView;
@@ -148,49 +151,54 @@ public class OnGetImageListener implements OnImageAvailableListener {
     }
     @Override
     public void onImageAvailable(final ImageReader reader) {
-        if(!stableFps.isStarted()) {
-            stableFps.start(fps -> {
+        if(mPostImageHandler!=null) {
+            mPostImageHandler.post(() -> {
+                if (!stableFps.isStarted()) {
+                    stableFps.start(fps -> {
 
-                final String log;
-                long endTime = System.currentTimeMillis();
-                if(lastTime == 0 || endTime == lastTime) {
-                    lastTime = System.currentTimeMillis();
-                    log = "Fps: " + fps;
-                } else {
-                    log = "Fps: " + 1000 / (endTime - lastTime);
-                    lastTime = endTime;
-                }
+                        final String log;
+                        long endTime = System.currentTimeMillis();
+                        if (lastTime == 0 || endTime == lastTime) {
+                            lastTime = System.currentTimeMillis();
+                            log = "Fps: " + fps;
+                        } else {
+                            log = "Fps: " + 1000 / (endTime - lastTime);
+                            lastTime = endTime;
+                        }
 
-                if (faceLandmarkListener != null && results != null && mCroppedBitmap != null && tvFps != null) {
+                        if (faceLandmarkListener != null && results != null && mCroppedBitmap != null && tvFps != null) {
 
-                    if(boundingBox == null && !results.isEmpty()) {
-                        ret = results.get(0);
-                        float x = ret.getLeft();
-                        float y = ret.getTop();
-                        float w = ret.getRight() - x;
-                        float h = ret.getBottom() - y;
-                        boundingBox = new Rect2d(x,y,w,h);
-                        oldBoundingBox = new Rect2d(boundingBox.x,boundingBox.y,boundingBox.width,boundingBox.height);
-                    }
-                    if(boundingBox!= null &&!results.isEmpty())  {
-                        if (mUIHandler != null) {
-                            mUIHandler.post(() -> {
-                                tvFps.setText(log);
+                            if (boundingBox == null && !results.isEmpty()) {
+                                ret = results.get(0);
+                                float x = ret.getLeft();
+                                float y = ret.getTop();
+                                float w = ret.getRight() - x;
+                                float h = ret.getBottom() - y;
+                                boundingBox = new Rect2d(x, y, w, h);
+                                oldBoundingBox = new Rect2d(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
+                            }
+                            if (boundingBox != null && !results.isEmpty()) {
+                                if (mUIHandler != null) {
+                                    mUIHandler.post(() -> {
+                                        tvFps.setText(log);
 //                                mWindow.setImageBitmap(mCroppedBitmap);
-                            });
+                                    });
+
+                                }
+                                ret = results.get(0); //get the old ret face
+                                VisionDetRet newRet = normResult(ret, boundingBox);//using old ret to get landmarks and the new boundingbox
+                                oldBoundingBox = new Rect2d(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
+                                results = new ArrayList<>();
+                                results.add(0, newRet); //add ret value to results
+                            }
+                            faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
 
                         }
-                        ret = results.get(0); //get the old ret face
-                        VisionDetRet newRet = normResult(ret, boundingBox);//using old ret to get landmarks and the new boundingbox
-                        oldBoundingBox = new Rect2d(boundingBox.x,boundingBox.y,boundingBox.width,boundingBox.height);
-                        results = new ArrayList<>();
-                        results.add(0, newRet); //add ret value to results
-                    }
-                    faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
 
+                    });
                 }
-
             });
+
         }
         Image image = null;
         try {
@@ -267,50 +275,46 @@ public class OnGetImageListener implements OnImageAvailableListener {
             mScreenRotation = -90;
         }
         matrix.postRotate(mScreenRotation);
-        if (this.cameraId.equals(CAMERA_FRONT)) {
+        if (cameraId.equals(CAMERA_FRONT)) {
             matrix.postScale(-1, 1);
             matrix.postTranslate(BM_FACE_H, 0);//scale image back
         }
 
-        if(mCroppedBitmap.isRecycled()) mCroppedBitmap.recycle();
+        if (mCroppedBitmap.isRecycled()) mCroppedBitmap.recycle();
         mCroppedBitmap = Bitmap.createBitmap(mRGBframeBitmap, 0, 0, mPreviewWidth, mPreviewHeight, matrix, false);
+        if (mFaceDetectionHandler != null)
+            mFaceDetectionHandler.post(
+                    () -> {
+                        if (!new File(Constants.getFaceShapeModelPath()).exists()) {
+                            //FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
+                            FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_5_face_landmarks, Constants.getFaceShapeModelPath());
+                        }
 
-        if (mInferenceHandler != null)
-            mInferenceHandler.post(
-                    new Runnable() {
-                        @Override
-                        public void run() {
-                            if (!new File(Constants.getFaceShapeModelPath()).exists()) {
-                                //FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
-                                FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_5_face_landmarks, Constants.getFaceShapeModelPath());
-                            }
+                        long startTime = System.currentTimeMillis();
 
-                            long startTime = System.currentTimeMillis();
+                        synchronized (OnGetImageListener.this) {
 
-                            synchronized (OnGetImageListener.this) {
+                            if(results == null || results.size() == 0) {
+                                results = mFaceDet.detect(mCroppedBitmap);
 
-                                if(results == null || results.size() == 0) {
-                                    results = mFaceDet.detect(mCroppedBitmap);
+                            } else {
+                                croppedMat = bitmapConversion.convertBitmap2Mat(mCroppedBitmap);
+                                if(boundingBox!=null) {
+                                    mosse.init(croppedMat,boundingBox );
+                                    //synchronized (boundingBox) {
+                                    boolean isValid = mosse.update(croppedMat, boundingBox);
 
-                                } else {
-                                    croppedMat = bitmapConversion.convertBitmap2Mat(mCroppedBitmap);
-                                    if(boundingBox!=null) {
-                                        mosse.init(croppedMat,boundingBox );
-                                        //synchronized (boundingBox) {
-                                        boolean isValid = mosse.update(croppedMat, boundingBox);
-
-                                        //}
-                                    }
+                                    //}
                                 }
                             }
-
-                            long endTime = System.currentTimeMillis();
-                            Log.d(TAG, "run: " + "Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
-                            // Draw on bitmap
-                            //bug here results is = 0
-
-                            mIsComputing = false;
                         }
+
+                        long endTime = System.currentTimeMillis();
+                        Log.d(TAG, "run: " + "Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
+                        // Draw on bitmap
+                        //bug here results is = 0
+
+                        mIsComputing = false;
                     });
 
         Trace.endSection();

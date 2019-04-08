@@ -231,33 +231,36 @@ public class CameraFragment extends Fragment
     /**
      * An additional thread for running tasks that shouldn't block the UI.
      */
-    private HandlerThread mBackgroundThread;
+    private HandlerThread preImageProcessThread;
 
     /**
      * A {@link Handler} for running tasks in the background.
      */
-    private Handler mBackgroundHandler;
+    private Handler mPreImageProcess;
 
     /**
      * An additional thread for running inference so as not to block the camera.
      */
-    private HandlerThread inferenceThread;
+    private HandlerThread faceDetectionThread;
 
     /**
      * A {@link Handler} for running tasks in the background.
      */
-    private Handler inferenceHandler;
+    private Handler mFaceDetectionHandler;
 
     /**
      * A {@link Handler} for running tasks in the UI.
      */
     private Handler uiHandler;
 
+    /*
+    * An additional thread for Post Image Process
+    * */
+    private HandlerThread postImageProcessThread;
     /**
-     * An {@link ImageReader} that handles still image capture.
-     */
-    //private ImageReader mImageReader;
-
+     * A handler for drawing task
+     * */
+    private Handler mPostImageHandler;
     /**
      * An {@link ImageReader} that handles preview frame capture.
      */
@@ -342,12 +345,7 @@ public class CameraFragment extends Fragment
     private void showToast(final String text) {
         final Activity activity = getActivity();
         if (activity != null) {
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(activity, text, Toast.LENGTH_SHORT).show();
-                }
-            });
+            activity.runOnUiThread(() -> Toast.makeText(activity, text, Toast.LENGTH_SHORT).show());
         }
     }
 
@@ -649,7 +647,7 @@ public class CameraFragment extends Fragment
             if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
             }
-            manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
+            manager.openCamera(mCameraId, mStateCallback, mPreImageProcess);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -694,13 +692,18 @@ public class CameraFragment extends Fragment
     @DebugLog
     private void startBackgroundThread() {
 
-        mBackgroundThread = new HandlerThread("CameraBackground");
-        mBackgroundThread.start();
-        mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
 
-        inferenceThread = new HandlerThread("InferenceThread");
-        inferenceThread.start();
-        inferenceHandler = new Handler(inferenceThread.getLooper());
+        preImageProcessThread = new HandlerThread("Pre processing image thread");
+        preImageProcessThread.start();
+        mPreImageProcess = new Handler(preImageProcessThread.getLooper());
+
+        faceDetectionThread = new HandlerThread("faceDetectionThread");
+        faceDetectionThread.start();
+        mFaceDetectionHandler = new Handler(faceDetectionThread.getLooper());
+
+        postImageProcessThread = new HandlerThread("PostImageProcessingThread");
+        postImageProcessThread.start();
+        mPostImageHandler = new Handler(postImageProcessThread.getLooper());
 
         uiHandler = new Handler(Looper.getMainLooper());
     }
@@ -713,19 +716,26 @@ public class CameraFragment extends Fragment
     @DebugLog
     private void stopBackgroundThread() {
         try {
-            if (mBackgroundThread != null) {
-                mBackgroundThread.quitSafely();
-                mBackgroundThread.join();
+            if (preImageProcessThread != null) {
+                preImageProcessThread.quitSafely();
+                preImageProcessThread.join();
             }
-            if (inferenceThread != null) {
-                inferenceThread.quitSafely();
-                inferenceThread.join();
+            if (faceDetectionThread != null) {
+                faceDetectionThread.quitSafely();
+                faceDetectionThread.join();
             }
-            mBackgroundThread = null;
-            mBackgroundHandler = null;
+            if(postImageProcessThread!=null){
+                postImageProcessThread.quitSafely();
+                postImageProcessThread.join();
+            }
+            preImageProcessThread = null;
+            mPreImageProcess = null;
 
-            inferenceThread = null;
-            inferenceHandler = null;
+            faceDetectionThread = null;
+            mFaceDetectionHandler = null;
+
+            postImageProcessThread = null;
+            mPostImageHandler = null;
 
             uiHandler = null;
         } catch (InterruptedException e) {
@@ -759,7 +769,7 @@ public class CameraFragment extends Fragment
 
             // Create the reader for the preview frames.
             previewReader = ImageReader.newInstance(mPreviewSize.getWidth(), mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 2);
-            previewReader.setOnImageAvailableListener(mOnGetPreviewListener, mBackgroundHandler);
+            previewReader.setOnImageAvailableListener(mOnGetPreviewListener, mPreImageProcess);
             mPreviewRequestBuilder.addTarget(previewReader.getSurface());
 
             // Here, we create a CameraCaptureSession for camera preview.
@@ -788,7 +798,7 @@ public class CameraFragment extends Fragment
                                 // Finally, we start displaying the camera preview.
                                 mPreviewRequest = mPreviewRequestBuilder.build();
                                 mCaptureSession.setRepeatingRequest(mPreviewRequest,
-                                        mCaptureCallback, mBackgroundHandler);
+                                        mCaptureCallback, mPreImageProcess);
                             } catch (CameraAccessException e) {
                                 e.printStackTrace();
                             }
@@ -808,7 +818,7 @@ public class CameraFragment extends Fragment
                 mCameraId,
                 getActivity().findViewById(R.id.fragment_camera_iv_preview),
                 getActivity().findViewById(R.id.fragment_camera_tv_fps),
-                inferenceHandler, uiHandler, this);
+                mPreImageProcess, uiHandler, mPostImageHandler, this);
     }
 
     /**
