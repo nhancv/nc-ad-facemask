@@ -99,25 +99,6 @@ public class CameraFragment extends Fragment
      */
     private static final int STATE_PREVIEW = 0;
 
-    /**
-     * Camera state: Waiting for the focus to be locked.
-     */
-    private static final int STATE_WAITING_LOCK = 1;
-
-    /**
-     * Camera state: Waiting for the exposure to be precapture state.
-     */
-    private static final int STATE_WAITING_PRECAPTURE = 2;
-
-    /**
-     * Camera state: Waiting for the exposure state to be something other than precapture.
-     */
-    private static final int STATE_WAITING_NON_PRECAPTURE = 3;
-
-    /**
-     * Camera state: Picture was taken.
-     */
-    private static final int STATE_PICTURE_TAKEN = 4;
 
     /**
      * Max preview width that is guaranteed by Camera2 API
@@ -135,18 +116,15 @@ public class CameraFragment extends Fragment
      * {@link TextureView.SurfaceTextureListener} handles several lifecycle events on a
      * {@link TextureView}.
      */
-    /*
-    * Current overlay bitmap to draw on
-    * */
-    List<Bitmap> curOverlayImg = new ArrayList<Bitmap>();
+
     /*
     * bitmap image change listener
     * */
+
+    String [] maskFilters = new String[]{"cat"};
     /*
-    * List of list Bitmap
-    * */
-    String [] maskFilters = new String[]{"cat","dog","nerd","hamster"};
-    HashMap<String,List<Bitmap>> maskFilterMap = new HashMap<String,List<Bitmap>>();
+     * Hash map that includes id and bitmaps
+     * */
     HashMap<String,HashMap<String,Bitmap>> maskFilterElements = new HashMap<>();
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener
             = new TextureView.SurfaceTextureListener() {
@@ -207,14 +185,7 @@ public class CameraFragment extends Fragment
      * The {@link android.util.Size} of camera preview.
      */
     private Size mPreviewSize;
-    //private LinearLayout maskFilterLayout;
-    /**
-     * Set of Image button filter
-     * */
-    ImageButton dogBtn;
-    ImageButton catBtn;
-    ImageButton nerdBtn;
-    ImageButton hamsterBtn;
+
     /**
      * {@link CameraDevice.StateCallback} is called when {@link CameraDevice} changes its state.
      */
@@ -260,33 +231,36 @@ public class CameraFragment extends Fragment
     /**
      * An additional thread for running tasks that shouldn't block the UI.
      */
-    private HandlerThread mBackgroundThread;
+    private HandlerThread preImageProcessThread;
 
     /**
      * A {@link Handler} for running tasks in the background.
      */
-    private Handler mBackgroundHandler;
+    private Handler mPreImageProcess;
 
     /**
      * An additional thread for running inference so as not to block the camera.
      */
-    private HandlerThread inferenceThread;
+    private HandlerThread faceDetectionThread;
 
     /**
      * A {@link Handler} for running tasks in the background.
      */
-    private Handler inferenceHandler;
+    private Handler mFaceDetectionHandler;
 
     /**
      * A {@link Handler} for running tasks in the UI.
      */
     private Handler uiHandler;
 
+    /*
+    * An additional thread for Post Image Process
+    * */
+    private HandlerThread postImageProcessThread;
     /**
-     * An {@link ImageReader} that handles still image capture.
-     */
-    private ImageReader mImageReader;
-
+     * A handler for drawing task
+     * */
+    private Handler mPostImageHandler;
     /**
      * An {@link ImageReader} that handles preview frame capture.
      */
@@ -299,19 +273,6 @@ public class CameraFragment extends Fragment
      */
     private File mFile;
 
-    /**
-     * This a callback object for the {@link ImageReader}. "onImageAvailable" will be called when a
-     * still image is ready to be saved.
-     */
-    private final ImageReader.OnImageAvailableListener mOnImageAvailableListener
-            = new ImageReader.OnImageAvailableListener() {
-
-        @Override
-        public void onImageAvailable(ImageReader reader) {
-            mBackgroundHandler.post(new ImageSaver(reader.acquireNextImage(), mFile));
-        }
-
-    };
 
     /**
      * {@link CaptureRequest.Builder} for the camera preview
@@ -357,43 +318,6 @@ public class CameraFragment extends Fragment
                     // We have nothing to do when the camera preview is working normally.
                     break;
                 }
-                case STATE_WAITING_LOCK: {
-                    Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
-                    if (afState != null && (CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED == afState ||
-                            CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED == afState)) {
-                        // CONTROL_AE_STATE can be null on some devices
-                        Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                        if (aeState == null ||
-                                aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED) {
-                            mState = STATE_PICTURE_TAKEN;
-                            captureStillPicture();
-                        } else {
-                            runPrecaptureSequence();
-                        }
-                    } else {
-                        captureStillPicture();
-                    }
-                    break;
-                }
-                case STATE_WAITING_PRECAPTURE: {
-                    // CONTROL_AE_STATE can be null on some devices
-                    Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                    if (aeState == null ||
-                            aeState == CaptureResult.CONTROL_AE_STATE_PRECAPTURE ||
-                            aeState == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED) {
-                        mState = STATE_WAITING_NON_PRECAPTURE;
-                    }
-                    break;
-                }
-                case STATE_WAITING_NON_PRECAPTURE: {
-                    // CONTROL_AE_STATE can be null on some devices
-                    Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                    if (aeState == null || aeState != CaptureResult.CONTROL_AE_STATE_PRECAPTURE) {
-                        mState = STATE_PICTURE_TAKEN;
-                        captureStillPicture();
-                    }
-                    break;
-                }
             }
         }
 
@@ -421,12 +345,7 @@ public class CameraFragment extends Fragment
     private void showToast(final String text) {
         final Activity activity = getActivity();
         if (activity != null) {
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(activity, text, Toast.LENGTH_SHORT).show();
-                }
-            });
+            activity.runOnUiThread(() -> Toast.makeText(activity, text, Toast.LENGTH_SHORT).show());
         }
     }
 
@@ -494,20 +413,8 @@ public class CameraFragment extends Fragment
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
-        view.findViewById(R.id.fragment_camera_ib_take_picture).setOnClickListener(this);
-        view.findViewById(R.id.fragment_camera_ib_toggle_preview).setOnClickListener(this);
-        view.findViewById(R.id.fragment_camera_ib_switch_camera).setOnClickListener(this);
         mTextureView = view.findViewById(R.id.texture);
         landmarkView = view.findViewById(R.id.landmarkView);
-        this.dogBtn = view.findViewById(R.id.btn_filter_dog);
-        this.dogBtn.setOnClickListener(this);
-        this.catBtn = view.findViewById(R.id.btn_filter_cat);
-        this.catBtn.setOnClickListener(this);
-        this.hamsterBtn = view.findViewById(R.id.btn_filter_hamster);
-        this.hamsterBtn.setOnClickListener(this);
-        this.nerdBtn = view.findViewById(R.id.btn_filter_nerd);
-        this.nerdBtn.setOnClickListener(this);
-
     }
 
     public static int getId(String resourceName, Class<?> c) {
@@ -521,18 +428,7 @@ public class CameraFragment extends Fragment
     }
 
     public void loadImageOverlay() {
-//        for (final String name : this.maskFilters) {
-//            this.curOverlayImg = new ArrayList<Bitmap>();
-//            for (int i = 0; i < 1; i++) {
-//                String str = name.concat("_").concat(String.format("%05d", i));//padd zero with width = 5
-//                Log.d(TAG, str);
-//                int id = getId(str, R.drawable.class);
-//                this.curOverlayImg.add(BitmapFactory.decodeResource(this.getResources(), id));
-//            }
-//            this.maskFilterMap.put(name,this.curOverlayImg);
-//        }
-//        this.curOverlayImg.add(BitmapFactory.decodeResource(this.getResources(), R.drawable.cat_00000));
-//        this.maskFilterMap.put("cat",this.curOverlayImg);
+
         for(final String name : this.maskFilters){
             HashMap<String,Bitmap> elements= new HashMap<>();
             for(int i = 0;i<2;i++)
@@ -540,15 +436,11 @@ public class CameraFragment extends Fragment
                 String str = name.concat("_").concat(String.format("%05d", i));//padd zero with width = 5
                 Log.d(TAG, str);
                 int id = getId(str, R.drawable.class);
+                //add eye bitmap
                 if(i==0) {
-                    if(name.equals("nerd"))
-                    {
-                        elements.put("eye",BitmapFactory.decodeResource(this.getResources(), id));
-                    }
-                    else {
-                        elements.put("head", BitmapFactory.decodeResource(this.getResources(), id));
-                    }
+                    elements.put("head",BitmapFactory.decodeResource(this.getResources(), id));
                 }
+                //add nose bitmap
                 else{
                     elements.put("nose",BitmapFactory.decodeResource(this.getResources(), id));
                 }
@@ -575,6 +467,8 @@ public class CameraFragment extends Fragment
         gLView.setupScene(scene);
         m3DPosController = new M3DPosController(gLView);*/
         m2DPosController = new M2DPosController(landmarkView);
+        //apply only 1 filter effects
+        m2DPosController.update(this.maskFilterElements.get("cat"));//update overlayImage
     }
 
     @Override
@@ -647,14 +541,6 @@ public class CameraFragment extends Fragment
                         continue;
                     }
 
-                    // For still image captures, we use the largest available size.
-                    Size largest = Collections.max(
-                            Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
-                            new CompareSizesByArea());
-                    mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
-                            ImageFormat.JPEG, /*maxImages*/2);
-                    mImageReader.setOnImageAvailableListener(
-                            mOnImageAvailableListener, mBackgroundHandler);
 
                     // Find out if we need to swap dimension to get the preview size relative to sensor
                     // coordinate.
@@ -761,7 +647,7 @@ public class CameraFragment extends Fragment
             if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
             }
-            manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
+            manager.openCamera(mCameraId, mStateCallback, mPreImageProcess);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -789,10 +675,7 @@ public class CameraFragment extends Fragment
                 previewReader.close();
                 previewReader = null;
             }
-            if (null != mImageReader) {
-                mImageReader.close();
-                mImageReader = null;
-            }
+
             mOnGetPreviewListener.deInitialize();
         } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
@@ -808,13 +691,19 @@ public class CameraFragment extends Fragment
     @SuppressLint("LongLogTag")
     @DebugLog
     private void startBackgroundThread() {
-        mBackgroundThread = new HandlerThread("CameraBackground");
-        mBackgroundThread.start();
-        mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
 
-        inferenceThread = new HandlerThread("InferenceThread");
-        inferenceThread.start();
-        inferenceHandler = new Handler(inferenceThread.getLooper());
+
+        preImageProcessThread = new HandlerThread("Pre processing image thread");
+        preImageProcessThread.start();
+        mPreImageProcess = new Handler(preImageProcessThread.getLooper());
+
+        faceDetectionThread = new HandlerThread("faceDetectionThread");
+        faceDetectionThread.start();
+        mFaceDetectionHandler = new Handler(faceDetectionThread.getLooper());
+
+        postImageProcessThread = new HandlerThread("PostImageProcessingThread");
+        postImageProcessThread.start();
+        mPostImageHandler = new Handler(postImageProcessThread.getLooper());
 
         uiHandler = new Handler(Looper.getMainLooper());
     }
@@ -827,19 +716,26 @@ public class CameraFragment extends Fragment
     @DebugLog
     private void stopBackgroundThread() {
         try {
-            if (mBackgroundThread != null) {
-                mBackgroundThread.quitSafely();
-                mBackgroundThread.join();
+            if (preImageProcessThread != null) {
+                preImageProcessThread.quitSafely();
+                preImageProcessThread.join();
             }
-            if (inferenceThread != null) {
-                inferenceThread.quitSafely();
-                inferenceThread.join();
+            if (faceDetectionThread != null) {
+                faceDetectionThread.quitSafely();
+                faceDetectionThread.join();
             }
-            mBackgroundThread = null;
-            mBackgroundHandler = null;
+            if(postImageProcessThread!=null){
+                postImageProcessThread.quitSafely();
+                postImageProcessThread.join();
+            }
+            preImageProcessThread = null;
+            mPreImageProcess = null;
 
-            inferenceThread = null;
-            inferenceHandler = null;
+            faceDetectionThread = null;
+            mFaceDetectionHandler = null;
+
+            postImageProcessThread = null;
+            mPostImageHandler = null;
 
             uiHandler = null;
         } catch (InterruptedException e) {
@@ -873,11 +769,11 @@ public class CameraFragment extends Fragment
 
             // Create the reader for the preview frames.
             previewReader = ImageReader.newInstance(mPreviewSize.getWidth(), mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 2);
-            previewReader.setOnImageAvailableListener(mOnGetPreviewListener, mBackgroundHandler);
+            previewReader.setOnImageAvailableListener(mOnGetPreviewListener, mPreImageProcess);
             mPreviewRequestBuilder.addTarget(previewReader.getSurface());
 
             // Here, we create a CameraCaptureSession for camera preview.
-            mCameraDevice.createCaptureSession(Arrays.asList(surface, previewReader.getSurface(), mImageReader.getSurface()),
+            mCameraDevice.createCaptureSession(Arrays.asList(surface, previewReader.getSurface()),
                     new CameraCaptureSession.StateCallback() {
 
                         @Override
@@ -902,7 +798,7 @@ public class CameraFragment extends Fragment
                                 // Finally, we start displaying the camera preview.
                                 mPreviewRequest = mPreviewRequestBuilder.build();
                                 mCaptureSession.setRepeatingRequest(mPreviewRequest,
-                                        mCaptureCallback, mBackgroundHandler);
+                                        mCaptureCallback, mPreImageProcess);
                             } catch (CameraAccessException e) {
                                 e.printStackTrace();
                             }
@@ -922,7 +818,7 @@ public class CameraFragment extends Fragment
                 mCameraId,
                 getActivity().findViewById(R.id.fragment_camera_iv_preview),
                 getActivity().findViewById(R.id.fragment_camera_tv_fps),
-                inferenceHandler, uiHandler, this);
+                mPreImageProcess, uiHandler, mPostImageHandler, this);
     }
 
     /**
@@ -961,195 +857,15 @@ public class CameraFragment extends Fragment
         mTextureView.setTransform(matrix);
     }
 
-    /**
-     * Initiate a still image capture.
-     */
-    private void takePicture() {
-        lockFocus();
-    }
 
-    /**
-     * Lock the focus as the first step for a still image capture.
-     */
-    private void lockFocus() {
-        try {
-            // This is how to tell the camera to lock focus.
-            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
-                    CameraMetadata.CONTROL_AF_TRIGGER_START);
-            // Tell #mCaptureCallback to wait for the lock.
-            mState = STATE_WAITING_LOCK;
-            mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback,
-                    mBackgroundHandler);
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Run the precapture sequence for capturing a still image. This method should be called when
-     * we get a response in {@link #mCaptureCallback} from {@link #lockFocus()}.
-     */
-    private void runPrecaptureSequence() {
-        try {
-            // This is how to tell the camera to trigger.
-            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                    CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
-            // Tell #mCaptureCallback to wait for the precapture sequence to be set.
-            mState = STATE_WAITING_PRECAPTURE;
-            mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback,
-                    mBackgroundHandler);
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Capture a still picture. This method should be called when we get a response in
-     * {@link #mCaptureCallback} from both {@link #lockFocus()}.
-     */
-    private void captureStillPicture() {
-        try {
-            final Activity activity = getActivity();
-            if (null == activity || null == mCameraDevice) {
-                return;
-            }
-            // This is the CaptureRequest.Builder that we use to take a picture.
-            final CaptureRequest.Builder captureBuilder =
-                    mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-//            captureBuilder.addTarget(mImageReader.getSurface());
-
-            // Use the same AE and AF modes as the preview.
-            captureBuilder.set(CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-            setAutoFlash(captureBuilder);
-
-            // Orientation
-            int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
-            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(rotation));
-
-            CameraCaptureSession.CaptureCallback CaptureCallback
-                    = new CameraCaptureSession.CaptureCallback() {
-
-                @Override
-                public void onCaptureCompleted(@NonNull CameraCaptureSession session,
-                                               @NonNull CaptureRequest request,
-                                               @NonNull TotalCaptureResult result) {
-                    showToast("Saved: " + mFile);
-                    Log.d(TAG, mFile.toString());
-                    unlockFocus();
-                }
-            };
-
-            mCaptureSession.stopRepeating();
-            mCaptureSession.abortCaptures();
-            mCaptureSession.capture(captureBuilder.build(), CaptureCallback, null);
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Retrieves the JPEG orientation from the specified screen rotation.
-     *
-     * @param rotation The screen rotation.
-     * @return The JPEG orientation (one of 0, 90, 270, and 360)
-     */
-    private int getOrientation(int rotation) {
-        // Sensor orientation is 90 for most devices, or 270 for some devices (eg. Nexus 5X)
-        // We have to take that into account and rotate JPEG properly.
-        // For devices with orientation of 90, we simply return our mapping from ORIENTATIONS.
-        // For devices with orientation of 270, we need to rotate the JPEG 180 degrees.
-        return (ORIENTATIONS.get(rotation) + mSensorOrientation + 270) % 360;
-    }
-
-    /**
-     * Unlock the focus. This method should be called when still image capture sequence is
-     * finished.
-     */
-    private void unlockFocus() {
-        try {
-            // Reset the auto-focus trigger
-            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
-                    CameraMetadata.CONTROL_AF_TRIGGER_CANCEL);
-            setAutoFlash(mPreviewRequestBuilder);
-            mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback,
-                    mBackgroundHandler);
-            // After this, the camera will go back to the normal state of preview.
-            mState = STATE_PREVIEW;
-            mCaptureSession.setRepeatingRequest(mPreviewRequest, mCaptureCallback,
-                    mBackgroundHandler);
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-    }
 
     @Override
     public void onClick(final View view) {
         view.setEnabled(false);
-        switch (view.getId()) {
-            case R.id.btn_filter_cat:
-                m2DPosController.update(this.maskFilterElements.get("cat"));//update overlayImage
-                break;
-            case R.id.btn_filter_dog:
-                m2DPosController.update(this.maskFilterElements.get("dog"));//update overlayImage
-                break;
-            case R.id.btn_filter_hamster:
-                m2DPosController.update(this.maskFilterElements.get("hamster"));//update overlayImage
-                break;
-            case R.id.btn_filter_nerd:
-                m2DPosController.update(this.maskFilterElements.get("nerd"));//update overlayImage
-                break;
-            case R.id.fragment_camera_ib_toggle_preview:
-                View v = Objects.requireNonNull(getActivity()).findViewById(R.id.fragment_camera_iv_preview);
-                if(v.getVisibility() == View.VISIBLE) {
-                    v.setVisibility(View.INVISIBLE);
-                } else {
-                    v.setVisibility(View.VISIBLE);
-                }
-                break;
-            case R.id.fragment_camera_ib_take_picture: {
-                takePicture();
-                break;
-            }
-            case R.id.fragment_camera_ib_switch_camera: {
-                switchCamera();
-                break;
-            }
-        }
         view.postDelayed(() -> view.setEnabled(true), 500);
 
     }
 
-    private synchronized void switchCamera() {
-        if (mCameraId.equals(CAMERA_FRONT)) {
-            mCameraId = CAMERA_BACK;
-            closeCamera();
-            stopBackgroundThread();
-            reopenCamera();
-        } else if (mCameraId.equals(CAMERA_BACK)) {
-            mCameraId = CAMERA_FRONT;
-            closeCamera();
-            stopBackgroundThread();
-            reopenCamera();
-
-        }
-    }
-
-    private void reopenCamera() {
-        startBackgroundThread();
-        if (mTextureView.isAvailable()) {
-            openCamera(mTextureView.getWidth(), mTextureView.getHeight());
-        } else {
-            mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
-        }
-    }
-
-    private void setAutoFlash(CaptureRequest.Builder requestBuilder) {
-        if (mFlashSupported) {
-            requestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
-                    CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
-        }
-    }
 
     @Override
     public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
@@ -1157,49 +873,6 @@ public class CameraFragment extends Fragment
         uiHandler.post(() -> m2DPosController.landmarkUpdate(visionDetRetList, bmW, bmH));
     }
 
-    /**
-     * Saves a JPEG {@link Image} into the specified {@link File}.
-     */
-    private static class ImageSaver implements Runnable {
-
-        /**
-         * The JPEG image
-         */
-        private final Image mImage;
-        /**
-         * The file we save the image into.
-         */
-        private final File mFile;
-
-        ImageSaver(Image image, File file) {
-            mImage = image;
-            mFile = file;
-        }
-
-        @Override
-        public void run() {
-            ByteBuffer buffer = mImage.getPlanes()[0].getBuffer();
-            byte[] bytes = new byte[buffer.remaining()];
-            buffer.get(bytes);
-            FileOutputStream output = null;
-            try {
-                output = new FileOutputStream(mFile);
-                output.write(bytes);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                mImage.close();
-                if (null != output) {
-                    try {
-                        output.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-
-    }
 
     /**
      * Compares two {@code Size}s based on their areas.

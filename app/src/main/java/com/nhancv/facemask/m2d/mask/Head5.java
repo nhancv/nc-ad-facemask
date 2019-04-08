@@ -14,9 +14,8 @@ public class Head5 implements  IMaskStrategy{
         //virtual animal ear
         //using width =  3/2 width of face
         //height = width*(height/width)
-        //posX =
         //posY = centerEye + 1/3 Face Height + maskHeight/2;
-        //float posX =
+
         float oEarHeight = mask.getHeight();
         float oEarWidth = mask.getWidth();
         float eyeWidth = distanceHelper.distance(landmarks.get(0),landmarks.get(2));
