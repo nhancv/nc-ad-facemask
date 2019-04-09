@@ -85,12 +85,15 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private long lastTime = 0;
 
     private RectF originBox = new RectF();
+    private Rect2d firstDetectBoundingBox = new Rect2d();
+    private Mat firstDetectCroppedMat = new Mat();
+
     private Rect2d boundingBox = new Rect2d();
     private Rect2d oldBoundingBox = new Rect2d();
 
     public OnGetImageListener() {
         renderFps = new StableFps(30);
-        detectFps = new StableFps(1);
+        detectFps = new StableFps(10);
     }
 
     @DebugLog
@@ -259,14 +262,14 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private void step2FaceDetProcess() {
         long startTime = System.currentTimeMillis();
 
-        Bitmap bmp32 = mCroppedBitmap.copy(Bitmap.Config.ARGB_8888, true);
+        Bitmap bmp32 = mCroppedBitmap.copy(mCroppedBitmap.getConfig(), true);
         results = mFaceDet.detect(bmp32);
 
         long endTime = System.currentTimeMillis();
         Log.d(TAG, "Detect face time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
 
         //convert mCroppedBitmap to cropped Mat to start init
-        final Mat croppedMat = bitmapConversion.convertBitmap2Mat(bmp32);
+        firstDetectCroppedMat = bitmapConversion.convertBitmap2Mat(bmp32);
 
         if (results.size() > 0) {
 
@@ -293,8 +296,17 @@ public class OnGetImageListener implements OnImageAvailableListener {
             oldBoundingBox.width = w;
             oldBoundingBox.height = h;
 
-            if(croppedMat != null && !croppedMat.size().empty()) {
-                trackingHandler.post(() -> mosse.init(croppedMat, new Rect2d(x, y, w, h)));
+            firstDetectBoundingBox.x = x;
+            firstDetectBoundingBox.y = y;
+            firstDetectBoundingBox.width = w;
+            firstDetectBoundingBox.height = h;
+
+            if(firstDetectCroppedMat != null && !firstDetectCroppedMat.size().empty()) {
+                trackingHandler.post(() -> {
+                    Log.e(TAG, "step2FaceDetProcess: init mosse " + firstDetectBoundingBox);
+                    mosse = TrackerMOSSE.create();
+                    mosse.init(firstDetectCroppedMat, firstDetectBoundingBox);
+                });
             }
             Log.d(TAG, "detectFrame" + oldBoundingBox);
         }
@@ -307,14 +319,15 @@ public class OnGetImageListener implements OnImageAvailableListener {
      * Read: mCroppedBitmap (clone), visionDetRets
      */
     private void step3TrackingProcess() {
-        Log.d(TAG, "BoundingBoxTracking" + boundingBox);
         if (boundingBox != null) {
-            Bitmap bmp32 = mCroppedBitmap.copy(Bitmap.Config.ARGB_8888, true);
+            Bitmap bmp32 = mCroppedBitmap.copy(mCroppedBitmap.getConfig(), true);
             final Mat croppedMat = bitmapConversion.convertBitmap2Mat(bmp32);
 
             long startTime = System.currentTimeMillis();
             //udpate bounding Box based on init boundingBox
             boolean canTrack = mosse.update(croppedMat, boundingBox);
+            Log.d(TAG, "BoundingBoxTracking" + boundingBox);
+
             long endTime = System.currentTimeMillis();
 
             Log.d(TAG, "Tracking time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec with " + canTrack);
@@ -322,21 +335,23 @@ public class OnGetImageListener implements OnImageAvailableListener {
             // Depend on (visionDetRets + oldBoundingBox ) combine with boundingBox => visionDetRets
             //Case 2: visionDetRet: 1 + oldBoundingBox: 1 + boundingBox 0 =>
             //if a bounding box can track
-            VisionDetRet newRet = null;
+            VisionDetRet newRet;
             if (canTrack) {
                 //Case 1: visionDetRet: 1 + oldBoundingBox: 1 + boundingBox 1 => new visionDetRets
                 if (visionDetRets.size() > 0 && !oldBoundingBox.empty()) {
                     VisionDetRet ret = visionDetRets.get(0);
 
                     //using the current bound box to get landmarks and compare with old bounding box
-//                    newRet = normResult(ret, boundingBox);
-//                    visionDetRets.set(0, newRet);//update with newRect
+                    newRet = normResult(ret, boundingBox);
+                    visionDetRets.set(0, newRet);//update with newRect
+
+                    //update oldboundingBox with bounding box
+                    oldBoundingBox.x = boundingBox.x;
+                    oldBoundingBox.y = boundingBox.y;
+                    oldBoundingBox.width = boundingBox.width;
+                    oldBoundingBox.height = boundingBox.height;
                 }
-                //update oldboundingBox with bounding box
-                oldBoundingBox.x = boundingBox.x;
-                oldBoundingBox.y = boundingBox.y;
-                oldBoundingBox.width = boundingBox.width;
-                oldBoundingBox.height = boundingBox.height;
+
             }
 
         }
@@ -359,17 +374,14 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
         if (faceLandmarkListener != null && visionDetRets != null && mCroppedBitmap != null && tvFps != null) {
             if (!visionDetRets.isEmpty()) {
-                drawOnResultBoundingBox(visionDetRets.get(0));
+                Bitmap bm32 = drawOnResultBoundingBox(visionDetRets.get(0));
                 if (mUIHandler != null) {
                     mUIHandler.post(() -> {
                         tvFps.setText(log);
-                        ivOverlay.setImageBitmap(mCroppedBitmap);
+                        ivOverlay.setImageBitmap(bm32);
                     });
-
                 }
-
             }
-
 //            faceLandmarkListener.landmarkUpdate(visionDetRets, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
 
         }
@@ -395,14 +407,16 @@ public class OnGetImageListener implements OnImageAvailableListener {
         return result;
     }
 
-    private void drawOnResultBoundingBox(VisionDetRet visionDetRet) {
+    private Bitmap drawOnResultBoundingBox(VisionDetRet visionDetRet) {
+        Bitmap bm32 = mCroppedBitmap.copy(mCroppedBitmap.getConfig(), true);
+
         Rect bounds = new Rect(visionDetRet.getLeft(), visionDetRet.getTop(), visionDetRet.getRight(), visionDetRet.getBottom());
-        Canvas canvas = new Canvas(mCroppedBitmap);
+        Canvas canvas = new Canvas(bm32);
         canvas.drawRect(bounds, greenPaint);
 
-        if (oldBoundingBox != null && !oldBoundingBox.empty()) {
-            RectF r = new RectF((float) oldBoundingBox.x, (float) oldBoundingBox.y,
-                    (float) (oldBoundingBox.x + oldBoundingBox.width), (float) (oldBoundingBox.y + oldBoundingBox.height));
+        if (boundingBox != null && !boundingBox.empty()) {
+            RectF r = new RectF((float) boundingBox.x, (float) boundingBox.y,
+                    (float) (boundingBox.x + boundingBox.width), (float) (boundingBox.y + boundingBox.height));
             canvas.drawRect(r, redPaint);
         }
 
@@ -415,6 +429,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
             canvas.drawPoint(landmark.x, landmark.y, greenPaint);
         }
 
+        return bm32;
     }
 
 }
