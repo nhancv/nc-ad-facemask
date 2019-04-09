@@ -4,7 +4,7 @@
     android:layout_height="match_parent">
 
     <com.nhancv.facemask.m3d.M3DSurfaceView
-        android:id="@+id/gLView"
+        android:id="@+id/fragment_camera_gl_3dsurfaceview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         />

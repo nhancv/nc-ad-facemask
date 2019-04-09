@@ -21,12 +21,10 @@ import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
-import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
-import android.media.Image;
 import android.media.ImageReader;
 import android.net.Uri;
 import android.os.Bundle;
@@ -46,7 +44,6 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.nhancv.facemask.m2d.M2DLandmarkView;
@@ -56,10 +53,7 @@ import com.nhancv.facemask.m3d.transformation.RealTimeRotation;
 import com.tzutalin.dlib.VisionDetRet;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -379,8 +373,8 @@ public class CameraFragment extends Fragment
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
-        mTextureView = view.findViewById(R.id.texture);
-        landmarkView = view.findViewById(R.id.landmarkView);
+        mTextureView = view.findViewById(R.id.fragment_camera_textureview);
+        landmarkView = view.findViewById(R.id.fragment_camera_2dlandmarkview);
     }
 
     public static int getId(String resourceName, Class<?> c) {
@@ -793,7 +787,7 @@ public class CameraFragment extends Fragment
         }
         mOnGetPreviewListener.initialize(Objects.requireNonNull(getActivity()).getApplicationContext(),
                 mCameraId,
-                getActivity().findViewById(R.id.fragment_camera_iv_preview),
+                getActivity().findViewById(R.id.fragment_camera_iv_overlay),
                 getActivity().findViewById(R.id.fragment_camera_tv_fps),
                 trackingHandler,
                 mFaceDetectionHandler, uiHandler, mPostImageHandler, this);

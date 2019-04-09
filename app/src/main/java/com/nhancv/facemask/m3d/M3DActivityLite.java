@@ -35,7 +35,7 @@ public class M3DActivityLite extends Activity {
                         Log.d(TAG, "onResume: uri" + uri.getPath());
 
                         scene = new M3DSceneLoader(this);
-                        M3DSurfaceView gLView = findViewById(R.id.gLView);
+                        M3DSurfaceView gLView = findViewById(R.id.fragment_camera_gl_3dsurfaceview);
                         scene.init(uri, 0, gLView);
                         gLView.setupScene(scene);
                     }

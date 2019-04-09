@@ -7,14 +7,14 @@
     >
 
     <com.nhancv.facemask.AutoFitTextureView
-        android:id="@+id/texture"
+        android:id="@+id/fragment_camera_textureview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_centerInParent="true"
         />
 
     <ImageView
-        android:id="@+id/fragment_camera_iv_preview"
+        android:id="@+id/fragment_camera_iv_overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_centerInParent="true"
@@ -22,16 +22,16 @@
         />
 
     <com.nhancv.facemask.m2d.M2DLandmarkView
-        android:id="@+id/landmarkView"
+        android:id="@+id/fragment_camera_2dlandmarkview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         />
 
     <com.nhancv.facemask.m3d.M3DSurfaceView
-        android:id="@+id/gLView"
+        android:id="@+id/fragment_camera_gl_3dsurfaceview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="visible"
+        android:visibility="invisible"
         />
 
     <TextView
