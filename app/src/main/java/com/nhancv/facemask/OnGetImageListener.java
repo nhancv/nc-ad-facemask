@@ -80,15 +80,15 @@ public class OnGetImageListener implements OnImageAvailableListener {
      * 1 for front camera
      * Initlity default camera is front camera
      */
-    Tracker mosse = TrackerMOSSE.create();
-    public static final String CAMERA_FRONT = "1";
-    public static final String CAMERA_BACK = "0";
+    private Tracker mosse = TrackerMOSSE.create();
+    private static final String CAMERA_FRONT = "1";
+    private static final String CAMERA_BACK = "0";
 
-    private StableFps stableFps;
+    private StableFps renderFps;
     private StableFps detectFps;
 
     public OnGetImageListener() {
-        stableFps = new StableFps(30);
+        renderFps = new StableFps(30);
         detectFps = new StableFps(1);
     }
 
@@ -131,7 +131,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
             if (mFaceDet != null) {
                 mFaceDet.release();
             }
-            stableFps.stop();
+            renderFps.stop();
             detectFps.stop();
         }
     }
@@ -139,6 +139,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private long lastTime = 0;
     Rect2d boundingBox;
     Rect2d oldBoundingBox;
+
     VisionDetRet ret;//our origin
 
     public VisionDetRet normResult(VisionDetRet ret, Rect2d boundingBox) {
@@ -185,7 +186,12 @@ public class OnGetImageListener implements OnImageAvailableListener {
                                     float y = ret.getTop();
                                     float w = ret.getRight() - x;
                                     float h = ret.getBottom() - y;
-                                    boundingBox = new Rect2d(x, y, w, h);
+                                    //boundingBox = new Rect2d(x, y, w, h);
+                                    //modify bounding box value
+                                    boundingBox.x = x;
+                                    boundingBox.y = y;
+                                    boundingBox.width = w;
+                                    boundingBox.height = h;
 
                                     trackingHandler.post(new Runnable() {
                                         @Override
@@ -203,8 +209,8 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
 
         // Fps for render to ui thread
-        if (!stableFps.isStarted()) {
-            stableFps.start(fps -> {
+        if (!renderFps.isStarted()) {
+            renderFps.start(fps -> {
 
                 if (mPostImageHandler != null) {
                     mPostImageHandler.post(() -> {
@@ -225,7 +231,8 @@ public class OnGetImageListener implements OnImageAvailableListener {
                                 float y = ret.getTop();
                                 float w = ret.getRight() - x;
                                 float h = ret.getBottom() - y;
-                                boundingBox = new Rect2d(x, y, w, h);
+                                boundingBox.x = x;
+                                boundingBox.y = y;
                                 oldBoundingBox = new Rect2d(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
                             }
                             if (boundingBox != null && !results.isEmpty()) {
@@ -336,7 +343,6 @@ public class OnGetImageListener implements OnImageAvailableListener {
                         long endTime = System.currentTimeMillis();
                         Log.d(TAG, "Tracking time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
 
-
                     }
                 }
             });
@@ -350,7 +356,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
         bounds.top = (int) boundingBox.y;
         bounds.bottom = (int) (boundingBox.y + boundingBox.height);
         bounds.right = (int) (boundingBox.x + boundingBox.width);
-        Canvas canvas = new Canvas(mCroppedBitmap);
+        Canvas canvas = new Canvas(mRGBframeBitmap);
         canvas.drawRect(bounds, mFaceLandmarkPaint);
     }
 }
