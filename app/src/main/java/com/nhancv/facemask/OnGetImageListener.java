@@ -14,8 +14,6 @@ import android.media.Image.Plane;
 import android.media.ImageReader;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.Handler;
-import android.os.Looper;
-import android.os.Trace;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -28,19 +26,16 @@ import com.tzutalin.dlib.VisionDetRet;
 import com.tzutalin.dlibtest.FileUtils;
 import com.tzutalin.dlibtest.ImageUtils;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
-
-import hugo.weaving.DebugLog;
-
-import org.andresoviedo.android_3d_model_engine.model.BoundingBox;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect2d;
 import org.opencv.tracking.Tracker;
 import org.opencv.tracking.TrackerMOSSE;
-import org.opencv.video.SparsePyrLKOpticalFlow;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import hugo.weaving.DebugLog;
 //import org.opencv.core.Mat;
 
 /**
@@ -65,7 +60,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private Handler mPostImageHandler;
     private Context mContext;
     private FaceDet mFaceDet;
-    private ImageView mWindow;
+    private ImageView ivOverlay;
     private TextView tvFps;
     private Paint mFaceLandmarkPaint;
     private String cameraId;
@@ -74,13 +69,14 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private BitmapConversion bitmapConversion = new BitmapConversion();
     private Mat croppedMat;
 
+    private Tracker mosse = TrackerMOSSE.create();
+
     //private Bitmap overlayImage;
     /**
      * 0 forback camera
      * 1 for front camera
      * Initlity default camera is front camera
      */
-    private Tracker mosse = TrackerMOSSE.create();
     private static final String CAMERA_FRONT = "1";
     private static final String CAMERA_BACK = "0";
 
@@ -96,7 +92,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
     public void initialize(
             final Context context,
             final String cameraId,
-            final ImageView imageView,
+            final ImageView ivOverlay,
             final TextView tvFps,
             final Handler trackingHandler,
             final Handler faceDetectionHandler,
@@ -111,8 +107,8 @@ public class OnGetImageListener implements OnImageAvailableListener {
         this.mPostImageHandler = mPostImageHandler;
 
         this.faceLandmarkListener = faceLandmarkListener;
-        mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
-        mWindow = imageView;
+        this.mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
+        this.ivOverlay = ivOverlay;
         this.tvFps = tvFps;
 
         mFaceLandmarkPaint = new Paint();
@@ -137,10 +133,10 @@ public class OnGetImageListener implements OnImageAvailableListener {
     }
 
     private long lastTime = 0;
-    Rect2d boundingBox;
-    Rect2d oldBoundingBox;
 
-    VisionDetRet ret;//our origin
+    private Rect2d boundingBox;
+    private Rect2d oldBoundingBox;
+    private VisionDetRet ret;//our origin
 
     public VisionDetRet normResult(VisionDetRet ret, Rect2d boundingBox) {
         VisionDetRet result;
