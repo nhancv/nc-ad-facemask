@@ -9,6 +9,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
@@ -66,7 +67,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private List<VisionDetRet> results;
     private List<VisionDetRet> visionDetRets = new ArrayList<>();
     private BitmapConversion bitmapConversion = new BitmapConversion();
-    private Paint mFaceLandmarkPaint;
+    private Paint greenPaint, redPaint, bluePaint;
     private Tracker mosse = TrackerMOSSE.create();
 
     //private Bitmap overlayImage;
@@ -83,6 +84,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
     private long lastTime = 0;
 
+    private RectF originBox = new RectF();
     private Rect2d boundingBox = new Rect2d();
     private Rect2d oldBoundingBox = new Rect2d();
 
@@ -118,10 +120,20 @@ public class OnGetImageListener implements OnImageAvailableListener {
             //FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
             FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_5_face_landmarks, Constants.getFaceShapeModelPath());
         }
-        mFaceLandmarkPaint = new Paint();
-        mFaceLandmarkPaint.setColor(Color.GREEN);
-        mFaceLandmarkPaint.setStrokeWidth(2);
-        mFaceLandmarkPaint.setStyle(Paint.Style.STROKE);
+        greenPaint = new Paint();
+        greenPaint.setColor(Color.GREEN);
+        greenPaint.setStrokeWidth(2);
+        greenPaint.setStyle(Paint.Style.STROKE);
+
+        redPaint = new Paint();
+        redPaint.setColor(Color.RED);
+        redPaint.setStrokeWidth(1);
+        redPaint.setStyle(Paint.Style.STROKE);
+
+        bluePaint = new Paint();
+        bluePaint.setColor(Color.BLUE);
+        bluePaint.setStrokeWidth(1);
+        bluePaint.setStyle(Paint.Style.STROKE);
     }
 
     @DebugLog
@@ -256,7 +268,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
         //convert mCroppedBitmap to cropped Mat to start init
         final Mat croppedMat = bitmapConversion.convertBitmap2Mat(bmp32);
 
-        if (results.size() > 0 && croppedMat != null && !croppedMat.size().empty()) {
+        if (results.size() > 0) {
 
             if (visionDetRets.size() == 0) {
                 visionDetRets.add(results.get(0));
@@ -269,20 +281,29 @@ public class OnGetImageListener implements OnImageAvailableListener {
             float y = ret.getTop();
             float w = ret.getRight() - x;
             float h = ret.getBottom() - y;
-            trackingHandler.post(() -> mosse.init(croppedMat, new Rect2d(x, y, w, h)));
+
+            originBox.left = ret.getLeft();
+            originBox.right = ret.getRight();
+            originBox.bottom = ret.getBottom();
+            originBox.top = ret.getTop();
+
             //update old bounding box = bounding box
             oldBoundingBox.x = x;
             oldBoundingBox.y = y;
             oldBoundingBox.width = w;
             oldBoundingBox.height = h;
-            Log.d(TAG, "detectFrame" + boundingBox);
+
+            if(croppedMat != null && !croppedMat.size().empty()) {
+                trackingHandler.post(() -> mosse.init(croppedMat, new Rect2d(x, y, w, h)));
+            }
+            Log.d(TAG, "detectFrame" + oldBoundingBox);
         }
     }
 
     /**
      * Tracking and update: visionDetRets depend on boundingBox, oldBoundingBox
      * <p>
-     * Write: boundingBox, oldBoundingBox
+     * Write: boundingBox, oldBoundingBox, visionDetRets
      * Read: mCroppedBitmap (clone), visionDetRets
      */
     private void step3TrackingProcess() {
@@ -308,31 +329,15 @@ public class OnGetImageListener implements OnImageAvailableListener {
                     VisionDetRet ret = visionDetRets.get(0);
 
                     //using the current bound box to get landmarks and compare with old bounding box
-                    newRet = normResult(ret, boundingBox);
-                    visionDetRets.set(0, newRet);//update with newRect
+//                    newRet = normResult(ret, boundingBox);
+//                    visionDetRets.set(0, newRet);//update with newRect
                 }
-            } else {
-
-                //Case 2: visionDetRet: 1 + oldBoundingBox: 1 + boundingBox = 0
-                boundingBox.x = oldBoundingBox.x;
-                boundingBox.y = oldBoundingBox.y;
-                boundingBox.width = oldBoundingBox.width;
-                boundingBox.height = oldBoundingBox.height;
-                if (visionDetRets.size() > 0 && !oldBoundingBox.empty()) {
-                    VisionDetRet ret = visionDetRets.get(0);
-                    //using the current bound box to get landmarks and compare with old bounding box
-                    newRet = normResult(ret, boundingBox);
-
-                    visionDetRets.set(0, newRet);//update with newRect
-                }
-
+                //update oldboundingBox with bounding box
+                oldBoundingBox.x = boundingBox.x;
+                oldBoundingBox.y = boundingBox.y;
+                oldBoundingBox.width = boundingBox.width;
+                oldBoundingBox.height = boundingBox.height;
             }
-            //update oldboundingBox with bounding box
-            oldBoundingBox.x = boundingBox.x;
-            oldBoundingBox.y = boundingBox.y;
-            oldBoundingBox.width = boundingBox.width;
-            oldBoundingBox.height = boundingBox.height;
-
 
         }
     }
@@ -393,11 +398,21 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private void drawOnResultBoundingBox(VisionDetRet visionDetRet) {
         Rect bounds = new Rect(visionDetRet.getLeft(), visionDetRet.getTop(), visionDetRet.getRight(), visionDetRet.getBottom());
         Canvas canvas = new Canvas(mCroppedBitmap);
-        canvas.drawRect(bounds, mFaceLandmarkPaint);
+        canvas.drawRect(bounds, greenPaint);
+
+        if (oldBoundingBox != null && !oldBoundingBox.empty()) {
+            RectF r = new RectF((float) oldBoundingBox.x, (float) oldBoundingBox.y,
+                    (float) (oldBoundingBox.x + oldBoundingBox.width), (float) (oldBoundingBox.y + oldBoundingBox.height));
+            canvas.drawRect(r, redPaint);
+        }
+
+        if (originBox != null) {
+            canvas.drawRect(originBox, bluePaint);
+        }
 
         List<Point> landmarks = visionDetRet.getFaceLandmarks();
         for (Point landmark : landmarks) {
-            canvas.drawPoint(landmark.x, landmark.y, mFaceLandmarkPaint);
+            canvas.drawPoint(landmark.x, landmark.y, greenPaint);
         }
 
     }
