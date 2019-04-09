@@ -293,13 +293,49 @@ public class OnGetImageListener implements OnImageAvailableListener {
             final Mat croppedMat = bitmapConversion.convertBitmap2Mat(bmp32);
 
             long startTime = System.currentTimeMillis();
+            //udpate bounding Box based on init boundingBox
             boolean canTrack = mosse.update(croppedMat, boundingBox);
             long endTime = System.currentTimeMillis();
+
             Log.d(TAG, "Tracking time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
 
             // Depend on (visionDetRets + oldBoundingBox ) combine with boundingBox => visionDetRets
+            //Case 2: visionDetRet: 1 + oldBoundingBox: 1 + boundingBox 0 =>
+            //if a bounding box can track
+            VisionDetRet newRet = null;
+            if(canTrack) {
+                Log.d(TAG,"CanTrack");
+                //Case 1: visionDetRet: 1 + oldBoundingBox: 1 + boundingBox 1 => new visionDetRets
+                if(visionDetRets.size()>0 && !oldBoundingBox.empty()){
+                    VisionDetRet ret = visionDetRets.get(0);
 
+                    //using the current bound box to get landmarks and compare with old bounding box
+                    newRet = normResult(ret, boundingBox);
+                    visionDetRets.set(0,newRet);//update with newRect
+                }
+            }
+            else{
 
+                //Case 2: visionDetRet: 1 + oldBoundingBox: 1 + boundingBox = 0
+                boundingBox.x = oldBoundingBox.x;
+                boundingBox.y = oldBoundingBox.y;
+                boundingBox.width = oldBoundingBox.width;
+                boundingBox.height = oldBoundingBox.height;
+                if(visionDetRets.size()>0 && !oldBoundingBox.empty()){
+                    VisionDetRet ret = visionDetRets.get(0);
+                    //using the current bound box to get landmarks and compare with old bounding box
+                    newRet = normResult(ret, boundingBox);
+
+                    visionDetRets.set(0,newRet);//update with newRect
+                }
+                Log.d(TAG,"Can not Track");
+
+            }
+            //update oldboundingBox with bounding box
+            oldBoundingBox.x = boundingBox.x;
+            oldBoundingBox.y = boundingBox.y;
+            oldBoundingBox.width = boundingBox.width;
+            oldBoundingBox.height = boundingBox.height;
 
 
 
