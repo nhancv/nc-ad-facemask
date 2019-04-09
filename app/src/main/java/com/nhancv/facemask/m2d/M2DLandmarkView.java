@@ -52,10 +52,12 @@ public class M2DLandmarkView extends View {
     private Mask curMask;
     private MaskController maskController;
     private List<Point> oldLandMarks = new ArrayList<>(); //landmarks that have been normalized
-    float radius = 30; //radius distance difference of new and old points
+    private float radius = 30; //radius distance difference of new and old points
     private Head5 head5 = new Head5();
     private Nose5 nose5 = new Nose5();
     private Eye5 eye5 = new Eye5();
+    private Paint mFaceLandmarkPaint;
+
 
     public M2DLandmarkView(Context context) {
         this(context, null, 0, 0);
@@ -72,6 +74,10 @@ public class M2DLandmarkView extends View {
     public M2DLandmarkView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
 
+        mFaceLandmarkPaint = new Paint();
+        mFaceLandmarkPaint.setColor(Color.GREEN);
+        mFaceLandmarkPaint.setStrokeWidth(2);
+        mFaceLandmarkPaint.setStyle(Paint.Style.STROKE);
 
         bounds = new Rect();
     }
@@ -196,6 +202,7 @@ public class M2DLandmarkView extends View {
             float centerY = faceCenterY(bounds.top, bounds.bottom);
             float faceW = bounds.right - bounds.left;
             float faceH = bounds.bottom - bounds.top;
+            canvas.drawRect(bounds, mFaceLandmarkPaint);
 
             if (overlayElements != null) {
                 for (Map.Entry<String, Bitmap> entry : overlayElements.entrySet()) {
