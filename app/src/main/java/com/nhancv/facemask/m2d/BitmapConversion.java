@@ -41,8 +41,8 @@ public class BitmapConversion {
     }
     public Mat convertBitmap2Mat(Bitmap bmp) {
         Mat rgbaMat = new Mat(bmp.getHeight(),bmp.getWidth(),CvType.CV_8UC4); //empty mat
-        Bitmap bmp32 = bmp.copy(Bitmap.Config.ARGB_8888,true);
-        Utils.bitmapToMat(bmp32,rgbaMat);
+//        Bitmap bmp32 = bmp.copy(Bitmap.Config.ARGB_8888,true);
+        Utils.bitmapToMat(bmp,rgbaMat);
         //From a 4 channel image, convert to 3 channel image
         Mat rgbMat = new Mat(bmp.getHeight(),bmp.getWidth(),CvType.CV_8UC3);
         cvtColor(rgbaMat,rgbMat,Imgproc.COLOR_RGBA2BGR,3); //BGR type for OpenCV

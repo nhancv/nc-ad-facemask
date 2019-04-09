@@ -32,6 +32,7 @@ import org.opencv.tracking.Tracker;
 import org.opencv.tracking.TrackerMOSSE;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import hugo.weaving.DebugLog;
@@ -63,8 +64,8 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private String cameraId;
     private FaceLandmarkListener faceLandmarkListener;
     private List<VisionDetRet> results;
+    private List<VisionDetRet> visionDetRets = new ArrayList<>();
     private BitmapConversion bitmapConversion = new BitmapConversion();
-    private Mat croppedMat;
     private Paint mFaceLandmarkPaint;
     private Tracker mosse = TrackerMOSSE.create();
 
@@ -84,8 +85,6 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
     private Rect2d boundingBox = new Rect2d();
     private Rect2d oldBoundingBox = new Rect2d();
-    private VisionDetRet ret;//our origin
-    private boolean isDetect = false;//check if it is detect
 
     public OnGetImageListener() {
         renderFps = new StableFps(30);
@@ -151,7 +150,6 @@ public class OnGetImageListener implements OnImageAvailableListener {
         }
 
         if (results != null && results.size() > 0) {
-            croppedMat = bitmapConversion.convertBitmap2Mat(mCroppedBitmap);
             //start tracking after finishing face detection
             trackingHandler.post(this::step3TrackingProcess);
         }
@@ -240,124 +238,127 @@ public class OnGetImageListener implements OnImageAvailableListener {
         return false;
     }
 
+    /**
+     *
+     * Process and output: visionDetRets, oldBoundingBox
+     *
+     * Write: results, visionDetRets, oldBoundingBox
+     * Read: mCroppedBitmap (clone)
+     */
     private void step2FaceDetProcess() {
         long startTime = System.currentTimeMillis();
 
-        results = mFaceDet.detect(mCroppedBitmap.copy(mCroppedBitmap.getConfig(), true));
+        Bitmap bmp32 = mCroppedBitmap.copy(Bitmap.Config.ARGB_8888, true);
+        results = mFaceDet.detect(bmp32);
 
         long endTime = System.currentTimeMillis();
         Log.d(TAG, "Detect face time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
-        // Draw on bitmap
-        //bug here results is = 0
-        //convert mCroppedBitmap to cropped Mat to start init
-        croppedMat = bitmapConversion.convertBitmap2Mat(mCroppedBitmap);
 
-        if (results.size() > 0
-                && croppedMat != null && !croppedMat.size().empty()) {
-            ret = results.get(0);
+        //convert mCroppedBitmap to cropped Mat to start init
+        final Mat croppedMat = bitmapConversion.convertBitmap2Mat(bmp32);
+
+        if (results.size() > 0 && croppedMat != null && !croppedMat.size().empty()) {
+
+            if (visionDetRets.size() == 0) {
+                visionDetRets.add(results.get(0));
+            } else {
+                visionDetRets.set(0, results.get(0));
+            }
+
+            VisionDetRet ret = visionDetRets.get(0);
             float x = ret.getLeft();
             float y = ret.getTop();
             float w = ret.getRight() - x;
             float h = ret.getBottom() - y;
-            //boundingBox = new Rect2d(x, y, w, h);
-            //modify bounding box value
-            boundingBox.x = x;
-            boundingBox.y = y;
-            boundingBox.width = w;
-            boundingBox.height = h;
-            //drawOnResultBoundingBox(boundingBox);
-            trackingHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    mosse.init(croppedMat, boundingBox);
-                }
-            });
+            trackingHandler.post(() -> mosse.init(croppedMat, new Rect2d(x, y, w, h)));
             //update old bounding box = bounding box
             oldBoundingBox.x = x;
             oldBoundingBox.y = y;
             oldBoundingBox.width = w;
             oldBoundingBox.height = h;
-            isDetect = true;
             Log.d(TAG, "detectFrame" + boundingBox);
         }
     }
 
+    /**
+     * Tracking and update: visionDetRets depend on boundingBox, oldBoundingBox
+     *
+     * Write: boundingBox, oldBoundingBox
+     * Read: mCroppedBitmap (clone), visionDetRets
+     */
     private void step3TrackingProcess() {
-        Log.d(TAG,"BoundingBoxTracking"+boundingBox);
-        if (boundingBox != null && !boundingBox.size().empty()) {
-            if(isDetect){
-                Log.d(TAG,"startTrackingFrame"+ boundingBox);
-                isDetect = false;
-            }
+        Log.d(TAG, "BoundingBoxTracking" + boundingBox);
+        if (boundingBox != null) {
+            Bitmap bmp32 = mCroppedBitmap.copy(Bitmap.Config.ARGB_8888, true);
+            final Mat croppedMat = bitmapConversion.convertBitmap2Mat(bmp32);
+
             long startTime = System.currentTimeMillis();
-            boolean canTrack = mosse.update(croppedMat, boundingBox);//update based on the old bounding box
-            //if cant track detect again or use old bounding box?
-            if(!canTrack) {
-                //long startTime = System.currentTimeMillis();
+            boolean canTrack = mosse.update(croppedMat, boundingBox);
+            long endTime = System.currentTimeMillis();
+            Log.d(TAG, "Tracking time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
 
-                results = mFaceDet.detect(mCroppedBitmap.copy(mCroppedBitmap.getConfig(), true));
+            // Depend on (visionDetRets + oldBoundingBox ) combine with boundingBox => visionDetRets
 
-                //long endTime = System.currentTimeMillis();
-                //Log.d(TAG, "Detect face time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
-                // Draw on bitmap
-                //bug here results is = 0
-                //convert mCroppedBitmap to cropped Mat to start init
-                croppedMat = bitmapConversion.convertBitmap2Mat(mCroppedBitmap);
 
-                if (results.size() > 0
-                        && croppedMat != null && !croppedMat.size().empty()) {
-                    ret = results.get(0);
-                    float x = ret.getLeft();
-                    float y = ret.getTop();
-                    float w = ret.getRight() - x;
-                    float h = ret.getBottom() - y;
-                    //boundingBox = new Rect2d(x, y, w, h);
-                    //modify bounding box value
-                    boundingBox.x = x;
-                    boundingBox.y = y;
-                    boundingBox.width = w;
-                    boundingBox.height = h;
-                    //drawOnResultBoundingBox(boundingBox);
-                    Log.d(TAG, "detectFrame" + boundingBox);
-                }
-                else {
-                    boundingBox.x = oldBoundingBox.x;
-                    boundingBox.y = oldBoundingBox.y;
-                    boundingBox.width = oldBoundingBox.width;
-                    boundingBox.height = oldBoundingBox.height;
-                }
-            }
-            if(!boundingBox.empty()){ //check if cropped Mat is not empty{
-                Log.d(TAG, "updatedBounding Box: " + boundingBox);
-                long endTime = System.currentTimeMillis();
-                Log.d(TAG, "Tracking time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
-                //update new bounding box by using tracking
 
-                if (results.size() > 0) {
-                    //wait(100);
-                    ret = results.get(0); //get the old ret face
 
-                }
-                //first frame: oldBoundingBox: original landmarks
-                //next frame:
-                VisionDetRet newRet = normResult(ret, boundingBox);//using the current bound box to get landmarks and compare with old bounding box
-                //update old bounding box with new bounding box
-                oldBoundingBox.x = boundingBox.x;
-                oldBoundingBox.y = boundingBox.y;
-                oldBoundingBox.width = boundingBox.width;
-                oldBoundingBox.height = boundingBox.height;
 
-                //update new landmarks
-                //                        results = new ArrayList<>();
-                //                        if(results.size() > 0) {
-                //                            results.set(0, newRet);
-                //                        }
-                if (results.size() > 0)
-                    results.set(0, newRet); //add ret value to results
-            }
+//            if (!canTrack) {
+//
+//                if (results.size() > 0
+//                        && croppedMat != null && !croppedMat.size().empty()) {
+//                    VisionDetRet ret = results.get(0);
+//                    float x = ret.getLeft();
+//                    float y = ret.getTop();
+//                    float w = ret.getRight() - x;
+//                    float h = ret.getBottom() - y;
+//                    //boundingBox = new Rect2d(x, y, w, h);
+//                    //modify bounding box value
+//                    boundingBox.x = x;
+//                    boundingBox.y = y;
+//                    boundingBox.width = w;
+//                    boundingBox.height = h;
+//                    //drawOnResultBoundingBox(boundingBox);
+//                    Log.d(TAG, "detectFrame" + boundingBox);
+//                } else {
+//                    boundingBox.x = oldBoundingBox.x;
+//                    boundingBox.y = oldBoundingBox.y;
+//                    boundingBox.width = oldBoundingBox.width;
+//                    boundingBox.height = oldBoundingBox.height;
+//                }
+//            }
+//
+//            if (!boundingBox.empty()) { //check if cropped Mat is not empty{
+//                Log.d(TAG, "updatedBounding Box: " + boundingBox);
+//                long endTime = System.currentTimeMillis();
+//                Log.d(TAG, "Tracking time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
+//                //update new bounding box by using tracking
+//
+//                if (results.size() > 0) {
+//                    //wait(100);
+//                    VisionDetRet ret = results.get(0); //get the old ret face
+//
+//                }
+//                //first frame: oldBoundingBox: original landmarks
+//                //next frame:
+//                VisionDetRet newRet = normResult(ret, boundingBox);//using the current bound box to get landmarks and compare with old bounding box
+//                //update old bounding box with new bounding box
+//                oldBoundingBox.x = boundingBox.x;
+//                oldBoundingBox.y = boundingBox.y;
+//                oldBoundingBox.width = boundingBox.width;
+//                oldBoundingBox.height = boundingBox.height;
+//
+//                if (results.size() > 0)
+//                    results.set(0, newRet); //add ret value to results
+//            }
         }
     }
 
+    /**
+     * Render object by: visionDetRets, mCroppedBitmap
+     * Read only
+     * @param fps
+     */
     private void step4RenderProcess(int fps) {
         final String log;
         long endTime = System.currentTimeMillis();
@@ -369,7 +370,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
             lastTime = endTime;
         }
 
-        if (faceLandmarkListener != null && results != null && mCroppedBitmap != null && tvFps != null) {
+        if (faceLandmarkListener != null && visionDetRets != null && mCroppedBitmap != null && tvFps != null) {
 //                            if (boundingBox == null && !results.isEmpty()) {
 //                                ret = results.get(0);
 //                                float x = ret.getLeft();
@@ -381,8 +382,8 @@ public class OnGetImageListener implements OnImageAvailableListener {
 //                                oldBoundingBox = new Rect2d(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
 //                            }
 
-            if (boundingBox != null && !results.isEmpty()) {
-                Log.d(TAG,"udpate tracking result");
+            if (boundingBox != null && !visionDetRets.isEmpty()) {
+                Log.d(TAG, "udpate tracking result");
                 drawOnResultBoundingBox(boundingBox);
                 if (mUIHandler != null) {
                     mUIHandler.post(() -> {
@@ -394,7 +395,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
             }
 
-            faceLandmarkListener.landmarkUpdate(results, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
+            faceLandmarkListener.landmarkUpdate(visionDetRets, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
 
         }
     }
@@ -421,12 +422,12 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
     private void drawOnResultBoundingBox(Rect2d boundingBox) {
         Rect bounds = new Rect();
-        bounds.left = (int)boundingBox.x;
-        bounds.top = (int)boundingBox.y;
-        bounds.right =(int)(boundingBox.x + boundingBox.width);
-        bounds.bottom = (int)(boundingBox.y+boundingBox.height);
+        bounds.left = (int) boundingBox.x;
+        bounds.top = (int) boundingBox.y;
+        bounds.right = (int) (boundingBox.x + boundingBox.width);
+        bounds.bottom = (int) (boundingBox.y + boundingBox.height);
         Canvas canvas = new Canvas(mCroppedBitmap);
-        canvas.drawRect(bounds,mFaceLandmarkPaint);
+        canvas.drawRect(bounds, mFaceLandmarkPaint);
 
     }
 
