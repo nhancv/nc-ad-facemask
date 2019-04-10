@@ -29,6 +29,7 @@ import com.tzutalin.dlibtest.ImageUtils;
 
 import org.opencv.core.Mat;
 import org.opencv.core.Rect2d;
+
 import org.opencv.tracking.Tracker;
 import org.opencv.tracking.TrackerMOSSE;
 
@@ -36,7 +37,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opencv.video.SparsePyrLKOpticalFlow;
 import hugo.weaving.DebugLog;
+
+import static org.opencv.core.CvType.CV_32F;
+import static org.opencv.core.CvType.CV_32FC2;
 
 /**
  * Class that takes in preview frames and converts the image to Bitmaps to process with dlib lib.
@@ -68,8 +73,13 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private List<VisionDetRet> visionDetRets = new ArrayList<>();
     private BitmapConversion bitmapConversion = new BitmapConversion();
     private Paint greenPaint, redPaint, bluePaint;
+    //Mosse tracker
     private Tracker mosse = TrackerMOSSE.create();
-
+    //Create Sparse Optical Flow LK
+    //default sparse optical flow config.
+    private SparsePyrLKOpticalFlow opticalFlow = SparsePyrLKOpticalFlow.create();
+    private MatConversion matConversion = new MatConversion();
+    private Mat firstDetectGrayMat = new Mat();
     //private Bitmap overlayImage;
     /**
      * 0 forback camera
@@ -83,13 +93,18 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private StableFps detectFps;
 
     private long lastTime = 0;
-
+    //MOSSE Tracking
     private RectF originBox = new RectF();
-    private Rect2d firstDetectBoundingBox = new Rect2d();
-    private Mat firstDetectCroppedMat = new Mat();
+    //private Rect2d firstDetectBoundingBox = new Rect2d();
+    //private Mat firstDetectCroppedMat = new Mat();
 
     private Rect2d boundingBox = new Rect2d();
     private Rect2d oldBoundingBox = new Rect2d();
+    //Optical Flow LK tracking
+    private Mat prevPts = new Mat(5,2,CV_32F);
+
+    private Mat prevImg = new Mat();
+    private List<Point> prevPtsList = new ArrayList<>();
 
     public OnGetImageListener() {
         renderFps = new StableFps(30);
@@ -259,6 +274,11 @@ public class OnGetImageListener implements OnImageAvailableListener {
      * Write: results, visionDetRets, oldBoundingBox
      * Read: mCroppedBitmap (clone)
      */
+    /***
+     * Process and output: preImg, prevPts
+     * Write: prImg, prevPts(clone), prePtsList
+     *
+     * */
     private void step2FaceDetProcess() {
         long startTime = System.currentTimeMillis();
 
@@ -269,7 +289,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
         Log.d(TAG, "Detect face time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
 
         //convert mCroppedBitmap to cropped Mat to start init
-        firstDetectCroppedMat = bitmapConversion.convertBitmap2Mat(bmp32);
+        firstDetectGrayMat = bitmapConversion.convertBitmap2GrayMat(bmp32);
 
         if (results.size() > 0) {
 
@@ -284,30 +304,36 @@ public class OnGetImageListener implements OnImageAvailableListener {
             float y = ret.getTop();
             float w = ret.getRight() - x;
             float h = ret.getBottom() - y;
+            //prePts
+            prevPts = matConversion.convertPts2OpenCVPts(ret.getFaceLandmarks());
+            //clone the first detect crop Mats
+            prevImg = firstDetectGrayMat;
+            prevPtsList = ret.getFaceLandmarks();
 
-            originBox.left = ret.getLeft();
-            originBox.right = ret.getRight();
-            originBox.bottom = ret.getBottom();
-            originBox.top = ret.getTop();
+//
+//            originBox.left = ret.getLeft();
+//            originBox.right = ret.getRight();
+//            originBox.bottom = ret.getBottom();
+//            originBox.top = ret.getTop();
 
             //update old bounding box = bounding box
-            oldBoundingBox.x = x;
-            oldBoundingBox.y = y;
-            oldBoundingBox.width = w;
-            oldBoundingBox.height = h;
+//            oldBoundingBox.x = x;
+//            oldBoundingBox.y = y;
+//            oldBoundingBox.width = w;
+//            oldBoundingBox.height = h;
+//
+//            firstDetectBoundingBox.x = x;
+//            firstDetectBoundingBox.y = y;
+//            firstDetectBoundingBox.width = w;
+//            firstDetectBoundingBox.height = h;
 
-            firstDetectBoundingBox.x = x;
-            firstDetectBoundingBox.y = y;
-            firstDetectBoundingBox.width = w;
-            firstDetectBoundingBox.height = h;
-
-            if(firstDetectCroppedMat != null && !firstDetectCroppedMat.size().empty()) {
-                trackingHandler.post(() -> {
-                    Log.e(TAG, "step2FaceDetProcess: init mosse " + firstDetectBoundingBox);
-                    mosse = TrackerMOSSE.create();
-                    mosse.init(firstDetectCroppedMat, firstDetectBoundingBox);
-                });
-            }
+//            if(firstDetectCroppedMat != null && !firstDetectCroppedMat.size().empty()) {
+//                trackingHandler.post(() -> {
+//                    Log.e(TAG, "step2FaceDetProcess: init mosse " + firstDetectBoundingBox);
+//                    mosse = TrackerMOSSE.create();
+//                    mosse.init(firstDetectCroppedMat, firstDetectBoundingBox);
+//                });
+//            }
             Log.d(TAG, "detectFrame" + oldBoundingBox);
         }
     }
@@ -318,41 +344,79 @@ public class OnGetImageListener implements OnImageAvailableListener {
      * Write: boundingBox, oldBoundingBox, visionDetRets
      * Read: mCroppedBitmap (clone), visionDetRets
      */
+    /**
+     * Tracking and update: visionDetRets depend on preImg, nextImg, prevPts, prevPtsList
+     * <p>
+     * Write: prevImg,prePts, PrevPtsList visionDetRets =>NextPts
+     * Read: mCroppedBitmap (clone), visionDetRets, PrevPtList
+     */
     private void step3TrackingProcess() {
-        if (boundingBox != null) {
+        if (prevPts!=null && prevImg!=null && !prevImg.empty()&&!prevPts.empty()) {
             Bitmap bmp32 = mCroppedBitmap.copy(mCroppedBitmap.getConfig(), true);
-            final Mat croppedMat = bitmapConversion.convertBitmap2Mat(bmp32);
-
+            Mat status = new Mat();
+            Log.d(TAG,"Previous Points"+prevPts);
+            //final Mat croppedMat = bitmapConversion.convertBitmap2Mat(bmp32);
+            final Mat croppedGrayMat = bitmapConversion.convertBitmap2GrayMat(bmp32);
             long startTime = System.currentTimeMillis();
             //udpate bounding Box based on init boundingBox
-            boolean canTrack = mosse.update(croppedMat, boundingBox);
-            Log.d(TAG, "BoundingBoxTracking" + boundingBox);
+//            boolean canTrack = mosse.update(croppedMat, boundingBox);
+            //the same type with prePts
+            Mat nextPts = new Mat(prevPts.rows(),1,CV_32FC2);
+            Log.d(TAG,"Next Point "+nextPts);
+            opticalFlow.calc(prevImg,croppedGrayMat,prevPts,nextPts,status);
+            //Log.d(TAG, "BoundingBoxTracking" + boundingBox);
 
             long endTime = System.currentTimeMillis();
 
-            Log.d(TAG, "Tracking time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec with " + canTrack);
-
+//            Log.d(TAG, "Tracking time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec with " + canTrack);
+            Log.d(TAG, "Tracking time cost: " + String.valueOf((endTime - startTime) / 1000f));
             // Depend on (visionDetRets + oldBoundingBox ) combine with boundingBox => visionDetRets
             //Case 2: visionDetRet: 1 + oldBoundingBox: 1 + boundingBox 0 =>
             //if a bounding box can track
             VisionDetRet newRet;
-            if (canTrack) {
-                //Case 1: visionDetRet: 1 + oldBoundingBox: 1 + boundingBox 1 => new visionDetRets
-                if (visionDetRets.size() > 0 && !oldBoundingBox.empty()) {
-                    VisionDetRet ret = visionDetRets.get(0);
-
-                    //using the current bound box to get landmarks and compare with old bounding box
-                    newRet = normResult(ret, boundingBox);
-                    visionDetRets.set(0, newRet);//update with newRect
-
-                    //update oldboundingBox with bounding box
-                    oldBoundingBox.x = boundingBox.x;
-                    oldBoundingBox.y = boundingBox.y;
-                    oldBoundingBox.width = boundingBox.width;
-                    oldBoundingBox.height = boundingBox.height;
+            List<Point> pointsList = new ArrayList<>();
+            List<Byte> statusList = new ArrayList<>();
+            matConversion.convertMatPts2(nextPts,pointsList);
+            matConversion.convertMat2ByteList(status,statusList);
+            Log.d(TAG,"statusList result: "+statusList);
+            for(int i = 0;i<pointsList.size();i++){
+                //if point is good we keep
+                if(statusList.get(i)!=0){
+                    Log.d(TAG,"valid point");
+                    continue;
                 }
-
+                //replace with prePoint
+                pointsList.set(i,prevPtsList.get(i));
             }
+
+
+            VisionDetRet ret = visionDetRets.get(0);
+            newRet = normResult(ret,pointsList);
+            visionDetRets.set(0,newRet);
+
+            //update for next tracking
+            prevImg = croppedGrayMat;
+            prevPts = nextPts;
+            prevPtsList = pointsList;
+
+            //Convert from List Of next points to prePts matrix
+//            if (canTrack) {
+//                //Case 1: visionDetRet: 1 + oldBoundingBox: 1 + boundingBox 1 => new visionDetRets
+//                if (visionDetRets.size() > 0 && !oldBoundingBox.empty()) {
+//                    VisionDetRet ret = visionDetRets.get(0);
+//
+//                    //using the current bound box to get landmarks and compare with old bounding box
+//                    newRet = normResult(ret, boundingBox);
+//                    visionDetRets.set(0, newRet);//update with newRect
+//
+//                    //update oldboundingBox with bounding box
+//                    oldBoundingBox.x = boundingBox.x;
+//                    oldBoundingBox.y = boundingBox.y;
+//                    oldBoundingBox.width = boundingBox.width;
+//                    oldBoundingBox.height = boundingBox.height;
+//                }
+//
+//            }
 
         }
     }
@@ -386,7 +450,44 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
         }
     }
+    /*
+    * Read: next points
+    *Write: next Bounding
+    * */
+    private VisionDetRet normResult(VisionDetRet ret, List<Point> nextPoints){
+        VisionDetRet result;
+        int x1 =prevPtsList.get(0).x;
+        int y1 = prevPtsList.get(0).y;
+        int x2 = nextPoints.get(0).x;
+        int y2 = nextPoints.get(0).y;
+        int translateX = x2-x1;
+        int translateY = y2 -y1;
 
+        int boxWidth = ret.getBottom()-ret.getTop();
+        int boxHeight = ret.getRight() - ret.getLeft();
+
+        int prevEyeWidth = prevPtsList.get(2).x - x1;
+        int width = nextPoints.get(2).x - x2;
+        float wRatio = 1.0f*width/prevEyeWidth;
+        int prevEyeHeight = prevPtsList.get(4).y - y1;
+        int height = nextPoints.get(4).y - y2;
+        float hRatio = 1.0f*height/prevEyeHeight;
+
+        int newBoxWidth = (int) (boxWidth *wRatio);
+        int newBoxHeight = (int) (boxHeight *hRatio);
+        int boxX = ret.getLeft() +translateX;
+        int boxY = ret.getTop() +translateY;
+
+        String label = "p1";
+        Point p1 = nextPoints.get(0);
+        Point p2 = nextPoints.get(2);
+        result = new VisionDetRet(label,100f,boxX,boxY,boxX+newBoxWidth,boxY+newBoxHeight);
+        for (int i = 0; i < nextPoints.size(); i++) {
+            result.addLandmark(nextPoints.get(i).x,nextPoints.get(i).y);
+        }
+
+        return result;
+    }
     private VisionDetRet normResult(VisionDetRet ret, Rect2d boundingBox) {
         VisionDetRet result;
         float x = (float) boundingBox.x;
@@ -398,8 +499,11 @@ public class OnGetImageListener implements OnImageAvailableListener {
         float bottom = (float) (boundingBox.y + boundingBox.height);
         //new result of VisionDetRet
         result = new VisionDetRet(label, 100f, (int) x, (int) y, (int) right, (int) bottom);
-        int offsetX = (int) (x - oldX);
-        int offsetY = (int) (y - oldY);
+
+        float xRatio = (float) ((float)boundingBox.width/oldBoundingBox.width);//x Scale Ratio
+        float yRatio = (float)((float)boundingBox.height/oldBoundingBox.height);//y Scale Ratio
+        int offsetX = (int) ((x - oldX)*xRatio);
+        int offsetY = (int) ((y - oldY)*yRatio);
         List<Point> oldLandmarks = ret.getFaceLandmarks();
         for (int i = 0; i < oldLandmarks.size(); i++) {
             result.addLandmark(oldLandmarks.get(i).x + offsetX, oldLandmarks.get(i).y + offsetY);

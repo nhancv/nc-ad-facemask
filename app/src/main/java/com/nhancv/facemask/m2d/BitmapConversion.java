@@ -48,4 +48,13 @@ public class BitmapConversion {
         cvtColor(rgbaMat,rgbMat,Imgproc.COLOR_RGBA2BGR,3); //BGR type for OpenCV
         return rgbMat;
     }
+    public Mat convertBitmap2GrayMat(Bitmap bmp){
+        Mat rgbaMat = new Mat(bmp.getHeight(),bmp.getWidth(),CvType.CV_8UC4); //empty mat
+//        Bitmap bmp32 = bmp.copy(Bitmap.Config.ARGB_8888,true);
+        Utils.bitmapToMat(bmp,rgbaMat);
+        //From a 4 channel image, convert to  gray scale img
+        Mat grayMat = new Mat(bmp.getHeight(),bmp.getWidth(),CvType.CV_8UC1);
+        cvtColor(rgbaMat,grayMat,Imgproc.COLOR_RGBA2GRAY,3); //BGR type for OpenCV
+        return grayMat;
+    }
 }
