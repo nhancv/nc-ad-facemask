@@ -127,6 +127,8 @@ public class STUtils {
             paint.setStyle(Paint.Style.STROKE);
             canvas.drawRect(rect, paint);
         }
+        Log.d("STUtils", "drawFaceRect: " + rect);
+
     }
 
     public static void drawPoints(Canvas canvas, Paint paint, PointF[] points, float[] visibles, int width, int height, boolean frontCamera) {
