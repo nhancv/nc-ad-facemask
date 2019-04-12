@@ -121,6 +121,7 @@ public class FaceTrackingListener implements OnImageAvailableListener {
         mPaint.setColor(Color.rgb(57, 138, 243));
         mPaint.setStrokeWidth(2);
         mPaint.setStyle(Paint.Style.FILL);
+
     }
 
     @DebugLog
@@ -128,6 +129,7 @@ public class FaceTrackingListener implements OnImageAvailableListener {
         synchronized (FaceTrackingListener.this) {
             renderFps.stop();
             detectFps.stop();
+            mTrack106 = false;
         }
     }
 
@@ -200,59 +202,59 @@ public class FaceTrackingListener implements OnImageAvailableListener {
             synchronized (lockObj) {
                 byte[] data = ImageUtil.YUV_420_888toNV212(image);
                 System.arraycopy(data, 0, mNv21Data, 0, data.length);
-            }
+                image.close();
 
-            if (mTrack106) {
-                mMultiTrack106.FaceTrackingInit(mNv21Data, mPreviewHeight, mPreviewWidth);
-                mTrack106 = !mTrack106;
-            } else {
-                mMultiTrack106.Update(mNv21Data, mPreviewHeight, mPreviewWidth);
-            }
 
-            List<Face> faceActions = mMultiTrack106.getTrackingInfo();
-
-            if (faceActions != null) {
-
-                if (!mOverlap.getHolder().getSurface().isValid()) {
-                    return false;
+                if (!mTrack106) {
+                    mMultiTrack106.FaceTrackingInit(mNv21Data, mPreviewHeight, mPreviewWidth);
+                    mTrack106 = !mTrack106;
+                } else {
+                    mMultiTrack106.Update(mNv21Data, mPreviewHeight, mPreviewWidth);
                 }
 
-                Canvas canvas = mOverlap.getHolder().lockCanvas();
-                if (canvas == null)
-                    return false;
+                List<Face> faceActions = mMultiTrack106.getTrackingInfo();
 
-                canvas.drawColor(0, PorterDuff.Mode.CLEAR);
-                canvas.setMatrix(matrix);
-                boolean rotate270 = true;
-                for (Face r : faceActions) {
+                if (faceActions != null) {
 
-                    Rect rect=new Rect(mPreviewHeight - r.left,r.top,mPreviewHeight - r.right,r.bottom);
-
-                    Log.d(TAG, "handleDrawPoints: " + rect);
-                    PointF[] points = new PointF[106];
-                    for(int i = 0 ; i < 106 ; i++)
-                    {
-                        points[i]  = new PointF(r.landmarks[i*2],r.landmarks[i*2+1]);
+                    if (!mOverlap.getHolder().getSurface().isValid()) {
+                        return false;
                     }
 
-                    float[] visibles =  new float[106];
+                    Canvas canvas = mOverlap.getHolder().lockCanvas();
+                    if (canvas == null)
+                        return false;
 
+                    canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+                    canvas.setMatrix(matrix);
+                    boolean rotate270 = true;
+                    for (Face r : faceActions) {
 
-                    for (int i = 0; i < points.length; i++) {
-                        visibles[i] = 1.0f;
-                        if (rotate270) {
-                            points[i].x = mPreviewHeight-points[i].x;
+                        Rect rect = new Rect(mPreviewHeight - r.left, r.top, mPreviewHeight - r.right, r.bottom);
+
+                        Log.d(TAG, "handleDrawPoints: " + rect);
+                        PointF[] points = new PointF[106];
+                        for (int i = 0; i < 106; i++) {
+                            points[i] = new PointF(r.landmarks[i * 2], r.landmarks[i * 2 + 1]);
                         }
+
+                        float[] visibles = new float[106];
+
+
+                        for (int i = 0; i < points.length; i++) {
+                            visibles[i] = 1.0f;
+                            if (rotate270) {
+                                points[i].x = mPreviewHeight - points[i].x;
+                            }
+                        }
+
+                        STUtils.drawFaceRect(canvas, rect, mPreviewHeight,
+                                mPreviewWidth, true);
+                        STUtils.drawPoints(canvas, mPaint, points, visibles, mPreviewHeight,
+                                mPreviewWidth, true);
+
                     }
-
-                    STUtils.drawFaceRect(canvas,rect, mPreviewHeight,
-                            mPreviewWidth, true);
-                    STUtils.drawPoints(canvas, mPaint, points,visibles, mPreviewHeight,
-                            mPreviewWidth, true);
-
+                    mOverlap.getHolder().unlockCanvasAndPost(canvas);
                 }
-                mOverlap.getHolder().unlockCanvasAndPost(canvas);
-            }
 
 
 //            for (int i = 0; i < planes.length; ++i) {
@@ -274,7 +276,7 @@ public class FaceTrackingListener implements OnImageAvailableListener {
 //                    uvPixelStride,
 //                    false);
 
-            image.close();
+            }
         } catch (final Exception e) {
             if (image != null) {
                 image.close();
@@ -373,8 +375,8 @@ public class FaceTrackingListener implements OnImageAvailableListener {
         if (face != null) {
             Canvas canvas = new Canvas(bm32);
 
-            for (int i = 0; i < face.landmarks.length; i+=2) {
-                canvas.drawCircle(face.landmarks[i], face.landmarks[i+1], 5, redPaint);
+            for (int i = 0; i < face.landmarks.length; i += 2) {
+                canvas.drawCircle(face.landmarks[i], face.landmarks[i + 1], 5, redPaint);
             }
 
 

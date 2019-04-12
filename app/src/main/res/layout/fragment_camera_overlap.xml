@@ -5,15 +5,15 @@
     android:layout_height="match_parent"
     >
 
-    <SurfaceView
+    <com.nhancv.facemask.AutoFitTextureView
         android:id="@+id/surfaceViewCamera"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         />
 
     <SurfaceView
         android:id="@+id/surfaceViewOverlap"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         />
 </RelativeLayout>

@@ -86,42 +86,18 @@ public class CameraFragment extends Fragment
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
-    /**
-     * Tag for the {@link Log}.
-     */
     private static final String TAG = "CameraFragment";
 
-    /**
-     * Camera state: Showing camera preview.
-     */
     private static final int STATE_PREVIEW = 0;
 
-
-    /**
-     * Max preview width that is guaranteed by Camera2 API
-     */
 //    private static final int MAX_PREVIEW_WIDTH = 1920;
     private static final int MAX_PREVIEW_WIDTH = 640;
-
-    /**
-     * Max preview height that is guaranteed by Camera2 API
-     */
 //    private static final int MAX_PREVIEW_HEIGHT = 1080;
     private static final int MAX_PREVIEW_HEIGHT = 480;
 
-    /**
-     * {@link TextureView.SurfaceTextureListener} handles several lifecycle events on a
-     * {@link TextureView}.
-     */
-
-    /*
-    * bitmap image change listener
-    * */
 
     String [] maskFilters = new String[]{"cat"};
-    /*
-     * Hash map that includes id and bitmaps
-     * */
+    // Hash map that includes id and bitmaps
     HashMap<String,HashMap<String,Bitmap>> maskFilterElements = new HashMap<>();
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener
             = new TextureView.SurfaceTextureListener() {
@@ -159,10 +135,6 @@ public class CameraFragment extends Fragment
     public static final String CAMERA_BACK = "0";
 
     private String mCameraId = CAMERA_FRONT;
-
-    /**
-     * An {@link AutoFitTextureView} for camera preview.
-     */
     private AutoFitTextureView mTextureView;
     private SurfaceView mOverlap;
     private Matrix transformMatrix = new Matrix();
@@ -170,25 +142,19 @@ public class CameraFragment extends Fragment
 
     private M2DLandmarkView landmarkView;
 
-    /**
-     * A {@link CameraCaptureSession } for camera preview.
-     */
+    // For camera preview.
     private CameraCaptureSession mCaptureSession;
 
-    /**
-     * A reference to the opened {@link CameraDevice}.
-     */
+    // A reference to the opened {@link CameraDevice}.
     private CameraDevice mCameraDevice;
 
-    /**
-     * The {@link android.util.Size} of camera preview.
-     */
+    // Size of camera preview
     private Size mPreviewSize;
 
+    private RealTimeRotation rotationInstance = RealTimeRotation.getInstance();
     /**
      * {@link CameraDevice.StateCallback} is called when {@link CameraDevice} changes its state.
      */
-    private RealTimeRotation rotationInstance = RealTimeRotation.getInstance();
     private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
 
         @Override
@@ -565,6 +531,7 @@ public class CameraFragment extends Fragment
                             rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth,
                             maxPreviewHeight, aspectRatio);
 
+                    Log.e(TAG, "setUpCameraOutputs mPreviewSize: " + mPreviewSize);
                     // We fit the aspect ratio of TextureView to the size of preview we picked.
                     int orientation = getResources().getConfiguration().orientation;
                     if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
