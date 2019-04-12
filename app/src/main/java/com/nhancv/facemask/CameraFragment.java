@@ -50,6 +50,7 @@ import com.nhancv.facemask.m2d.M2DLandmarkView;
 import com.nhancv.facemask.m2d.M2DPosController;
 import com.nhancv.facemask.m3d.M3DPosController;
 import com.nhancv.facemask.m3d.transformation.RealTimeRotation;
+import com.nhancv.facemask.tracking.FaceTrackingListener;
 import com.tzutalin.dlib.VisionDetRet;
 
 import java.io.File;
@@ -714,7 +715,7 @@ public class CameraFragment extends Fragment
         }
     }
 
-    private final OnGetImageListener mOnGetPreviewListener = new OnGetImageListener();
+    private final FaceTrackingListener mOnGetPreviewListener = new FaceTrackingListener();
 
     /**
      * Creates a new {@link CameraCaptureSession} for camera preview.

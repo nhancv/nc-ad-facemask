@@ -1,55 +1,55 @@
-<!--<FrameLayout-->
-    <!--xmlns:android="http://schemas.android.com/apk/res/android"-->
-    <!--xmlns:tools="http://schemas.android.com/tools"-->
-    <!--android:id="@+id/container"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:background="#000"-->
-    <!--tools:context="com.nhancv.facemask.CameraActivity"-->
-    <!--/>-->
-
-<LinearLayout
-xmlns:android="http://schemas.android.com/apk/res/android"
-android:layout_width="match_parent"
-android:layout_height="match_parent"
-android:orientation="vertical"
-    >
-
-<com.nhancv.facemask.util.FixedAspectRatioRelativeLayout
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    >
-
-    <SurfaceView
-        android:id="@+id/surface_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
-</com.nhancv.facemask.util.FixedAspectRatioRelativeLayout>
-
-<SeekBar
-    android:id="@+id/seek_bar_a"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_margin="10dp"
-    android:max="300"
-    android:progress="100"
+    android:background="#000"
+    tools:context="com.nhancv.facemask.CameraActivity"
     />
 
-<SeekBar
-    android:id="@+id/seek_bar_b"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_margin="10dp"
-    android:max="360"
-    />
+<!--<LinearLayout-->
+<!--xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--android:layout_width="match_parent"-->
+<!--android:layout_height="match_parent"-->
+<!--android:orientation="vertical"-->
+    <!--&gt;-->
 
-<SeekBar
-    android:id="@+id/seek_bar_c"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_margin="10dp"
-    android:max="200"
-    android:progress="100"
-    />
-</LinearLayout>
+<!--<com.nhancv.facemask.util.FixedAspectRatioRelativeLayout-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--&gt;-->
+
+    <!--<SurfaceView-->
+        <!--android:id="@+id/surface_view"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--/>-->
+<!--</com.nhancv.facemask.util.FixedAspectRatioRelativeLayout>-->
+
+<!--<SeekBar-->
+    <!--android:id="@+id/seek_bar_a"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_margin="10dp"-->
+    <!--android:max="300"-->
+    <!--android:progress="100"-->
+    <!--/>-->
+
+<!--<SeekBar-->
+    <!--android:id="@+id/seek_bar_b"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_margin="10dp"-->
+    <!--android:max="360"-->
+    <!--/>-->
+
+<!--<SeekBar-->
+    <!--android:id="@+id/seek_bar_c"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_margin="10dp"-->
+    <!--android:max="200"-->
+    <!--android:progress="100"-->
+    <!--/>-->
+<!--</LinearLayout>-->

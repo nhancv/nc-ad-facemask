@@ -38,4 +38,16 @@ public class Face {
     public int[] landmarks;
 
 
+    @Override
+    public String toString() {
+        return "Face{" +
+                "ID=" + ID +
+                ", left=" + left +
+                ", top=" + top +
+                ", right=" + right +
+                ", bottom=" + bottom +
+                ", height=" + height +
+                ", width=" + width +
+                '}';
+    }
 }
