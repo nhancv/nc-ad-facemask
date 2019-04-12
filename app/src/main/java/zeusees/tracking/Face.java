@@ -1,6 +1,8 @@
 package zeusees.tracking;
 
 
+import java.util.Arrays;
+
 public class Face {
     Face(int x1,int y1,int x2,int y2)
     {
@@ -48,6 +50,7 @@ public class Face {
                 ", bottom=" + bottom +
                 ", height=" + height +
                 ", width=" + width +
+                ", landmarks=" + Arrays.toString(landmarks) +
                 '}';
     }
 }

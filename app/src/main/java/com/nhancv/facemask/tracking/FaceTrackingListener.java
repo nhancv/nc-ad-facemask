@@ -7,7 +7,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
@@ -51,6 +50,7 @@ public class FaceTrackingListener implements OnImageAvailableListener {
     private byte[][] mYUVBytes;
     private int[] mRGBBytes = null;
     private Bitmap mRGBframeBitmap = null;
+    private Bitmap mRGBframeBitmap2 = null;
     private Bitmap mCroppedBitmap = null;
 
     private Context context;
@@ -208,6 +208,7 @@ public class FaceTrackingListener implements OnImageAvailableListener {
 
                 mRGBBytes = new int[mPreviewWidth * mPreviewHeight];
                 mRGBframeBitmap = Bitmap.createBitmap(mPreviewWidth, mPreviewHeight, Config.ARGB_8888);
+                mRGBframeBitmap2 = Bitmap.createBitmap(mPreviewHeight, mPreviewWidth, Config.ARGB_8888);
                 float scaleInputRate = Math.max(mPreviewWidth, mPreviewHeight) * 1f / Math.min(mPreviewWidth, mPreviewHeight);
                 BM_FACE_H = (int) (BM_FACE_W * scaleInputRate);
                 mCroppedBitmap = Bitmap.createBitmap(mRGBframeBitmap, 0, 0, mPreviewWidth, mPreviewHeight);
@@ -385,12 +386,18 @@ public class FaceTrackingListener implements OnImageAvailableListener {
     }
 
     private Bitmap drawOnResultBoundingBox() {
-        Bitmap bm32 = mCroppedBitmap.copy(mCroppedBitmap.getConfig(), true);
+        Bitmap bm32 = mRGBframeBitmap2.copy(mRGBframeBitmap2.getConfig(), true);
 
         Log.e(TAG, "drawOnResultBoundingBox: " + face);
         if (face != null) {
             Canvas canvas = new Canvas(bm32);
-            canvas.drawRect(new RectF(face.left, face.top, face.right, face.bottom), greenPaint);
+
+            for (int i = 0; i < face.landmarks.length; i+=2) {
+                canvas.drawCircle(face.landmarks[i], face.landmarks[i+1], 5, redPaint);
+            }
+
+
+            canvas.drawRect(new Rect(10, 10, 100, 100), greenPaint);
 
         }
 //
