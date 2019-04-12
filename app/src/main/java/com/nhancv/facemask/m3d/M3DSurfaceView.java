@@ -64,7 +64,7 @@ public class M3DSurfaceView extends GLSurfaceView {
     }
 
 
-    @SuppressLint("LongLogTag")
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         currentWidth = MeasureSpec.getSize(widthMeasureSpec);

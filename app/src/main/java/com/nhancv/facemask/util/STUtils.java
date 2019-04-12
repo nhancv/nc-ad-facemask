@@ -11,6 +11,7 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.os.Environment;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
@@ -246,5 +247,48 @@ public class STUtils {
         }
 
         return path;
+    }
+
+
+
+    public static void copyFilesFromAssets(Context context, String oldPath, String newPath) {
+        try {
+            String[] fileNames = context.getAssets().list(oldPath);
+            if ((fileNames != null ? fileNames.length : 0) > 0) {
+                // directory
+                File file = new File(newPath);
+                if (!file.mkdir()) {
+                    Log.d("mkdir", "can't make folder");
+
+                }
+
+                for (String fileName : fileNames) {
+                    copyFilesFromAssets(context, oldPath + "/" + fileName,
+                            newPath + "/" + fileName);
+                }
+            } else {
+                // file
+                InputStream is = context.getAssets().open(oldPath);
+                FileOutputStream fos = new FileOutputStream(new File(newPath));
+                byte[] buffer = new byte[1024];
+                int byteCount;
+                while ((byteCount = is.read(buffer)) != -1) {
+                    fos.write(buffer, 0, byteCount);
+                }
+                fos.flush();
+                is.close();
+                fos.close();
+            }
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    public static void initModelFiles(Context context) {
+        String assetPath = "ZeuseesFaceTracking";
+        String sdcardPath = Environment.getExternalStorageDirectory() + File.separator + assetPath;
+        copyFilesFromAssets(context, assetPath, sdcardPath);
+
     }
 }

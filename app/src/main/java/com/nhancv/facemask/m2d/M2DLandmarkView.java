@@ -91,7 +91,7 @@ public class M2DLandmarkView extends View {
         maskController = new MaskController();
     }
 
-    @SuppressLint("LongLogTag")
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         currentWidth = MeasureSpec.getSize(widthMeasureSpec);
@@ -111,7 +111,7 @@ public class M2DLandmarkView extends View {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
-    @SuppressLint("LongLogTag")
+
     public void setAspectRatio(int width, int height) {
         if (width < 0 || height < 0) {
             throw new IllegalArgumentException("Size cannot be negative.");
