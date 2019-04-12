@@ -53,7 +53,6 @@ import com.nhancv.facemask.m2d.M2DPosController;
 import com.nhancv.facemask.m3d.M3DPosController;
 import com.nhancv.facemask.m3d.transformation.RealTimeRotation;
 import com.nhancv.facemask.tracking.FaceTrackingListener;
-import com.tzutalin.dlib.VisionDetRet;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -67,7 +66,8 @@ import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import hugo.weaving.DebugLog;
+import zeusees.tracking.Face;
+
 
 public class CameraFragment extends Fragment
         implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback, FaceLandmarkListener {
@@ -102,13 +102,11 @@ public class CameraFragment extends Fragment
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener
             = new TextureView.SurfaceTextureListener() {
         @SuppressLint("LongLogTag")
-        @DebugLog
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
             openCamera(width, height);
         }
         @SuppressLint("LongLogTag")
-        @DebugLog
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
             configureTransform(width, height);
@@ -300,7 +298,6 @@ public class CameraFragment extends Fragment
      */
 
     @SuppressLint("LongLogTag")
-    @DebugLog
     private static Size chooseOptimalSize(Size[] choices, int textureViewWidth,
             int textureViewHeight, int maxWidth, int maxHeight, Size aspectRatio) {
 
@@ -460,7 +457,6 @@ public class CameraFragment extends Fragment
      */
     @SuppressWarnings("SuspiciousNameCombination")
     @SuppressLint("LongLogTag")
-    @DebugLog
     private void setUpCameraOutputs(int width, int height) {
         Activity activity = getActivity();
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
@@ -569,7 +565,6 @@ public class CameraFragment extends Fragment
      * Opens the camera specified by {@link CameraFragment#mCameraId}.
      */
     @SuppressLint("LongLogTag")
-    @DebugLog
     private void openCamera(int width, int height) {
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -596,7 +591,6 @@ public class CameraFragment extends Fragment
      * Closes the current {@link CameraDevice}.
      */
 
-    @DebugLog
     private void closeCamera() {
         try {
             mCameraOpenCloseLock.acquire();
@@ -626,7 +620,6 @@ public class CameraFragment extends Fragment
      */
 
     @SuppressLint("LongLogTag")
-    @DebugLog
     private void startBackgroundThread() {
 
 
@@ -654,7 +647,6 @@ public class CameraFragment extends Fragment
      */
 
     @SuppressLint("LongLogTag")
-    @DebugLog
     private void stopBackgroundThread() {
         try {
             if (preImageProcessThread != null) {
@@ -698,7 +690,6 @@ public class CameraFragment extends Fragment
      */
 
     @SuppressLint("LongLogTag")
-    @DebugLog
     private void createCameraPreviewSession() {
         try {
             SurfaceTexture texture = mTextureView.getSurfaceTexture();
@@ -780,7 +771,6 @@ public class CameraFragment extends Fragment
      */
 
     @SuppressLint("LongLogTag")
-    @DebugLog
     private void configureTransform(int viewWidth, int viewHeight) {
         Activity activity = getActivity();
         if (null == mTextureView || null == mPreviewSize || null == activity) {
@@ -815,7 +805,7 @@ public class CameraFragment extends Fragment
 
 
     @Override
-    public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
+    public void landmarkUpdate(List<Face> visionDetRetList, int bmW, int bmH) {
         //m3DPosController.landmarkUpdate(visionDetRetList, bmW, bmH);
         uiHandler.post(() -> m2DPosController.landmarkUpdate(visionDetRetList, bmW, bmH));
     }

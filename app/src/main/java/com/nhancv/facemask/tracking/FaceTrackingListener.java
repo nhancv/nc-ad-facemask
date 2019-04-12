@@ -27,7 +27,6 @@ import com.nhancv.facemask.util.STUtils;
 
 import java.util.List;
 
-import hugo.weaving.DebugLog;
 import zeusees.tracking.Face;
 import zeusees.tracking.FaceTracking;
 
@@ -74,7 +73,6 @@ public class FaceTrackingListener implements OnImageAvailableListener {
         detectFps = new StableFps(10);
     }
 
-    @DebugLog
     public void initialize(
             final View parentView,
             final Context context,
@@ -124,7 +122,6 @@ public class FaceTrackingListener implements OnImageAvailableListener {
 
     }
 
-    @DebugLog
     public void deInitialize() {
         synchronized (FaceTrackingListener.this) {
             renderFps.stop();

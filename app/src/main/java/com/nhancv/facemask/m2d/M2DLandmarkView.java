@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PointF;
@@ -17,19 +16,16 @@ import android.view.View;
 import com.nhancv.facemask.m2d.mask.DistanceHelper;
 import com.nhancv.facemask.m2d.mask.Eye5;
 import com.nhancv.facemask.m2d.mask.Head5;
-import com.nhancv.facemask.m2d.mask.IMaskStrategy;
 import com.nhancv.facemask.m2d.mask.Mask;
 import com.nhancv.facemask.m2d.mask.MaskController;
 import com.nhancv.facemask.m2d.mask.Nose5;
-import com.tzutalin.dlib.VisionDetRet;
-
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import hugo.weaving.DebugLog;
+import zeusees.tracking.Face;
 
 
 public class M2DLandmarkView extends View {
@@ -38,7 +34,7 @@ public class M2DLandmarkView extends View {
     private int mRatioHeight = 0;
     private float offsetX = 0;
     private float offsetY = 0;
-    private List<VisionDetRet> visionDetRetList;
+    private List<Face> visionDetRetList;
     //private Paint mFaceLandmarkPaint;
     private Rect bounds;
     private int bmWidth;
@@ -82,7 +78,7 @@ public class M2DLandmarkView extends View {
         bounds = new Rect();
     }
 
-    public void setVisionDetRetList(List<VisionDetRet> visionDetRetList, int bmWidth, int bmHeight) {
+    public void setVisionDetRetList(List<Face> visionDetRetList, int bmWidth, int bmHeight) {
         this.visionDetRetList = visionDetRetList;
         this.bmWidth = bmWidth;
         this.bmHeight = bmHeight;
@@ -96,7 +92,6 @@ public class M2DLandmarkView extends View {
     }
 
     @SuppressLint("LongLogTag")
-    @DebugLog
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         currentWidth = MeasureSpec.getSize(widthMeasureSpec);
@@ -117,7 +112,6 @@ public class M2DLandmarkView extends View {
     }
 
     @SuppressLint("LongLogTag")
-    @DebugLog
     public void setAspectRatio(int width, int height) {
         if (width < 0 || height < 0) {
             throw new IllegalArgumentException("Size cannot be negative.");
@@ -190,14 +184,15 @@ public class M2DLandmarkView extends View {
     protected void onDraw(Canvas canvas) {
 
         if (visionDetRetList == null) return;
-        for (final VisionDetRet ret : visionDetRetList) {
-            List<Point> landmarks = ret.getFaceLandmarks();
+        for (final Face ret : visionDetRetList) {
+//            List<Point> landmarks = ret.getFaceLandmarks();
+            List<Point> landmarks = new ArrayList<>();
             List<Point> normLandmark = this.normalizePoint(landmarks);
 
-            bounds.left = (int) (getX(ret.getLeft()));
-            bounds.top = (int) (getY(ret.getTop()));
-            bounds.right = (int) getX(ret.getRight());
-            bounds.bottom = (int) getY(ret.getBottom());
+            bounds.left = (int) (getX(ret.left));
+            bounds.top = (int) (getY(ret.top));
+            bounds.right = (int) getX(ret.right);
+            bounds.bottom = (int) getY(ret.bottom);
             float centerX = faceCenterX(bounds.left, bounds.right);
             float centerY = faceCenterY(bounds.top, bounds.bottom);
             float faceW = bounds.right - bounds.left;

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.TextureView;
 
-import hugo.weaving.DebugLog;
 
 public class AutoFitTextureView extends TextureView {
 
@@ -33,7 +32,6 @@ public class AutoFitTextureView extends TextureView {
      * @param height Relative vertical size
      */
     @SuppressLint("LongLogTag")
-    @DebugLog
     public void setAspectRatio(int width, int height) {
         if (width < 0 || height < 0) {
             throw new IllegalArgumentException("Size cannot be negative.");

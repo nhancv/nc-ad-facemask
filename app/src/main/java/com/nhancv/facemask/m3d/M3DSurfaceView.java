@@ -8,7 +8,6 @@ import android.util.AttributeSet;
 
 import org.andresoviedo.android_3d_model_engine.model.Camera;
 
-import hugo.weaving.DebugLog;
 
 public class M3DSurfaceView extends GLSurfaceView {
 
@@ -66,7 +65,6 @@ public class M3DSurfaceView extends GLSurfaceView {
 
 
     @SuppressLint("LongLogTag")
-    @DebugLog
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         currentWidth = MeasureSpec.getSize(widthMeasureSpec);

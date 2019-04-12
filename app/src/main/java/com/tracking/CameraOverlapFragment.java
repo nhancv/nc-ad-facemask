@@ -13,8 +13,6 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
-import android.hardware.Camera;
-import android.hardware.Camera.CameraInfo;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -28,7 +26,6 @@ import android.media.ImageReader;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -36,7 +33,6 @@ import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.Surface;
-import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
@@ -44,18 +40,15 @@ import android.view.ViewGroup;
 
 import com.nhancv.facemask.AutoFitTextureView;
 import com.nhancv.facemask.R;
-import com.nhancv.facemask.tracking.FaceTrackingListener;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import hugo.weaving.DebugLog;
 
 
 public class CameraOverlapFragment extends Fragment implements ImageReader.OnImageAvailableListener {
@@ -90,14 +83,12 @@ public class CameraOverlapFragment extends Fragment implements ImageReader.OnIma
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener
             = new TextureView.SurfaceTextureListener() {
         @SuppressLint("LongLogTag")
-        @DebugLog
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
             openCamera(width, height);
         }
 
         @SuppressLint("LongLogTag")
-        @DebugLog
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
             configureTransform(width, height);
@@ -191,7 +182,6 @@ public class CameraOverlapFragment extends Fragment implements ImageReader.OnIma
     };
 
     @SuppressLint("LongLogTag")
-    @DebugLog
     private static android.util.Size chooseOptimalSize(android.util.Size[] choices, int textureViewWidth,
                                                        int textureViewHeight, int maxWidth, int maxHeight, android.util.Size aspectRatio) {
 
@@ -226,7 +216,6 @@ public class CameraOverlapFragment extends Fragment implements ImageReader.OnIma
     }
 
     @SuppressLint("LongLogTag")
-    @DebugLog
     private void createCameraPreviewSession() {
         try {
             SurfaceTexture texture = mTextureView.getSurfaceTexture();
@@ -297,7 +286,6 @@ public class CameraOverlapFragment extends Fragment implements ImageReader.OnIma
      */
 
     @SuppressLint("LongLogTag")
-    @DebugLog
     private void configureTransform(int viewWidth, int viewHeight) {
         Activity activity = getActivity();
         if (null == mTextureView || null == mPreviewSize || null == activity) {
@@ -362,7 +350,6 @@ public class CameraOverlapFragment extends Fragment implements ImageReader.OnIma
      */
 
     @SuppressLint("LongLogTag")
-    @DebugLog
     private void startBackgroundThread() {
         preImageProcessThread = new HandlerThread("PreProcessingImageThread");
         preImageProcessThread.start();
@@ -375,7 +362,6 @@ public class CameraOverlapFragment extends Fragment implements ImageReader.OnIma
      */
 
     @SuppressLint("LongLogTag")
-    @DebugLog
     private void stopBackgroundThread() {
         try {
             if (preImageProcessThread != null) {
@@ -420,7 +406,6 @@ public class CameraOverlapFragment extends Fragment implements ImageReader.OnIma
     }
 
     @SuppressLint("LongLogTag")
-    @DebugLog
     private void setUpCameraOutputs(int width, int height) {
         Activity activity = getActivity();
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
@@ -515,7 +500,6 @@ public class CameraOverlapFragment extends Fragment implements ImageReader.OnIma
     }
 
     @SuppressLint("LongLogTag")
-    @DebugLog
     private void openCamera(int width, int height) {
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -541,7 +525,6 @@ public class CameraOverlapFragment extends Fragment implements ImageReader.OnIma
      * Closes the current {@link CameraDevice}.
      */
 
-    @DebugLog
     private void closeCamera() {
         try {
             mCameraOpenCloseLock.acquire();

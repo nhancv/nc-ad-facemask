@@ -1,8 +1,8 @@
 package com.nhancv.facemask;
 
-import com.tzutalin.dlib.VisionDetRet;
-
 import java.util.List;
+
+import zeusees.tracking.Face;
 
 public interface FaceLandmarkListener {
     /**
@@ -11,5 +11,5 @@ public interface FaceLandmarkListener {
      * @param bmW from resized bitmap width for detect
      * @param bmH from resized bitmap height for detect
      */
-    void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH);
+    void landmarkUpdate(List<Face> visionDetRetList, int bmW, int bmH);
 }

@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
-import hugo.weaving.DebugLog;
 
 public class CameraActivity extends AppCompatActivity {
 
@@ -63,7 +62,6 @@ public class CameraActivity extends AppCompatActivity {
      * Checks if the app has permission to write to device storage or open camera
      * If the app does not has permission then the user will be prompted to grant permissions
      */
-    @DebugLog
     private static boolean verifyPermissions(Activity activity) {
         // Check if we have write permission
         int writePermission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
@@ -86,14 +84,12 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     /* Checks if external storage is available for read and write */
-    @DebugLog
     private boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
         return Environment.MEDIA_MOUNTED.equals(state);
     }
 
     /* Checks if external storage is available to at least read */
-    @DebugLog
     private boolean isExternalStorageReadable() {
         String state = Environment.getExternalStorageState();
         return Environment.MEDIA_MOUNTED.equals(state) ||
