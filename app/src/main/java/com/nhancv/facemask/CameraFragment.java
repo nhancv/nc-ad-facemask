@@ -13,6 +13,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
@@ -41,6 +42,7 @@ import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.Surface;
+import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,6 +52,7 @@ import com.nhancv.facemask.m2d.M2DLandmarkView;
 import com.nhancv.facemask.m2d.M2DPosController;
 import com.nhancv.facemask.m3d.M3DPosController;
 import com.nhancv.facemask.m3d.transformation.RealTimeRotation;
+import com.nhancv.facemask.tracking.FaceTrackingListener;
 import com.tzutalin.dlib.VisionDetRet;
 
 import java.io.File;
@@ -97,14 +100,14 @@ public class CameraFragment extends Fragment
     /**
      * Max preview width that is guaranteed by Camera2 API
      */
-    private static final int MAX_PREVIEW_WIDTH = 1920;
-//    private static final int MAX_PREVIEW_WIDTH = 640;
+//    private static final int MAX_PREVIEW_WIDTH = 1920;
+    private static final int MAX_PREVIEW_WIDTH = 640;
 
     /**
      * Max preview height that is guaranteed by Camera2 API
      */
-    private static final int MAX_PREVIEW_HEIGHT = 1080;
-//    private static final int MAX_PREVIEW_HEIGHT = 480;
+//    private static final int MAX_PREVIEW_HEIGHT = 1080;
+    private static final int MAX_PREVIEW_HEIGHT = 480;
 
     /**
      * {@link TextureView.SurfaceTextureListener} handles several lifecycle events on a
@@ -160,6 +163,9 @@ public class CameraFragment extends Fragment
      * An {@link AutoFitTextureView} for camera preview.
      */
     private AutoFitTextureView mTextureView;
+    private SurfaceView mOverlap;
+    private Matrix transformMatrix = new Matrix();
+
 
     private M2DLandmarkView landmarkView;
 
@@ -375,6 +381,9 @@ public class CameraFragment extends Fragment
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         mTextureView = view.findViewById(R.id.fragment_camera_textureview);
         landmarkView = view.findViewById(R.id.fragment_camera_2dlandmarkview);
+        mOverlap = view.findViewById(R.id.surfaceViewOverlap);
+        mOverlap.setZOrderOnTop(true);
+        mOverlap.getHolder().setFormat(PixelFormat.TRANSLUCENT);
     }
 
     public static int getId(String resourceName, Class<?> c) {
@@ -714,7 +723,7 @@ public class CameraFragment extends Fragment
         }
     }
 
-    private final OnGetImageListener mOnGetPreviewListener = new OnGetImageListener();
+    private final FaceTrackingListener mOnGetPreviewListener = new FaceTrackingListener();
 
     /**
      * Creates a new {@link CameraCaptureSession} for camera preview.
@@ -785,12 +794,12 @@ public class CameraFragment extends Fragment
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
-        mOnGetPreviewListener.initialize(Objects.requireNonNull(getActivity()).getApplicationContext(),
+        mOnGetPreviewListener.initialize(getView(), Objects.requireNonNull(getActivity()).getApplicationContext(),
                 mCameraId,
                 getActivity().findViewById(R.id.fragment_camera_iv_overlay),
                 getActivity().findViewById(R.id.fragment_camera_tv_fps),
                 trackingHandler,
-                mFaceDetectionHandler, uiHandler, mPostImageHandler, this);
+                mFaceDetectionHandler, uiHandler, mPostImageHandler, this, mOverlap, transformMatrix );
     }
 
     /**
@@ -826,10 +835,9 @@ public class CameraFragment extends Fragment
         } else if (Surface.ROTATION_180 == rotation) {
             matrix.postRotate(180, centerX, centerY);
         }
-        mTextureView.setTransform(matrix);
+        transformMatrix = matrix;
+        mTextureView.setTransform(transformMatrix);
     }
-
-
 
     @Override
     public void onClick(final View view) {

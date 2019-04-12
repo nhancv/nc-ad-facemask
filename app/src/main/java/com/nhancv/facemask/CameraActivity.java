@@ -2,20 +2,21 @@ package com.nhancv.facemask;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.Display;
 
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 
 import hugo.weaving.DebugLog;
 
@@ -24,6 +25,7 @@ public class CameraActivity extends AppCompatActivity {
     static {
         OpenCVLoader.initDebug();
     }
+
     private static final String TAG = CameraActivity.class.getSimpleName();
 
     private static final int REQUEST_CODE_PERMISSION = 2;
@@ -33,19 +35,7 @@ public class CameraActivity extends AppCompatActivity {
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.CAMERA
     };
-    BaseLoaderCallback baseLoaderCallBack = new BaseLoaderCallback(this) {
-        @Override
-        public void onManagerConnected(int status) {
-            switch (status){
-                case BaseLoaderCallback.SUCCESS:
-                    break;
-                default:
-                    super.onManagerConnected(status); //try to access camera again
-                    break;
-            }
 
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,28 +47,16 @@ public class CameraActivity extends AppCompatActivity {
         isExternalStorageReadable();
 
         // For API 23+ you need to request the read/write permissions even if they are already in your manifest.
-        int currentapiVersion = android.os.Build.VERSION.SDK_INT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && verifyPermissions(this)) {
 
-        if (currentapiVersion >= Build.VERSION_CODES.M) {
-            verifyPermissions(this);
+            initModelFiles();
+
+            if (null == savedInstanceState) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.container, CameraFragment.newInstance())
+                        .commit();
+            }
         }
-
-        if (null == savedInstanceState) {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.container, CameraFragment.newInstance())
-                    .commit();
-        }
-
-
-        Display display = getWindowManager().getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        int width = size.x;
-        int height = size.y;
-
-        //onCreate: Width 1080 - Height 1776 (Sony E5655)
-        Log.e(TAG, "onCreate: Width " + width + " - Height " + height);
-
     }
 
     /**
@@ -88,13 +66,13 @@ public class CameraActivity extends AppCompatActivity {
     @DebugLog
     private static boolean verifyPermissions(Activity activity) {
         // Check if we have write permission
-        int write_permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        int read_persmission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        int camera_permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA);
+        int writePermission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int readPermission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int cameraPermission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA);
 
-        if (write_permission != PackageManager.PERMISSION_GRANTED ||
-                read_persmission != PackageManager.PERMISSION_GRANTED ||
-                camera_permission != PackageManager.PERMISSION_GRANTED) {
+        if (writePermission != PackageManager.PERMISSION_GRANTED ||
+                readPermission != PackageManager.PERMISSION_GRANTED ||
+                cameraPermission != PackageManager.PERMISSION_GRANTED) {
             // We don't have permission so prompt the user
             ActivityCompat.requestPermissions(
                     activity,
@@ -111,25 +89,61 @@ public class CameraActivity extends AppCompatActivity {
     @DebugLog
     private boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            return true;
-        }
-        return false;
+        return Environment.MEDIA_MOUNTED.equals(state);
     }
 
     /* Checks if external storage is available to at least read */
     @DebugLog
     private boolean isExternalStorageReadable() {
         String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state) ||
-                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-            return true;
-        }
-        return false;
+        return Environment.MEDIA_MOUNTED.equals(state) ||
+                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+
+    public void copyFilesFromAssets(Context context, String oldPath, String newPath) {
+        try {
+            String[] fileNames = context.getAssets().list(oldPath);
+            if ((fileNames != null ? fileNames.length : 0) > 0) {
+                // directory
+                File file = new File(newPath);
+                if (!file.mkdir()) {
+                    Log.d("mkdir", "can't make folder");
+
+                }
+
+                for (String fileName : fileNames) {
+                    copyFilesFromAssets(context, oldPath + "/" + fileName,
+                            newPath + "/" + fileName);
+                }
+            } else {
+                // file
+                InputStream is = context.getAssets().open(oldPath);
+                FileOutputStream fos = new FileOutputStream(new File(newPath));
+                byte[] buffer = new byte[1024];
+                int byteCount;
+                while ((byteCount = is.read(buffer)) != -1) {
+                    fos.write(buffer, 0, byteCount);
+                }
+                fos.flush();
+                is.close();
+                fos.close();
+            }
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    private void initModelFiles() {
+        String assetPath = "ZeuseesFaceTracking";
+        String sdcardPath = Environment.getExternalStorageDirectory() + File.separator + assetPath;
+        copyFilesFromAssets(this, assetPath, sdcardPath);
 
     }
 
