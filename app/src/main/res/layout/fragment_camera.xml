@@ -10,13 +10,12 @@
         android:id="@+id/fragment_camera_textureview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerInParent="true"
         />
 
     <SurfaceView
         android:id="@+id/surfaceViewOverlap"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"/>
 
     <ImageView
         android:id="@+id/fragment_camera_iv_overlay"

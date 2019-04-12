@@ -136,6 +136,7 @@ public class CameraFragment extends Fragment
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
             configureTransform(width, height);
+            transformMatrix.setScale(width / (float) mPreviewSize.getHeight(), height / (float) mPreviewSize.getWidth());
         }
 
         @Override
@@ -835,8 +836,7 @@ public class CameraFragment extends Fragment
         } else if (Surface.ROTATION_180 == rotation) {
             matrix.postRotate(180, centerX, centerY);
         }
-        transformMatrix = matrix;
-        mTextureView.setTransform(transformMatrix);
+        mTextureView.setTransform(matrix);
     }
 
     @Override
