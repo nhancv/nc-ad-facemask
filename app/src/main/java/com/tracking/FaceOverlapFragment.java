@@ -105,9 +105,6 @@ public class FaceOverlapFragment extends CameraOverlapFragment {
 
         boolean frontCamera = true;
 
-
-//        Log.d(TAG, "handleDrawPoints: " + mPreviewSize);
-//        Log.d(TAG, "handleDrawPoints: " + mPreviewWidth + " " + mPreviewHeight);
         if (frameIndex == 0) {
             mMultiTrack106.FaceTrackingInit(mTmpBuffer, mPreviewHeight, mPreviewWidth);
 
@@ -184,7 +181,6 @@ public class FaceOverlapFragment extends CameraOverlapFragment {
         synchronized (lockObj) {
             if (mMultiTrack106 != null) {
                 mMultiTrack106 = null;
-
             }
         }
 

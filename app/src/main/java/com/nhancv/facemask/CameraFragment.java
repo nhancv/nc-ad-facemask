@@ -72,6 +72,9 @@ public class CameraFragment extends Fragment
     private static final int MAX_PREVIEW_WIDTH = 640;//1920
     private static final int MAX_PREVIEW_HEIGHT = 480;//1080
 
+    private static final int READER_WIDTH = 320;
+    private static final int READER_HEIGHT = 240;
+
     /**
      * Thread
      */
@@ -82,10 +85,10 @@ public class CameraFragment extends Fragment
     private Handler trackingHandler;
 
     private HandlerThread faceDetectionThread;
-    private Handler mFaceDetectionHandler;
+    private Handler faceDetectionHandler;
 
     private HandlerThread postImageProcessThread;
-    private Handler mPostImageHandler;
+    private Handler postImageHandler;
 
     private Handler uiHandler;
 
@@ -148,7 +151,7 @@ public class CameraFragment extends Fragment
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
             configureTransform(width, height);
-            transformMatrix.setScale(width / (float) 240, height / (float) 320);
+            transformMatrix.setScale(width / (float) READER_HEIGHT, height / (float) READER_WIDTH);
         }
 
         @Override
@@ -438,7 +441,7 @@ public class CameraFragment extends Fragment
 
         faceDetectionThread = new HandlerThread("FaceDetectionThread");
         faceDetectionThread.start();
-        mFaceDetectionHandler = new Handler(faceDetectionThread.getLooper());
+        faceDetectionHandler = new Handler(faceDetectionThread.getLooper());
 
         trackingThread = new HandlerThread("TrackingThread");
         trackingThread.start();
@@ -446,7 +449,7 @@ public class CameraFragment extends Fragment
 
         postImageProcessThread = new HandlerThread("PostImageProcessingThread");
         postImageProcessThread.start();
-        mPostImageHandler = new Handler(postImageProcessThread.getLooper());
+        postImageHandler = new Handler(postImageProcessThread.getLooper());
 
         uiHandler = new Handler(Looper.getMainLooper());
     }
@@ -474,13 +477,13 @@ public class CameraFragment extends Fragment
             mPreImageProcess = null;
 
             faceDetectionThread = null;
-            mFaceDetectionHandler = null;
+            faceDetectionHandler = null;
 
             trackingThread = null;
             trackingHandler = null;
 
             postImageProcessThread = null;
-            mPostImageHandler = null;
+            postImageHandler = null;
 
             uiHandler = null;
         } catch (InterruptedException e) {
@@ -506,8 +509,7 @@ public class CameraFragment extends Fragment
             previewRequestBuilder.addTarget(surface);
 
             // Create the reader for the preview frames.
-//            previewReader = ImageReader.newInstance(previewSize.getWidth(), previewSize.getHeight(), ImageFormat.YUV_420_888, 2);
-            previewReader = ImageReader.newInstance(320, 240, ImageFormat.YUV_420_888, 2);
+            previewReader = ImageReader.newInstance(READER_WIDTH, READER_HEIGHT, ImageFormat.YUV_420_888, 1);
             previewReader.setOnImageAvailableListener(onGetPreviewListener, mPreImageProcess);
             previewRequestBuilder.addTarget(previewReader.getSurface());
 
@@ -552,7 +554,8 @@ public class CameraFragment extends Fragment
                 getActivity().findViewById(R.id.fragment_camera_iv_overlay),
                 getActivity().findViewById(R.id.fragment_camera_tv_fps),
                 trackingHandler,
-                mFaceDetectionHandler, uiHandler, mPostImageHandler, this, overlapFaceView, transformMatrix);
+                faceDetectionHandler, uiHandler, postImageHandler, this,
+                cameraTextureView, overlapFaceView, transformMatrix);
     }
 
     /**

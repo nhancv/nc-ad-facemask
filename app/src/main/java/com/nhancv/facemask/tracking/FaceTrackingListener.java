@@ -17,6 +17,7 @@ import android.media.ImageReader.OnImageAvailableListener;
 import android.os.Handler;
 import android.util.Log;
 import android.view.SurfaceView;
+import android.view.TextureView;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -25,6 +26,7 @@ import com.nhancv.facemask.FaceLandmarkListener;
 import com.nhancv.facemask.fps.StableFps;
 import com.nhancv.facemask.util.STUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import zeusees.tracking.Face;
@@ -36,24 +38,25 @@ public class FaceTrackingListener implements OnImageAvailableListener {
 
     private static final int BM_FACE_W = 300;
     private static int BM_FACE_H = BM_FACE_W;
-    private int mPreviewWidth = 0;
-    private int mPreviewHeight = 0;
-    private byte[][] mYUVBytes;
-    private int[] mRGBBytes = null;
-    private Bitmap mRGBframeBitmap = null;
-    private Bitmap mRGBframeBitmap2 = null;
-    private Bitmap mCroppedBitmap = null;
+    private int previewWidth = 0;
+    private int previewHeight = 0;
+    private byte[][] yuvBytes;
+    private int[] rgbBytes = null;
+    private Bitmap rgbFrameBitmap = null;
+    private Bitmap rbgFrameBitmap2 = null;
+    private Bitmap croppedBitmap = null;
 
     private Context context;
     private Handler trackingHandler;
-    private Handler mFaceDetectionHandler;
-    private Handler mUIHandler;
-    private Handler mPostImageHandler;
+    private Handler faceDetectionHandler;
+    private Handler uiHandler;
+    private Handler postImageHandler;
     private ImageView ivOverlay;
     private TextView tvFps;
     private String cameraId;
     private FaceLandmarkListener faceLandmarkListener;
     private Paint greenPaint, redPaint, bluePaint;
+    private TextureView cameraTextureView;
     /**
      * 0 forback camera
      * 1 for front camera
@@ -84,14 +87,15 @@ public class FaceTrackingListener implements OnImageAvailableListener {
             final Handler mUIHandler,
             final Handler mPostImageHandler,
             final FaceLandmarkListener faceLandmarkListener,
+            final TextureView cameraTextureView,
             final SurfaceView overlap,
             final Matrix transformMatrix) {
         this.context = context;
         this.cameraId = cameraId;
         this.trackingHandler = trackingHandler;
-        this.mFaceDetectionHandler = faceDetectionHandler;
-        this.mUIHandler = mUIHandler;
-        this.mPostImageHandler = mPostImageHandler;
+        this.faceDetectionHandler = faceDetectionHandler;
+        this.uiHandler = mUIHandler;
+        this.postImageHandler = mPostImageHandler;
 
         this.faceLandmarkListener = faceLandmarkListener;
         this.ivOverlay = ivOverlay;
@@ -112,13 +116,16 @@ public class FaceTrackingListener implements OnImageAvailableListener {
         bluePaint.setStrokeWidth(2);
         bluePaint.setStyle(Paint.Style.STROKE);
 
-        this.mOverlap = overlap;
+        this.cameraTextureView = cameraTextureView;
+        this.overlap = overlap;
         this.matrix = transformMatrix;
-        mMultiTrack106 = new FaceTracking("/sdcard/ZeuseesFaceTracking/models");
-        mPaint = new Paint();
-        mPaint.setColor(Color.rgb(57, 138, 243));
-        mPaint.setStrokeWidth(2);
-        mPaint.setStyle(Paint.Style.FILL);
+        if (multiTrack106 == null) {
+            multiTrack106 = new FaceTracking("/sdcard/ZeuseesFaceTracking/models");
+        }
+        paint = new Paint();
+        paint.setColor(Color.rgb(57, 138, 243));
+        paint.setStrokeWidth(2);
+        paint.setStyle(Paint.Style.FILL);
 
     }
 
@@ -127,6 +134,9 @@ public class FaceTrackingListener implements OnImageAvailableListener {
             renderFps.stop();
             detectFps.stop();
             mTrack106 = false;
+            if (multiTrack106 != null) {
+                multiTrack106 = null;
+            }
         }
     }
 
@@ -138,8 +148,8 @@ public class FaceTrackingListener implements OnImageAvailableListener {
         // Fps for detect face
         if (!detectFps.isStarted()) {
             detectFps.start(fps -> {
-                if (mFaceDetectionHandler != null && mCroppedBitmap != null) {
-                    mFaceDetectionHandler.post(this::step2FaceDetProcess);
+                if (faceDetectionHandler != null && croppedBitmap != null) {
+                    faceDetectionHandler.post(this::step2FaceDetProcess);
                 }
             });
         }
@@ -149,19 +159,19 @@ public class FaceTrackingListener implements OnImageAvailableListener {
         // Fps for render to ui thread
         if (!renderFps.isStarted()) {
             renderFps.start(fps -> {
-                if (mPostImageHandler != null) {
-                    mPostImageHandler.post(() -> step4RenderProcess(fps));
+                if (postImageHandler != null) {
+                    postImageHandler.post(() -> step4RenderProcess(fps));
                 }
             });
         }
     }
 
 
-    private Paint mPaint;
+    private Paint paint;
     private byte[] mNv21Data;
-    private FaceTracking mMultiTrack106 = null;
+    private FaceTracking multiTrack106 = null;
     private boolean mTrack106 = false;
-    private SurfaceView mOverlap;
+    private SurfaceView overlap;
     private Matrix matrix = new Matrix();
     private Face face;
 
@@ -177,22 +187,22 @@ public class FaceTrackingListener implements OnImageAvailableListener {
             final Plane[] planes = image.getPlanes();
 
             // Initialize the storage bitmaps once when the resolution is known.
-            if (mPreviewWidth != image.getWidth() || mPreviewHeight != image.getHeight()) {
-                mPreviewWidth = image.getWidth();
-                mPreviewHeight = image.getHeight();
-                Log.d(TAG, String.format("Initializing at size %dx%d", mPreviewWidth, mPreviewHeight));
+            if (previewWidth != image.getWidth() || previewHeight != image.getHeight()) {
+                previewWidth = image.getWidth();
+                previewHeight = image.getHeight();
+                Log.d(TAG, String.format("Initializing at size %dx%d", previewWidth, previewHeight));
 
-                mNv21Data = new byte[mPreviewWidth * mPreviewHeight * 2];
+                mNv21Data = new byte[previewWidth * previewHeight * 2];
 
-                mRGBBytes = new int[mPreviewWidth * mPreviewHeight];
-                mRGBframeBitmap = Bitmap.createBitmap(mPreviewWidth, mPreviewHeight, Config.ARGB_8888);
-                mRGBframeBitmap2 = Bitmap.createBitmap(mPreviewHeight, mPreviewWidth, Config.ARGB_8888);
-                float scaleInputRate = Math.max(mPreviewWidth, mPreviewHeight) * 1f / Math.min(mPreviewWidth, mPreviewHeight);
+                rgbBytes = new int[previewWidth * previewHeight];
+                rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Config.ARGB_8888);
+                rbgFrameBitmap2 = Bitmap.createBitmap(previewHeight, previewWidth, Config.ARGB_8888);
+                float scaleInputRate = Math.max(previewWidth, previewHeight) * 1f / Math.min(previewWidth, previewHeight);
                 BM_FACE_H = (int) (BM_FACE_W * scaleInputRate);
-                mCroppedBitmap = Bitmap.createBitmap(mRGBframeBitmap, 0, 0, mPreviewWidth, mPreviewHeight);
-                mYUVBytes = new byte[planes.length][];
+                croppedBitmap = Bitmap.createBitmap(rgbFrameBitmap, 0, 0, previewWidth, previewHeight);
+                yuvBytes = new byte[planes.length][];
                 for (int i = 0; i < planes.length; ++i) {
-                    mYUVBytes[i] = new byte[planes[i].getBuffer().capacity()];
+                    yuvBytes[i] = new byte[planes[i].getBuffer().capacity()];
                 }
             }
 
@@ -201,73 +211,20 @@ public class FaceTrackingListener implements OnImageAvailableListener {
                 System.arraycopy(data, 0, mNv21Data, 0, data.length);
                 image.close();
 
-
-                if (!mTrack106) {
-                    mMultiTrack106.FaceTrackingInit(mNv21Data, mPreviewHeight, mPreviewWidth);
-                    mTrack106 = !mTrack106;
-                } else {
-                    mMultiTrack106.Update(mNv21Data, mPreviewHeight, mPreviewWidth);
-                }
-
-                List<Face> faceActions = mMultiTrack106.getTrackingInfo();
-
-                if (faceActions != null) {
-
-                    if (!mOverlap.getHolder().getSurface().isValid()) {
-                        return false;
-                    }
-
-                    Canvas canvas = mOverlap.getHolder().lockCanvas();
-                    if (canvas == null)
-                        return false;
-
-                    canvas.drawColor(0, PorterDuff.Mode.CLEAR);
-                    canvas.setMatrix(matrix);
-                    boolean rotate270 = true;
-                    for (Face r : faceActions) {
-
-                        Rect rect = new Rect(mPreviewHeight - r.left, r.top, mPreviewHeight - r.right, r.bottom);
-
-                        Log.d(TAG, "handleDrawPoints: " + rect);
-                        PointF[] points = new PointF[106];
-                        for (int i = 0; i < 106; i++) {
-                            points[i] = new PointF(r.landmarks[i * 2], r.landmarks[i * 2 + 1]);
-                        }
-
-                        float[] visibles = new float[106];
-
-
-                        for (int i = 0; i < points.length; i++) {
-                            visibles[i] = 1.0f;
-                            if (rotate270) {
-                                points[i].x = mPreviewHeight - points[i].x;
-                            }
-                        }
-
-                        STUtils.drawFaceRect(canvas, rect, mPreviewHeight,
-                                mPreviewWidth, true);
-                        STUtils.drawPoints(canvas, mPaint, points, visibles, mPreviewHeight,
-                                mPreviewWidth, true);
-
-                    }
-                    mOverlap.getHolder().unlockCanvasAndPost(canvas);
-                }
-
-
 //            for (int i = 0; i < planes.length; ++i) {
-//                planes[i].getBuffer().get(mYUVBytes[i]);
+//                planes[i].getBuffer().get(yuvBytes[i]);
 //            }
 //
 //            final int yRowStride = planes[0].getRowStride();
 //            final int uvRowStride = planes[1].getRowStride();
 //            final int uvPixelStride = planes[1].getPixelStride();
 //            ImageUtils.convertYUV420ToARGB8888(
-//                    mYUVBytes[0],
-//                    mYUVBytes[1],
-//                    mYUVBytes[2],
-//                    mRGBBytes,
-//                    mPreviewWidth,
-//                    mPreviewHeight,
+//                    yuvBytes[0],
+//                    yuvBytes[1],
+//                    yuvBytes[2],
+//                    rgbBytes,
+//                    previewWidth,
+//                    previewHeight,
 //                    yRowStride,
 //                    uvRowStride,
 //                    uvPixelStride,
@@ -281,11 +238,11 @@ public class FaceTrackingListener implements OnImageAvailableListener {
             Log.e(TAG, "Exception!", e);
             return false;
         }
-//        mRGBframeBitmap.setPixels(mRGBBytes, 0, mPreviewWidth, 0, 0, mPreviewWidth, mPreviewHeight);
+//        rgbFrameBitmap.setPixels(rgbBytes, 0, previewWidth, 0, 0, previewWidth, previewHeight);
 //
-//        // Resized mRGBframeBitmap
+//        // Resized rgbFrameBitmap
 //        final Matrix matrix = new Matrix();
-//        matrix.postScale(BM_FACE_H * 1f / mPreviewWidth, BM_FACE_W * 1f / mPreviewHeight);
+//        matrix.postScale(BM_FACE_H * 1f / previewWidth, BM_FACE_W * 1f / previewHeight);
 //        int mScreenRotation = 90;
 //        if (cameraId.equals(CAMERA_FRONT)) {
 //            mScreenRotation = -90;
@@ -296,7 +253,7 @@ public class FaceTrackingListener implements OnImageAvailableListener {
 //            matrix.postTranslate(BM_FACE_H, 0);//scale image back
 //        }
 //
-//        mCroppedBitmap = Bitmap.createBitmap(mRGBframeBitmap, 0, 0, mPreviewWidth, mPreviewHeight, matrix, false);
+//        croppedBitmap = Bitmap.createBitmap(rgbFrameBitmap, 0, 0, previewWidth, previewHeight, matrix, false);
         return true;
     }
 
@@ -304,7 +261,7 @@ public class FaceTrackingListener implements OnImageAvailableListener {
      * Process and output: visionDetRets, oldBoundingBox
      * <p>
      * Write: results, visionDetRets, oldBoundingBox
-     * Read: mCroppedBitmap (clone)
+     * Read: croppedBitmap (clone)
      */
     /***
      * Process and output: preImg, prevPts
@@ -314,8 +271,17 @@ public class FaceTrackingListener implements OnImageAvailableListener {
     private void step2FaceDetProcess() {
         long startTime = System.currentTimeMillis();
 
-        Bitmap bmp32 = mCroppedBitmap.copy(mCroppedBitmap.getConfig(), true);
+//        Bitmap bmp32 = croppedBitmap.copy(croppedBitmap.getConfig(), true);
 //        results = mFaceDet.detect(bmp32);
+
+        synchronized (mNv21Data) {
+            if (!mTrack106) {
+                multiTrack106.FaceTrackingInit(mNv21Data, previewHeight, previewWidth);
+                mTrack106 = !mTrack106;
+            } else {
+                multiTrack106.Update(mNv21Data, previewHeight, previewWidth);
+            }
+        }
 
         long endTime = System.currentTimeMillis();
         Log.d(TAG, "Detect face time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
@@ -326,24 +292,73 @@ public class FaceTrackingListener implements OnImageAvailableListener {
      * Tracking and update: visionDetRets depend on boundingBox, oldBoundingBox
      * <p>
      * Write: boundingBox, oldBoundingBox, visionDetRets
-     * Read: mCroppedBitmap (clone), visionDetRets
+     * Read: croppedBitmap (clone), visionDetRets
      */
     /**
      * Tracking and update: visionDetRets depend on preImg, nextImg, prevPts, prevPtsList
      * <p>
      * Write: prevImg,prePts, PrevPtsList visionDetRets =>NextPts
-     * Read: mCroppedBitmap (clone), visionDetRets, PrevPtList
+     * Read: croppedBitmap (clone), visionDetRets, PrevPtList
      */
     private void step3TrackingProcess() {
 
     }
 
     /**
-     * Render object by: visionDetRets, mCroppedBitmap
+     * Render object by: visionDetRets, croppedBitmap
      * Read only
      */
     private void step4RenderProcess(int fps) {
         final String log;
+
+        Canvas rootCanvas = cameraTextureView.lockCanvas();
+
+
+        List<Face> faceActions = new ArrayList<>(multiTrack106.getTrackingInfo());
+
+        if (faceActions != null) {
+
+            if (!overlap.getHolder().getSurface().isValid()) {
+                return;
+            }
+
+            Canvas canvas = overlap.getHolder().lockCanvas();
+            if (canvas == null)
+                return;
+
+            canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+            canvas.setMatrix(matrix);
+            boolean rotate270 = true;
+            for (Face r : faceActions) {
+
+                Rect rect = new Rect(previewHeight - r.left, r.top, previewHeight - r.right, r.bottom);
+
+                PointF[] points = new PointF[106];
+                for (int i = 0; i < 106; i++) {
+                    points[i] = new PointF(r.landmarks[i * 2], r.landmarks[i * 2 + 1]);
+                }
+
+                float[] visibles = new float[106];
+
+
+                for (int i = 0; i < points.length; i++) {
+                    visibles[i] = 1.0f;
+                    if (rotate270) {
+                        points[i].x = previewHeight - points[i].x;
+                    }
+                }
+
+                STUtils.drawFaceRect(canvas, rect, previewHeight,
+                        previewWidth, true);
+                STUtils.drawPoints(canvas, paint, points, visibles, previewHeight,
+                        previewWidth, true);
+
+            }
+            overlap.getHolder().unlockCanvasAndPost(canvas);
+        }
+
+        cameraTextureView.unlockCanvasAndPost(rootCanvas);
+
         long endTime = System.currentTimeMillis();
         if (lastTime == 0 || endTime == lastTime) {
             lastTime = System.currentTimeMillis();
@@ -355,19 +370,19 @@ public class FaceTrackingListener implements OnImageAvailableListener {
 
         if (faceLandmarkListener != null && tvFps != null) {
 //            Bitmap bm32 = drawOnResultBoundingBox();
-            if (mUIHandler != null) {
-                mUIHandler.post(() -> {
+            if (uiHandler != null) {
+                uiHandler.post(() -> {
                     tvFps.setText(log);
 //                    ivOverlay.setImageBitmap(bm32);
                 });
             }
-//            faceLandmarkListener.landmarkUpdate(visionDetRets, mCroppedBitmap.getWidth(), mCroppedBitmap.getHeight());
+//            faceLandmarkListener.landmarkUpdate(visionDetRets, croppedBitmap.getWidth(), croppedBitmap.getHeight());
 
         }
     }
 
     private Bitmap drawOnResultBoundingBox() {
-        Bitmap bm32 = mRGBframeBitmap2.copy(mRGBframeBitmap2.getConfig(), true);
+        Bitmap bm32 = rbgFrameBitmap2.copy(rbgFrameBitmap2.getConfig(), true);
 
         if (face != null) {
             Canvas canvas = new Canvas(bm32);
@@ -377,11 +392,11 @@ public class FaceTrackingListener implements OnImageAvailableListener {
             }
 
 
-            Rect rect = new Rect(mPreviewHeight - face.left, face.top, mPreviewHeight - face.right, face.bottom);
+            Rect rect = new Rect(previewHeight - face.left, face.top, previewHeight - face.right, face.bottom);
 
             int left = rect.left;
-            rect.left = mPreviewHeight - rect.right;
-            rect.right = mPreviewHeight - left;
+            rect.left = previewHeight - rect.right;
+            rect.right = previewHeight - left;
             canvas.drawRect(rect, greenPaint);
 
         }
