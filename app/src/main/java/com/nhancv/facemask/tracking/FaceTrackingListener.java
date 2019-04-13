@@ -212,6 +212,7 @@ public class FaceTrackingListener implements OnImageAvailableListener {
                 float scaleInputRate = Math.max(mPreviewWidth, mPreviewHeight) * 1f / Math.min(mPreviewWidth, mPreviewHeight);
                 BM_FACE_H = (int) (BM_FACE_W * scaleInputRate);
                 mCroppedBitmap = Bitmap.createBitmap(mRGBframeBitmap, 0, 0, mPreviewWidth, mPreviewHeight);
+
                 mYUVBytes = new byte[planes.length][];
                 for (int i = 0; i < planes.length; ++i) {
                     mYUVBytes[i] = new byte[planes[i].getBuffer().capacity()];
@@ -241,36 +242,60 @@ public class FaceTrackingListener implements OnImageAvailableListener {
             for (Face r : faceActions) {
                 face = r;
                 points = new float[106 * 2];
-
+                //get tracking face location return 0,0,0,0
                 Rect rect = new Rect(mPreviewHeight - r.left, r.top, mPreviewHeight - r.right, r.bottom);
-                Log.d(TAG, "step1PreImageProcess: " + rect);
-                for (int i = 0; i < 106; i++) {
-                    int x = mPreviewHeight - r.landmarks[i * 2];
-                    int y = r.landmarks[i * 2 + 1];
-                    points[i * 2] = view2openglX(x, mPreviewHeight);
-                    points[i * 2 + 1] = view2openglY(y, mPreviewWidth);
-                    if (i == 70) {
-                        p = new float[8];
-                        p[0] = view2openglX(x + 20, mPreviewHeight);
-                        p[1] = view2openglY(y - 20, mPreviewWidth);
-                        p[2] = view2openglX(x - 20, mPreviewHeight);
-                        p[3] = view2openglY(y - 20, mPreviewWidth);
-                        p[4] = view2openglX(x + 20, mPreviewHeight);
-                        p[5] = view2openglY(y + 20, mPreviewWidth);
-                        p[6] = view2openglX(x - 20, mPreviewHeight);
-                        p[7] = view2openglY(y + 20, mPreviewWidth);
+                Log.d(TAG, "step1PreImageProcess: " + face.toString());
+                int left =r.landmarks[0], top = r.landmarks[1] ,right = r.landmarks[0] ,bottom = r.landmarks[1] ;
+                int width = 0,height = 0;
+                for (int i = 2; i < 106; i++) {
+                    int x = r.landmarks[i*2];
+                    int y = r.landmarks[i*2+1];
+                    if(x<left){
+                        left = x;
                     }
+                    if(y<top){
+                        top = y;
+                    }
+                    if(x>right){
+                        right = x;
+                    }
+                    if(y>bottom){
+                        bottom = y;
+                    }
+//                    int x = mPreviewHeight - r.landmarks[i * 2];
+//                    int y = r.landmarks[i * 2 + 1];
+//                    points[i * 2] = view2openglX(x, mPreviewHeight);
+//                    points[i * 2 + 1] = view2openglY(y, mPreviewWidth);
+//                    if (i == 70) {
+//                        p = new float[8];
+//                        p[0] = view2openglX(x + 20, mPreviewHeight);
+//                        p[1] = view2openglY(y - 20, mPreviewWidth);
+//                        p[2] = view2openglX(x - 20, mPreviewHeight);
+//                        p[3] = view2openglY(y - 20, mPreviewWidth);
+//                        p[4] = view2openglX(x + 20, mPreviewHeight);
+//                        p[5] = view2openglY(y + 20, mPreviewWidth);
+//                        p[6] = view2openglX(x - 20, mPreviewHeight);
+//                        p[7] = view2openglY(y + 20, mPreviewWidth);
                 }
-                if (p != null) {
-                    break;
-                }
+                r.setLeft(left-1);
+                r.setRight(right+1);
+                r.setBottom(bottom+1);
+                r.setTop(top-1);
+                r.setWidth(right - left+2);
+                r.setHeight(bottom-top +2);
             }
+//            if (p != null) {
+//                break;
+//            }
 
-            if (points != null) {
-                for (float point : points) {
-//                Log.e(TAG, "step1PreImageProcess: " + point);
-                }
-            }
+
+
+
+//            if (points != null) {
+//                for (float point : points) {
+////                Log.e(TAG, "step1PreImageProcess: " + point);
+//                }
+//            }
 
 
 //            for (int i = 0; i < planes.length; ++i) {
@@ -384,7 +409,6 @@ public class FaceTrackingListener implements OnImageAvailableListener {
 
         }
     }
-
     private Bitmap drawOnResultBoundingBox() {
         Bitmap bm32 = mRGBframeBitmap2.copy(mRGBframeBitmap2.getConfig(), true);
 
@@ -396,10 +420,10 @@ public class FaceTrackingListener implements OnImageAvailableListener {
                 canvas.drawCircle(face.landmarks[i], face.landmarks[i+1], 5, redPaint);
             }
 
-
-            canvas.drawRect(new Rect(10, 10, 100, 100), greenPaint);
+            canvas.drawRect(new Rect(face.left, face.top, face.right, face.bottom), greenPaint);
 
         }
+
 //
 //        Rect bounds = new Rect(visionDetRet.getLeft(), visionDetRet.getTop(), visionDetRet.getRight(), visionDetRet.getBottom());
 //        Canvas canvas = new Canvas(bm32);

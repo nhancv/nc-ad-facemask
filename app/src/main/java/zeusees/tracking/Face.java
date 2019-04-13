@@ -31,6 +31,30 @@ public class Face {
 
     public int ID;
 
+    public void setLeft(int left) {
+        this.left = left;
+    }
+
+    public void setTop(int top) {
+        this.top = top;
+    }
+
+    public void setRight(int right) {
+        this.right = right;
+    }
+
+    public void setBottom(int bottom) {
+        this.bottom = bottom;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
     public int left;
     public int top;
     public int right;
