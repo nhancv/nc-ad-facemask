@@ -34,8 +34,6 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning"
         >
-        <activity android:name=".MainActivity">
-        </activity>
         <activity
             android:name=".CameraActivity"
             android:screenOrientation="portrait"

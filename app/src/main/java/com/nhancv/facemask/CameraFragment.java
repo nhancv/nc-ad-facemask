@@ -63,105 +63,18 @@ import zeusees.tracking.Face;
 public class CameraFragment extends Fragment
         implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback, FaceLandmarkListener {
 
+    /**
+     * Static
+     */
     private static final String TAG = CameraFragment.class.getSimpleName();
-
     private static final int REQUEST_CAMERA_PERMISSION = 1;
     private static final String FRAGMENT_DIALOG = "dialog";
-
-    private final SparseIntArray ORIENTATIONS = new SparseIntArray();
-
-    {
-        ORIENTATIONS.append(Surface.ROTATION_0, 90);
-        ORIENTATIONS.append(Surface.ROTATION_90, 0);
-        ORIENTATIONS.append(Surface.ROTATION_180, 270);
-        ORIENTATIONS.append(Surface.ROTATION_270, 180);
-    }
-
     private static final int MAX_PREVIEW_WIDTH = 640;//1920
     private static final int MAX_PREVIEW_HEIGHT = 480;//1080
 
-
-    String[] maskFilters = new String[]{"cat"};
-    // Hash map that includes id and bitmaps
-    HashMap<String, HashMap<String, Bitmap>> maskFilterElements = new HashMap<>();
-    private final TextureView.SurfaceTextureListener mSurfaceTextureListener
-            = new TextureView.SurfaceTextureListener() {
-
-        @Override
-        public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
-            openCamera(width, height);
-        }
-
-
-        @Override
-        public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
-            configureTransform(width, height);
-            transformMatrix.setScale(width / (float) mPreviewSize.getHeight(), height / (float) mPreviewSize.getWidth());
-        }
-
-        @Override
-        public boolean onSurfaceTextureDestroyed(SurfaceTexture texture) {
-            return true;
-        }
-
-        @Override
-        public void onSurfaceTextureUpdated(SurfaceTexture texture) {
-        }
-
-    };
-
-    private String mCameraId = "1";
-    private AutoFitTextureView mTextureView;
-    private SurfaceView mOverlap;
-    private Matrix transformMatrix = new Matrix();
-
-    private M2DPosController m2DPosController;
-    private M2DLandmarkView landmarkView;
-    // For camera preview.
-    private CameraCaptureSession mCaptureSession;
-    // A reference to the opened {@link CameraDevice}.
-    private CameraDevice mCameraDevice;
-    // Size of camera preview
-    private Size mPreviewSize;
-    // CameraDevice.StateCallback is called when CameraDevice changes its state.
-    private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
-
-        @Override
-        public void onOpened(@NonNull CameraDevice cameraDevice) {
-            // This method is called when the camera is opened.  We start camera preview here.
-            mCameraOpenCloseLock.release();
-            mCameraDevice = cameraDevice;
-            createCameraPreviewSession();
-        }
-
-        @Override
-        public void onDisconnected(@NonNull CameraDevice cameraDevice) {
-            mCameraOpenCloseLock.release();
-            cameraDevice.close();
-            mCameraDevice = null;
-
-            if (mOnGetPreviewListener != null) {
-                mOnGetPreviewListener.deInitialize();
-            }
-        }
-
-        @Override
-        public void onError(@NonNull CameraDevice cameraDevice, int error) {
-            mCameraOpenCloseLock.release();
-            cameraDevice.close();
-            mCameraDevice = null;
-            Activity activity = getActivity();
-            if (null != activity) {
-                activity.finish();
-            }
-
-            if (mOnGetPreviewListener != null) {
-                mOnGetPreviewListener.deInitialize();
-            }
-        }
-
-    };
-
+    /**
+     * Thread
+     */
     private HandlerThread preImageProcessThread;
     private Handler mPreImageProcess;
 
@@ -176,16 +89,116 @@ public class CameraFragment extends Fragment
 
     private Handler uiHandler;
 
+
+    /**
+     * Global vars
+     */
+    private String cameraId = "1";
+    private M2DPosController m2DPosController;
+    private Matrix transformMatrix = new Matrix();
+    // Hash map that includes id and bitmaps
+    private HashMap<String, Bitmap> maskFilterElements = new HashMap<>();
+
+    /**
+     * Camera component
+     */
+    // For camera preview.
+    private CameraCaptureSession captureSession;
+    private CameraDevice cameraDevice;
     private ImageReader previewReader;
-
-    private CaptureRequest.Builder mPreviewRequestBuilder;
-    private CaptureRequest mPreviewRequest;
-
-    // A {@link Semaphore} to prevent the app from exiting before closing the camera.
-    private Semaphore mCameraOpenCloseLock = new Semaphore(1);
-
+    private CaptureRequest.Builder previewRequestBuilder;
+    private CaptureRequest previewRequest;
+    // A Semaphore to prevent the app from exiting before closing the camera.
+    private Semaphore cameraOpenCloseLock = new Semaphore(1);
+    private final SparseIntArray ORIENTATIONS = new SparseIntArray();
+    {
+        ORIENTATIONS.append(Surface.ROTATION_0, 90);
+        ORIENTATIONS.append(Surface.ROTATION_90, 0);
+        ORIENTATIONS.append(Surface.ROTATION_180, 270);
+        ORIENTATIONS.append(Surface.ROTATION_270, 180);
+    }
     // Whether the current camera device supports Flash or not.
-    private boolean mFlashSupported;
+    private boolean flashSupported;
+    // Size of camera preview
+    private Size previewSize;
+
+
+    /**
+     * UI component
+     */
+    private AutoFitTextureView cameraTextureView;
+    private SurfaceView overlapFaceView;
+    private M2DLandmarkView landmarkView;
+
+
+    /**
+     * Listener / Callback
+     */
+    private final FaceTrackingListener onGetPreviewListener = new FaceTrackingListener();
+
+    private final TextureView.SurfaceTextureListener surfaceTextureListener
+            = new TextureView.SurfaceTextureListener() {
+
+        @Override
+        public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
+            openCamera(width, height);
+        }
+
+
+        @Override
+        public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
+            configureTransform(width, height);
+            transformMatrix.setScale(width / (float) previewSize.getHeight(), height / (float) previewSize.getWidth());
+        }
+
+        @Override
+        public boolean onSurfaceTextureDestroyed(SurfaceTexture texture) {
+            return true;
+        }
+
+        @Override
+        public void onSurfaceTextureUpdated(SurfaceTexture texture) {
+        }
+
+    };
+    // CameraDevice.StateCallback is called when CameraDevice changes its state.
+    private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
+
+        @Override
+        public void onOpened(@NonNull CameraDevice cameraDevice) {
+            // This method is called when the camera is opened.  We start camera preview here.
+            cameraOpenCloseLock.release();
+            CameraFragment.this.cameraDevice = cameraDevice;
+            createCameraPreviewSession();
+        }
+
+        @Override
+        public void onDisconnected(@NonNull CameraDevice cameraDevice) {
+            cameraOpenCloseLock.release();
+            cameraDevice.close();
+            CameraFragment.this.cameraDevice = null;
+
+            if (onGetPreviewListener != null) {
+                onGetPreviewListener.deInitialize();
+            }
+        }
+
+        @Override
+        public void onError(@NonNull CameraDevice cameraDevice, int error) {
+            cameraOpenCloseLock.release();
+            cameraDevice.close();
+            CameraFragment.this.cameraDevice = null;
+            Activity activity = getActivity();
+            if (null != activity) {
+                activity.finish();
+            }
+
+            if (onGetPreviewListener != null) {
+                onGetPreviewListener.deInitialize();
+            }
+        }
+
+    };
 
     public static CameraFragment newInstance() {
         return new CameraFragment();
@@ -199,11 +212,11 @@ public class CameraFragment extends Fragment
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
-        mTextureView = view.findViewById(R.id.fragment_camera_textureview);
+        cameraTextureView = view.findViewById(R.id.fragment_camera_textureview);
         landmarkView = view.findViewById(R.id.fragment_camera_2dlandmarkview);
-        mOverlap = view.findViewById(R.id.surfaceViewOverlap);
-        mOverlap.setZOrderOnTop(true);
-        mOverlap.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+        overlapFaceView = view.findViewById(R.id.surfaceViewOverlap);
+        overlapFaceView.setZOrderOnTop(true);
+        overlapFaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
     }
 
     @Override
@@ -211,7 +224,7 @@ public class CameraFragment extends Fragment
         super.onActivityCreated(savedInstanceState);
         loadImageOverlay();
         m2DPosController = new M2DPosController(landmarkView);
-        m2DPosController.update(this.maskFilterElements.get("cat"));
+        m2DPosController.update(maskFilterElements);
     }
 
     @Override
@@ -219,10 +232,10 @@ public class CameraFragment extends Fragment
         super.onResume();
         startBackgroundThread();
 
-        if (mTextureView.isAvailable()) {
-            openCamera(mTextureView.getWidth(), mTextureView.getHeight());
+        if (cameraTextureView.isAvailable()) {
+            openCamera(cameraTextureView.getWidth(), cameraTextureView.getHeight());
         } else {
-            mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
+            cameraTextureView.setSurfaceTextureListener(surfaceTextureListener);
         }
     }
 
@@ -281,7 +294,7 @@ public class CameraFragment extends Fragment
                 CameraCharacteristics characteristics
                         = manager.getCameraCharacteristics(cameraId);
 
-                if (cameraId.equals(mCameraId)) {
+                if (cameraId.equals(this.cameraId)) {
                     StreamConfigurationMap map = characteristics.get(
                             CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                     if (map == null) {
@@ -338,28 +351,28 @@ public class CameraFragment extends Fragment
                     // bus' bandwidth limitation, resulting in gorgeous previews but the storage of
                     // garbage capture data.
                     Size aspectRatio = new Size(MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGHT);
-                    mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
+                    previewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
                             rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth,
                             maxPreviewHeight, aspectRatio);
 
-                    Log.e(TAG, "setUpCameraOutputs mPreviewSize: " + mPreviewSize);
+                    Log.e(TAG, "setUpCameraOutputs previewSize: " + previewSize);
                     // We fit the aspect ratio of TextureView to the size of preview we picked.
                     int orientation = getResources().getConfiguration().orientation;
                     if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                        mTextureView.setAspectRatio(
-                                mPreviewSize.getWidth(), mPreviewSize.getHeight());
+                        cameraTextureView.setAspectRatio(
+                                previewSize.getWidth(), previewSize.getHeight());
                         landmarkView.setAspectRatio(
-                                mPreviewSize.getWidth(), mPreviewSize.getHeight());
+                                previewSize.getWidth(), previewSize.getHeight());
                     } else {
-                        mTextureView.setAspectRatio(
-                                mPreviewSize.getHeight(), mPreviewSize.getWidth());
+                        cameraTextureView.setAspectRatio(
+                                previewSize.getHeight(), previewSize.getWidth());
                         landmarkView.setAspectRatio(
-                                mPreviewSize.getHeight(), mPreviewSize.getWidth());
+                                previewSize.getHeight(), previewSize.getWidth());
                     }
 
                     // Check if the flash is supported.
                     Boolean available = characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
-                    mFlashSupported = available == null ? false : available;
+                    flashSupported = available == null ? false : available;
                 }
             }
         } catch (CameraAccessException e) {
@@ -369,7 +382,7 @@ public class CameraFragment extends Fragment
         }
     }
 
-    // Opens the camera specified by mCameraId
+    // Opens the camera specified by cameraId
     private void openCamera(int width, int height) {
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -381,10 +394,10 @@ public class CameraFragment extends Fragment
         Activity activity = getActivity();
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
         try {
-            if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
+            if (!cameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
             }
-            manager.openCamera(mCameraId, mStateCallback, mPreImageProcess);
+            manager.openCamera(cameraId, stateCallback, mPreImageProcess);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -395,25 +408,25 @@ public class CameraFragment extends Fragment
     // Closes the current CameraDevice
     private void closeCamera() {
         try {
-            mCameraOpenCloseLock.acquire();
-            if (null != mCaptureSession) {
-                mCaptureSession.close();
-                mCaptureSession = null;
+            cameraOpenCloseLock.acquire();
+            if (null != captureSession) {
+                captureSession.close();
+                captureSession = null;
             }
-            if (null != mCameraDevice) {
-                mCameraDevice.close();
-                mCameraDevice = null;
+            if (null != cameraDevice) {
+                cameraDevice.close();
+                cameraDevice = null;
             }
             if (null != previewReader) {
                 previewReader.close();
                 previewReader = null;
             }
 
-            mOnGetPreviewListener.deInitialize();
+            onGetPreviewListener.deInitialize();
         } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
         } finally {
-            mCameraOpenCloseLock.release();
+            cameraOpenCloseLock.release();
         }
     }
 
@@ -475,51 +488,49 @@ public class CameraFragment extends Fragment
         }
     }
 
-    private final FaceTrackingListener mOnGetPreviewListener = new FaceTrackingListener();
-
     // Creates a new CameraCaptureSession for camera preview.
     private void createCameraPreviewSession() {
         try {
-            SurfaceTexture texture = mTextureView.getSurfaceTexture();
+            SurfaceTexture texture = cameraTextureView.getSurfaceTexture();
             assert texture != null;
 
             // We configure the size of default buffer to be the size of camera preview we want.
-            texture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
+            texture.setDefaultBufferSize(previewSize.getWidth(), previewSize.getHeight());
 
             // This is the output Surface we need to start preview.
             Surface surface = new Surface(texture);
 
             // We set up a CaptureRequest.Builder with the output Surface.
-            mPreviewRequestBuilder
-                    = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            mPreviewRequestBuilder.addTarget(surface);
+            previewRequestBuilder
+                    = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            previewRequestBuilder.addTarget(surface);
 
             // Create the reader for the preview frames.
-            previewReader = ImageReader.newInstance(mPreviewSize.getWidth(), mPreviewSize.getHeight(), ImageFormat.YUV_420_888, 2);
-            previewReader.setOnImageAvailableListener(mOnGetPreviewListener, mPreImageProcess);
-            mPreviewRequestBuilder.addTarget(previewReader.getSurface());
+            previewReader = ImageReader.newInstance(previewSize.getWidth(), previewSize.getHeight(), ImageFormat.YUV_420_888, 2);
+            previewReader.setOnImageAvailableListener(onGetPreviewListener, mPreImageProcess);
+            previewRequestBuilder.addTarget(previewReader.getSurface());
 
             // Here, we create a CameraCaptureSession for camera preview.
-            mCameraDevice.createCaptureSession(Arrays.asList(surface, previewReader.getSurface()),
+            cameraDevice.createCaptureSession(Arrays.asList(surface, previewReader.getSurface()),
                     new CameraCaptureSession.StateCallback() {
 
                         @Override
                         public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
                             // The camera is already closed
-                            if (null == mCameraDevice) {
+                            if (null == cameraDevice) {
                                 return;
                             }
 
                             // When the session is ready, we start displaying the preview.
-                            mCaptureSession = cameraCaptureSession;
+                            captureSession = cameraCaptureSession;
                             try {
                                 // Turn Off auto mode
-                                if (mFlashSupported) {
-                                    mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF);
+                                if (flashSupported) {
+                                    previewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF);
                                 }
                                 // Finally, we start displaying the camera preview.
-                                mPreviewRequest = mPreviewRequestBuilder.build();
-                                mCaptureSession.setRepeatingRequest(mPreviewRequest, null, mPreImageProcess);
+                                previewRequest = previewRequestBuilder.build();
+                                captureSession.setRepeatingRequest(previewRequest, null, mPreImageProcess);
                             } catch (CameraAccessException e) {
                                 e.printStackTrace();
                             }
@@ -535,54 +546,51 @@ public class CameraFragment extends Fragment
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
-        mOnGetPreviewListener.initialize(getView(), Objects.requireNonNull(getActivity()).getApplicationContext(),
-                mCameraId,
+        onGetPreviewListener.initialize(getView(), Objects.requireNonNull(getActivity()).getApplicationContext(),
+                cameraId,
                 getActivity().findViewById(R.id.fragment_camera_iv_overlay),
                 getActivity().findViewById(R.id.fragment_camera_tv_fps),
                 trackingHandler,
-                mFaceDetectionHandler, uiHandler, mPostImageHandler, this, mOverlap, transformMatrix);
+                mFaceDetectionHandler, uiHandler, mPostImageHandler, this, overlapFaceView, transformMatrix);
     }
 
     /**
-     * Configures the necessary {@link android.graphics.Matrix} transformation to `mTextureView`.
+     * Configures the necessary {@link android.graphics.Matrix} transformation to `cameraTextureView`.
      * This method should be called after the camera preview size is determined in
-     * setUpCameraOutputs and also the size of `mTextureView` is fixed.
+     * setUpCameraOutputs and also the size of `cameraTextureView` is fixed.
      *
-     * @param viewWidth The width of `mTextureView`
-     * @param viewHeight The height of `mTextureView`
+     * @param viewWidth The width of `cameraTextureView`
+     * @param viewHeight The height of `cameraTextureView`
      */
     private void configureTransform(int viewWidth, int viewHeight) {
         Activity activity = getActivity();
-        if (null == mTextureView || null == mPreviewSize || null == activity) {
+        if (null == cameraTextureView || null == previewSize || null == activity) {
             return;
         }
         int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
         Matrix matrix = new Matrix();
         RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
-        RectF bufferRect = new RectF(0, 0, mPreviewSize.getHeight(), mPreviewSize.getWidth());
+        RectF bufferRect = new RectF(0, 0, previewSize.getHeight(), previewSize.getWidth());
         float centerX = viewRect.centerX();
         float centerY = viewRect.centerY();
         if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
             bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY());
             matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL);
             float scale = Math.max(
-                    (float) viewHeight / mPreviewSize.getHeight(),
-                    (float) viewWidth / mPreviewSize.getWidth());
+                    (float) viewHeight / previewSize.getHeight(),
+                    (float) viewWidth / previewSize.getWidth());
             matrix.postScale(scale, scale, centerX, centerY);
             matrix.postRotate(90 * (rotation - 2), centerX, centerY);
         } else if (Surface.ROTATION_180 == rotation) {
             matrix.postRotate(180, centerX, centerY);
         }
-        mTextureView.setTransform(matrix);
+        cameraTextureView.setTransform(matrix);
     }
 
+    // Load image resources
     public void loadImageOverlay() {
-        for (final String name : this.maskFilters) {
-            HashMap<String, Bitmap> elements = new HashMap<>();
-            elements.put("head", BitmapFactory.decodeResource(this.getResources(), R.drawable.cat_00001));
-            elements.put("nose", BitmapFactory.decodeResource(this.getResources(), R.drawable.cat_00001));
-            maskFilterElements.put(name, elements);
-        }
+        maskFilterElements.put("head", BitmapFactory.decodeResource(this.getResources(), R.drawable.cat_00001));
+        maskFilterElements.put("nose", BitmapFactory.decodeResource(this.getResources(), R.drawable.cat_00001));
     }
 
     // Shows a {@link Toast} on the UI thread.

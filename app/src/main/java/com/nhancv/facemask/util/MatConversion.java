@@ -1,4 +1,4 @@
-package com.nhancv.facemask;
+package com.nhancv.facemask.util;
 
 import android.graphics.Point;
 

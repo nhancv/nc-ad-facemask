@@ -1,7 +1,6 @@
 package com.tracking;
 
 import android.annotation.SuppressLint;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -15,15 +14,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.nhancv.facemask.tracking.ImageUtil;
-import com.nhancv.facemask.util.AuthCallback;
 import com.nhancv.facemask.util.STUtils;
 
 import java.util.List;
