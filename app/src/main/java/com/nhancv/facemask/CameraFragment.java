@@ -148,7 +148,7 @@ public class CameraFragment extends Fragment
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
             configureTransform(width, height);
-            transformMatrix.setScale(width / (float) previewSize.getHeight(), height / (float) previewSize.getWidth());
+            transformMatrix.setScale(width / (float) 240, height / (float) 320);
         }
 
         @Override
@@ -506,7 +506,8 @@ public class CameraFragment extends Fragment
             previewRequestBuilder.addTarget(surface);
 
             // Create the reader for the preview frames.
-            previewReader = ImageReader.newInstance(previewSize.getWidth(), previewSize.getHeight(), ImageFormat.YUV_420_888, 2);
+//            previewReader = ImageReader.newInstance(previewSize.getWidth(), previewSize.getHeight(), ImageFormat.YUV_420_888, 2);
+            previewReader = ImageReader.newInstance(320, 240, ImageFormat.YUV_420_888, 2);
             previewReader.setOnImageAvailableListener(onGetPreviewListener, mPreImageProcess);
             previewRequestBuilder.addTarget(previewReader.getSurface());
 

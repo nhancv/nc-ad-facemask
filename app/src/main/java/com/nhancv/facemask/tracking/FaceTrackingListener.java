@@ -197,7 +197,7 @@ public class FaceTrackingListener implements OnImageAvailableListener {
             }
 
             synchronized (lockObj) {
-                byte[] data = ImageUtil.YUV_420_888toNV212(image);
+                byte[] data = ImageUtil.convertYUV420ToNV21(image);
                 System.arraycopy(data, 0, mNv21Data, 0, data.length);
                 image.close();
 
