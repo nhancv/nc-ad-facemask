@@ -4,10 +4,11 @@ import android.graphics.Bitmap;
 
 import com.nhancv.facemask.FaceLandmarkListener;
 import com.nhancv.facemask.OverlayImageListener;
-import com.tzutalin.dlib.VisionDetRet;
 
 import java.util.HashMap;
 import java.util.List;
+
+import zeusees.tracking.Face;
 
 public class M2DPosController implements FaceLandmarkListener, OverlayImageListener {
 
@@ -18,7 +19,7 @@ public class M2DPosController implements FaceLandmarkListener, OverlayImageListe
     }
 
     @Override
-    public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
+    public void landmarkUpdate(List<Face> visionDetRetList, int bmW, int bmH) {
         //1280x720
         //640x480
         landmarkView.setVisionDetRetList(visionDetRetList, bmW, bmH);

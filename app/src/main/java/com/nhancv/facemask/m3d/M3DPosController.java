@@ -1,16 +1,13 @@
 package com.nhancv.facemask.m3d;
-import android.annotation.SuppressLint;
+
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.util.Log;
-import android.view.View;
 
 import com.nhancv.facemask.FaceLandmarkListener;
 import com.nhancv.facemask.m3d.transformation.*;
-import com.tzutalin.dlib.VisionDetRet;
 
-import org.andresoviedo.android_3d_model_engine.model.Camera;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -19,17 +16,17 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.MatOfPoint3f;
 
 import java.util.ArrayList;
-import java.util.DoubleSummaryStatistics;
 import java.util.List;
 
-import hugo.weaving.DebugLog;
+import zeusees.tracking.Face;
+
 
 public class M3DPosController implements FaceLandmarkListener {
 
     private final static String TAG = M3DPosController.class.getName();
     private M3DSurfaceView surfaceView;
     private M3DRenderer renderer;
-    private List<VisionDetRet> visionDetRetList;
+    private List<Face> visionDetRetList;
     private Rect bounds;
     private int bmWidth;
     private int bmHeight;
@@ -51,35 +48,37 @@ public class M3DPosController implements FaceLandmarkListener {
     private Mat rotationVector;
     private Mat translationVector;
     private RotationHelper rotationHelper = new RotationHelper();
+
     public void setUpDistCoeff() {
-        Mat coeffMat =new Mat();
-        Mat.zeros(4,1,CvType.CV_64FC1).copyTo(coeffMat);
+        Mat coeffMat = new Mat();
+        Mat.zeros(4, 1, CvType.CV_64FC1).copyTo(coeffMat);
         distCoeffs = new MatOfDouble(coeffMat);
     }
-    public void releaseMat(){
-        if(camMatrix!=null){
+
+    public void releaseMat() {
+        if (camMatrix != null) {
             camMatrix.release();
         }
-        if(rotationVector!=null){
+        if (rotationVector != null) {
             rotationVector.release();
         }
-        if(translationVector!=null){
+        if (translationVector != null) {
             translationVector.release();
         }
-        if(objPointMat!=null)
-        {
+        if (objPointMat != null) {
             objPointMat.release();
         }
-        if(distCoeffs!=null){
+        if (distCoeffs != null) {
             distCoeffs.release();
         }
     }
-    public float distance_to_camera(float knownWidth, float focalLength,float perWidth)
-    {
-        return knownWidth*focalLength/perWidth;
+
+    public float distance_to_camera(float knownWidth, float focalLength, float perWidth) {
+        return knownWidth * focalLength / perWidth;
     }
 
     Handler handler = new Handler();
+
     public M3DPosController(M3DSurfaceView surfaceView) {
         this.surfaceView = surfaceView;//receive the current surface view
         this.renderer = surfaceView.getModelRenderer();
@@ -91,70 +90,74 @@ public class M3DPosController implements FaceLandmarkListener {
     }
 
 
-
     private float getX(float x) {
-        return x/bmWidth * this.surfaceWidth;
+        return x / bmWidth * this.surfaceWidth;
     }
-    private float faceCenterX(int left,int right)
-    {
-        return (left+right)/2;
+
+    private float faceCenterX(int left, int right) {
+        return (left + right) / 2;
     }
-    private float faceCenterY(int top, int bottom)
-    {
-        return (top+bottom)/2;
+
+    private float faceCenterY(int top, int bottom) {
+        return (top + bottom) / 2;
     }
-    private float objX(int centerX, float x){
+
+    private float objX(int centerX, float x) {
         return x - centerX; //x coord is normal
     }
-    private float objY(int centerY, float y){
+
+    private float objY(int centerY, float y) {
 
         return centerY - y; //y coord is opposite
     }
 
     private float getY(float y) {
-        return y/bmHeight * this.surfaceHeight;
+        return y / bmHeight * this.surfaceHeight;
     }
-    private float ratioDepth(float depth)
-    {
-        float ratio = (default_distance - depth)/default_distance;
+
+    private float ratioDepth(float depth) {
+        float ratio = (default_distance - depth) / default_distance;
         return ratio;
         //return default_distance/depth;
     }
 
-    private float headWidth(ArrayList<Point> landmarks){
+    private float headWidth(ArrayList<Point> landmarks) {
         float dx = Math.abs(landmarks.get(16).x - landmarks.get(0).x);
-        float dy = Math.abs(landmarks.get(16).y-landmarks.get(0).y);
-        float result = (float)Math.hypot(dx,dy);
+        float dy = Math.abs(landmarks.get(16).y - landmarks.get(0).y);
+        float result = (float) Math.hypot(dx, dy);
         return result;
     }
-    private MatOfPoint2f get5ValidPoint( ArrayList<Point> landmarks ){
+
+    private MatOfPoint2f get5ValidPoint(ArrayList<Point> landmarks) {
         List<org.opencv.core.Point> objPoints = new ArrayList<org.opencv.core.Point>();
         MatOfPoint2f imagePoints = new MatOfPoint2f();
-        objPoints.add(new org.opencv.core.Point(landmarks.get(30).x,landmarks.get(30).y));
-        objPoints.add(new org.opencv.core.Point(landmarks.get(8).x,landmarks.get(8).y));
-        objPoints.add(new org.opencv.core.Point(landmarks.get(36).x,landmarks.get(36).y));
-        objPoints.add(new org.opencv.core.Point(landmarks.get(46).x,landmarks.get(46).y));
-        objPoints.add(new org.opencv.core.Point(landmarks.get(48).x,landmarks.get(48).y));
-        objPoints.add(new org.opencv.core.Point(landmarks.get(54).x,landmarks.get(54).y));
+        objPoints.add(new org.opencv.core.Point(landmarks.get(30).x, landmarks.get(30).y));
+        objPoints.add(new org.opencv.core.Point(landmarks.get(8).x, landmarks.get(8).y));
+        objPoints.add(new org.opencv.core.Point(landmarks.get(36).x, landmarks.get(36).y));
+        objPoints.add(new org.opencv.core.Point(landmarks.get(46).x, landmarks.get(46).y));
+        objPoints.add(new org.opencv.core.Point(landmarks.get(48).x, landmarks.get(48).y));
+        objPoints.add(new org.opencv.core.Point(landmarks.get(54).x, landmarks.get(54).y));
         imagePoints.fromList(objPoints);
         return imagePoints;
     }
-    private MatOfPoint3f getProjectPoints(){
+
+    private MatOfPoint3f getProjectPoints() {
         MatOfPoint3f projectPoints = new MatOfPoint3f();
         List<org.opencv.core.Point3> objPoints = new ArrayList<org.opencv.core.Point3>();
-        objPoints.add(new org.opencv.core.Point3(0f,0f,1000.0f) );
+        objPoints.add(new org.opencv.core.Point3(0f, 0f, 1000.0f));
         projectPoints.fromList(objPoints);
         return projectPoints;
     }
+
     @Override
-    public void landmarkUpdate(List<VisionDetRet> visionDetRetList, int bmW, int bmH) {
+    public void landmarkUpdate(List<Face> visionDetRetList, int bmW, int bmH) {
         this.visionDetRetList = visionDetRetList;
         this.bmWidth = bmW;
         this.bmHeight = bmH;
         this.surfaceWidth = surfaceView.getCurrentWidth();
         this.surfaceHeight = surfaceView.getCurrentHeight();
-        this.centerX = this.surfaceWidth/2;
-        this.centerY = this.surfaceHeight/2;
+        this.centerX = this.surfaceWidth / 2;
+        this.centerY = this.surfaceHeight / 2;
 
         if (visionDetRetList == null) return;
 
@@ -166,65 +169,67 @@ public class M3DPosController implements FaceLandmarkListener {
 
         renderer.setObjectVisible(false);
 
-        for (final VisionDetRet ret : visionDetRetList) {
-            ArrayList<Point> landmarks = ret.getFaceLandmarks();
+        for (final Face ret : visionDetRetList) {
+            // TODO: 4/13/19 Need convert from ret.landmarks
+            ArrayList<Point> landmarks = new ArrayList<>();
+
             renderer.setObjectVisible(true);
 
-            bounds.left = (int) (getX(ret.getLeft()));
-            bounds.top = (int) (getY(ret.getTop()));
-            bounds.right = (int) getX(ret.getRight());
-            bounds.bottom = (int) getY(ret.getBottom());
+            bounds.left = (int) (getX(ret.left));
+            bounds.top = (int) (getY(ret.top));
+            bounds.right = (int) getX(ret.right);
+            bounds.bottom = (int) getY(ret.bottom);
             //get face width and height
 
             //get the center of face
-            float centerFaceX = faceCenterX(bounds.left,bounds.right);
-            float centerFaceY = faceCenterY(bounds.top,bounds.bottom);
+            float centerFaceX = faceCenterX(bounds.left, bounds.right);
+            float centerFaceY = faceCenterY(bounds.top, bounds.bottom);
             //convert from coord arcooding to center
             //the current position we get is pixels
-            float objX = objX(centerX,centerFaceX)/1000;
-            float objY = objY(centerY,centerFaceY)/1000;
+            float objX = objX(centerX, centerFaceX) / 1000;
+            float objY = objY(centerY, centerFaceY) / 1000;
             float distance = headWidth(landmarks);
 
-            float head_distance = distance_to_camera(knownWidth,focal_length,distance);//calculate the head distance
+            float head_distance = distance_to_camera(knownWidth, focal_length, distance);//calculate the head distance
 
             //the ratio of our detected face and the default distancnce
             float objZ = ratioDepth(head_distance);
 
-            Log.d("M3DPos",""+head_distance);
+            Log.d("M3DPos", "" + head_distance);
             ObjectTransformation objectTransformation;
             //Using Sovle PNP
             MatOfPoint2f imagePoints = this.get5ValidPoint(landmarks);
             this.rotationVector = new Mat();
             this.translationVector = new Mat();
-            Calib3d.solvePnP(this.objPointMat,imagePoints,this.camMatrix,this.distCoeffs,this.rotationVector,this.translationVector);
+            Calib3d.solvePnP(this.objPointMat, imagePoints, this.camMatrix, this.distCoeffs, this.rotationVector, this.translationVector);
 
-            double[] rx =this.rotationVector.get(0,0);
-            double[] ry = this.rotationVector.get(1,0);
-            double[] rz = this.rotationVector.get(2,0);
-            Log.d(TAG,"Radian"+rx+","+ry+","+rz);
-            float dx = rotationHelper.normalizeRange((float)rx[0],10);
-            float dy = rotationHelper.normalizeRange((float) ry[0],45);
-            float dz = rotationHelper.normalizeRange((float) rz[0],45);
-            Log.d(TAG,"Degree"+dx+","+dy+","+dz);
+            double[] rx = this.rotationVector.get(0, 0);
+            double[] ry = this.rotationVector.get(1, 0);
+            double[] rz = this.rotationVector.get(2, 0);
+            Log.d(TAG, "Radian" + rx + "," + ry + "," + rz);
+            float dx = rotationHelper.normalizeRange((float) rx[0], 10);
+            float dy = rotationHelper.normalizeRange((float) ry[0], 45);
+            float dz = rotationHelper.normalizeRange((float) rz[0], 45);
+            Log.d(TAG, "Degree" + dx + "," + dy + "," + dz);
 
             Rotation rotation = new Rotation(dx, dy, dz);//rotationValues[curRotationIdx][0],rotationValues[curRotationIdx][1],rotationValues[curRotationIdx][2]);
-            Log.d("M3DPositionController","x"+objX+ ",y"+objY+",z"+objZ);
+            Log.d("M3DPositionController", "x" + objX + ",y" + objY + ",z" + objZ);
             //
             MatOfPoint3f projectPoints = this.getProjectPoints();
             MatOfPoint2f noseEndPoints = new MatOfPoint2f();
             Mat jacobian = new Mat();
-            Calib3d.projectPoints(projectPoints,rotationVector,translationVector,camMatrix,distCoeffs,noseEndPoints,jacobian);
+            Calib3d.projectPoints(projectPoints, rotationVector, translationVector, camMatrix, distCoeffs, noseEndPoints, jacobian);
 
-            Translation translation = new Translation(objX,objY,objZ);//translate back our scale will base on z
-            Scale scale = new Scale(5,5,3);//scale obj model
+            Translation translation = new Translation(objX, objY, objZ);//translate back our scale will base on z
+            Scale scale = new Scale(5, 5, 3);//scale obj model
 
 
             objectTransformation = new ObjectTransformationBuilder().setRotation(rotation)
-                                                                    .setTranslation(translation).setScale(scale).build();
+                    .setTranslation(translation).setScale(scale).build();
 
             //Scale scale = new Scale()
-            if(objectTransformation!=null)
-                listObjectTransformation.add( objectTransformation);//add each tranformation for each object
+            if (objectTransformation != null)
+                listObjectTransformation.add(objectTransformation);//add each tranformation for each object
             this.rotationVector.release();//release rotation vector
             this.translationVector.release();//release translation vector
         }

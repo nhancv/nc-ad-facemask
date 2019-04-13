@@ -3,28 +3,33 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/black"
+    
     >
 
     <com.nhancv.facemask.AutoFitTextureView
         android:id="@+id/fragment_camera_textureview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerInParent="true"
         />
+
+    <SurfaceView
+        android:id="@+id/surfaceViewOverlap"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
     <ImageView
         android:id="@+id/fragment_camera_iv_overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_centerInParent="true"
-        android:visibility="visible"
+        android:visibility="invisible"
         />
 
     <com.nhancv.facemask.m2d.M2DLandmarkView
         android:id="@+id/fragment_camera_2dlandmarkview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="invisible"
         />
 
     <com.nhancv.facemask.m3d.M3DSurfaceView
@@ -43,5 +48,6 @@
         android:background="@android:color/white"
         android:visibility="visible"
         />
+
 
 </RelativeLayout>
