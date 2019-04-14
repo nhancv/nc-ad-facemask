@@ -509,7 +509,7 @@ public class CameraFragment extends Fragment
             previewRequestBuilder.addTarget(surface);
 
             // Create the reader for the preview frames.
-            previewReader = ImageReader.newInstance(READER_WIDTH, READER_HEIGHT, ImageFormat.YUV_420_888, 1);
+            previewReader = ImageReader.newInstance(READER_WIDTH, READER_HEIGHT, ImageFormat.YUV_420_888, 2);
             previewReader.setOnImageAvailableListener(onGetPreviewListener, mPreImageProcess);
             previewRequestBuilder.addTarget(previewReader.getSurface());
 

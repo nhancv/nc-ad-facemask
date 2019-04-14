@@ -15,6 +15,8 @@ import android.media.Image.Plane;
 import android.media.ImageReader;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Message;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.TextureView;
@@ -35,6 +37,7 @@ import zeusees.tracking.FaceTracking;
 public class FaceTrackingListener implements OnImageAvailableListener {
 
     private static final String TAG = "FaceTrackingListener";
+    private static final int MESSAGE_DRAW_POINTS = 100;
 
     private static final int BM_FACE_W = 300;
     private static int BM_FACE_H = BM_FACE_W;
@@ -70,9 +73,20 @@ public class FaceTrackingListener implements OnImageAvailableListener {
 
     private long lastTime = 0;
     private final Object lockObj = new Object();
+    private HandlerThread handlerThread;
+    private Handler handler;
+
+    private Paint paint;
+    private byte[] nv21Data;
+    private byte[] tmpBuffer;
+    private FaceTracking multiTrack106 = null;
+    private boolean mTrack106 = false;
+    private SurfaceView overlap;
+    private Matrix matrix = new Matrix();
+    private Face face;
 
     public FaceTrackingListener() {
-        renderFps = new StableFps(30);
+        renderFps = new StableFps(40);
         detectFps = new StableFps(10);
     }
 
@@ -127,6 +141,73 @@ public class FaceTrackingListener implements OnImageAvailableListener {
         paint.setStrokeWidth(2);
         paint.setStyle(Paint.Style.FILL);
 
+        handlerThread = new HandlerThread("SurfaceRender");
+        handlerThread.start();
+        handler = new Handler(handlerThread.getLooper()) {
+            @Override
+            public void handleMessage(Message msg) {
+                if (msg.what == MESSAGE_DRAW_POINTS) {
+//                    synchronized (lockObj) {
+
+                        synchronized (nv21Data) {
+                            System.arraycopy(nv21Data, 0, tmpBuffer, 0, nv21Data.length);
+                            if (!mTrack106) {
+                                multiTrack106.FaceTrackingInit(tmpBuffer, previewHeight, previewWidth);
+                                mTrack106 = true;
+                            } else {
+                                multiTrack106.Update(tmpBuffer, previewHeight, previewWidth);
+                            }
+
+//                            List<Face> faceActions = new ArrayList<>(multiTrack106.getTrackingInfo());
+                            List<Face> faceActions = multiTrack106.getTrackingInfo();
+
+                            if (faceActions != null) {
+
+                                if (!overlap.getHolder().getSurface().isValid()) {
+                                    return;
+                                }
+
+                                Canvas canvas = overlap.getHolder().lockCanvas();
+                                if (canvas == null)
+                                    return;
+
+                                canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+                                canvas.setMatrix(matrix);
+                                boolean rotate270 = true;
+                                for (Face r : faceActions) {
+
+                                    Rect rect = new Rect(previewHeight - r.left, r.top, previewHeight - r.right, r.bottom);
+
+                                    PointF[] points = new PointF[106];
+                                    for (int i = 0; i < 106; i++) {
+                                        points[i] = new PointF(r.landmarks[i * 2], r.landmarks[i * 2 + 1]);
+                                    }
+
+                                    float[] visibles = new float[106];
+
+
+                                    for (int i = 0; i < points.length; i++) {
+                                        visibles[i] = 1.0f;
+                                        if (rotate270) {
+                                            points[i].x = previewHeight - points[i].x;
+                                        }
+                                    }
+
+                                    STUtils.drawFaceRect(canvas, rect, previewHeight,
+                                            previewWidth, true);
+                                    STUtils.drawPoints(canvas, paint, points, visibles, previewHeight,
+                                            previewWidth, true);
+
+                                }
+                                overlap.getHolder().unlockCanvasAndPost(canvas);
+                            }
+                        }
+//                    }
+
+                }
+            }
+        };
+
     }
 
     public void deInitialize() {
@@ -138,6 +219,16 @@ public class FaceTrackingListener implements OnImageAvailableListener {
                 multiTrack106 = null;
             }
         }
+        if (handlerThread != null) {
+            handlerThread.quitSafely();
+            try {
+                handlerThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        handlerThread = null;
+        handler = null;
     }
 
     @Override
@@ -146,35 +237,25 @@ public class FaceTrackingListener implements OnImageAvailableListener {
         if (!step1PreImageProcess(reader)) return;
 
         // Fps for detect face
-        if (!detectFps.isStarted()) {
-            detectFps.start(fps -> {
-                if (faceDetectionHandler != null && croppedBitmap != null) {
-                    faceDetectionHandler.post(this::step2FaceDetProcess);
-                }
-            });
-        }
+//        if (!detectFps.isStarted()) {
+//            detectFps.start(fps -> {
+//                if (faceDetectionHandler != null && croppedBitmap != null) {
+//                    faceDetectionHandler.post(this::step2FaceDetProcess);
+//                }
+//            });
+//        }
 
 //        trackingHandler.post(this::step3TrackingProcess);
 
         // Fps for render to ui thread
-        if (!renderFps.isStarted()) {
-            renderFps.start(fps -> {
-                if (postImageHandler != null) {
-                    postImageHandler.post(() -> step4RenderProcess(fps));
-                }
-            });
-        }
+//        if (!renderFps.isStarted()) {
+//            renderFps.start(fps -> {
+//                if (postImageHandler != null) {
+//                    postImageHandler.post(() -> step4RenderProcess(fps));
+//                }
+//            });
+//        }
     }
-
-
-    private Paint paint;
-    private byte[] mNv21Data;
-    private FaceTracking multiTrack106 = null;
-    private boolean mTrack106 = false;
-    private SurfaceView overlap;
-    private Matrix matrix = new Matrix();
-    private Face face;
-
 
     private boolean step1PreImageProcess(ImageReader reader) {
         Image image = null;
@@ -192,7 +273,8 @@ public class FaceTrackingListener implements OnImageAvailableListener {
                 previewHeight = image.getHeight();
                 Log.d(TAG, String.format("Initializing at size %dx%d", previewWidth, previewHeight));
 
-                mNv21Data = new byte[previewWidth * previewHeight * 2];
+                nv21Data = new byte[previewWidth * previewHeight * 2];
+                tmpBuffer = new byte[previewWidth * previewHeight * 2];
 
                 rgbBytes = new int[previewWidth * previewHeight];
                 rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Config.ARGB_8888);
@@ -208,28 +290,11 @@ public class FaceTrackingListener implements OnImageAvailableListener {
 
             synchronized (lockObj) {
                 byte[] data = ImageUtil.convertYUV420ToNV21(image);
-                System.arraycopy(data, 0, mNv21Data, 0, data.length);
+                System.arraycopy(data, 0, nv21Data, 0, data.length);
                 image.close();
 
-//            for (int i = 0; i < planes.length; ++i) {
-//                planes[i].getBuffer().get(yuvBytes[i]);
-//            }
-//
-//            final int yRowStride = planes[0].getRowStride();
-//            final int uvRowStride = planes[1].getRowStride();
-//            final int uvPixelStride = planes[1].getPixelStride();
-//            ImageUtils.convertYUV420ToARGB8888(
-//                    yuvBytes[0],
-//                    yuvBytes[1],
-//                    yuvBytes[2],
-//                    rgbBytes,
-//                    previewWidth,
-//                    previewHeight,
-//                    yRowStride,
-//                    uvRowStride,
-//                    uvPixelStride,
-//                    false);
-
+                handler.removeMessages(MESSAGE_DRAW_POINTS);
+                handler.sendEmptyMessage(MESSAGE_DRAW_POINTS);
             }
         } catch (final Exception e) {
             if (image != null) {
@@ -238,22 +303,6 @@ public class FaceTrackingListener implements OnImageAvailableListener {
             Log.e(TAG, "Exception!", e);
             return false;
         }
-//        rgbFrameBitmap.setPixels(rgbBytes, 0, previewWidth, 0, 0, previewWidth, previewHeight);
-//
-//        // Resized rgbFrameBitmap
-//        final Matrix matrix = new Matrix();
-//        matrix.postScale(BM_FACE_H * 1f / previewWidth, BM_FACE_W * 1f / previewHeight);
-//        int mScreenRotation = 90;
-//        if (cameraId.equals(CAMERA_FRONT)) {
-//            mScreenRotation = -90;
-//        }
-//        matrix.postRotate(mScreenRotation);
-//        if (cameraId.equals(CAMERA_FRONT)) {
-//            matrix.postScale(-1, 1);
-//            matrix.postTranslate(BM_FACE_H, 0);//scale image back
-//        }
-//
-//        croppedBitmap = Bitmap.createBitmap(rgbFrameBitmap, 0, 0, previewWidth, previewHeight, matrix, false);
         return true;
     }
 
@@ -274,12 +323,12 @@ public class FaceTrackingListener implements OnImageAvailableListener {
 //        Bitmap bmp32 = croppedBitmap.copy(croppedBitmap.getConfig(), true);
 //        results = mFaceDet.detect(bmp32);
 
-        synchronized (mNv21Data) {
+        synchronized (nv21Data) {
             if (!mTrack106) {
-                multiTrack106.FaceTrackingInit(mNv21Data, previewHeight, previewWidth);
+                multiTrack106.FaceTrackingInit(nv21Data, previewHeight, previewWidth);
                 mTrack106 = !mTrack106;
             } else {
-                multiTrack106.Update(mNv21Data, previewHeight, previewWidth);
+                multiTrack106.Update(nv21Data, previewHeight, previewWidth);
             }
         }
 
@@ -310,9 +359,6 @@ public class FaceTrackingListener implements OnImageAvailableListener {
      */
     private void step4RenderProcess(int fps) {
         final String log;
-
-        Canvas rootCanvas = cameraTextureView.lockCanvas();
-
 
         List<Face> faceActions = new ArrayList<>(multiTrack106.getTrackingInfo());
 
@@ -356,8 +402,6 @@ public class FaceTrackingListener implements OnImageAvailableListener {
             }
             overlap.getHolder().unlockCanvasAndPost(canvas);
         }
-
-        cameraTextureView.unlockCanvasAndPost(rootCanvas);
 
         long endTime = System.currentTimeMillis();
         if (lastTime == 0 || endTime == lastTime) {
