@@ -67,8 +67,6 @@ public class CameraFragment extends Fragment
      * Static
      */
     private static final String TAG = CameraFragment.class.getSimpleName();
-    private static final int REQUEST_CAMERA_PERMISSION = 1;
-    private static final String FRAGMENT_DIALOG = "dialog";
     private static final int MAX_PREVIEW_WIDTH = 640;//1920
     private static final int MAX_PREVIEW_HEIGHT = 480;//1080
 
@@ -114,12 +112,14 @@ public class CameraFragment extends Fragment
     // A Semaphore to prevent the app from exiting before closing the camera.
     private Semaphore cameraOpenCloseLock = new Semaphore(1);
     private final SparseIntArray ORIENTATIONS = new SparseIntArray();
+
     {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
         ORIENTATIONS.append(Surface.ROTATION_180, 270);
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
+
     // Whether the current camera device supports Flash or not.
     private boolean flashSupported;
     // Size of camera preview
@@ -132,6 +132,7 @@ public class CameraFragment extends Fragment
     private AutoFitTextureView cameraTextureView;
     private SurfaceView overlapFaceView;
     private M2DLandmarkView landmarkView;
+    private boolean permissionReady = false;
 
 
     /**
@@ -144,9 +145,8 @@ public class CameraFragment extends Fragment
 
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
-            openCamera(width, height);
+            if (permissionReady) openCamera(width, height);
         }
-
 
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
@@ -181,9 +181,7 @@ public class CameraFragment extends Fragment
             cameraDevice.close();
             CameraFragment.this.cameraDevice = null;
 
-            if (onGetPreviewListener != null) {
-                onGetPreviewListener.deInitialize();
-            }
+            onGetPreviewListener.deInitialize();
         }
 
         @Override
@@ -196,9 +194,7 @@ public class CameraFragment extends Fragment
                 activity.finish();
             }
 
-            if (onGetPreviewListener != null) {
-                onGetPreviewListener.deInitialize();
-            }
+            onGetPreviewListener.deInitialize();
         }
 
     };
@@ -210,16 +206,15 @@ public class CameraFragment extends Fragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_camera, container, false);
-    }
-
-    @Override
-    public void onViewCreated(final View view, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_camera, container, false);
         cameraTextureView = view.findViewById(R.id.fragment_camera_textureview);
+        cameraTextureView.setSurfaceTextureListener(surfaceTextureListener);
+
         landmarkView = view.findViewById(R.id.fragment_camera_2dlandmarkview);
         overlapFaceView = view.findViewById(R.id.surfaceViewOverlap);
         overlapFaceView.setZOrderOnTop(true);
         overlapFaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+        return view;
     }
 
     @Override
@@ -233,33 +228,31 @@ public class CameraFragment extends Fragment
     @Override
     public void onResume() {
         super.onResume();
+        if (permissionReady) {
+            init();
+        }
+    }
+
+    public void init() {
+        if (!permissionReady) permissionReady = true;
         startBackgroundThread();
 
         if (cameraTextureView.isAvailable()) {
             openCamera(cameraTextureView.getWidth(), cameraTextureView.getHeight());
-        } else {
-            cameraTextureView.setSurfaceTextureListener(surfaceTextureListener);
         }
     }
 
     @Override
     public void onPause() {
-        closeCamera();
-        stopBackgroundThread();
+        if (permissionReady) {
+            release();
+        }
         super.onPause();
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        if (requestCode == REQUEST_CAMERA_PERMISSION) {
-            if (grantResults.length != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                ErrorDialog.newInstance(getString(R.string.request_permission))
-                        .show(getChildFragmentManager(), FRAGMENT_DIALOG);
-            }
-        } else {
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
+    private void release() {
+        closeCamera();
+        stopBackgroundThread();
     }
 
     @Override
@@ -276,9 +269,9 @@ public class CameraFragment extends Fragment
 
     private void requestCameraPermission() {
         if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
-            new ConfirmationDialog().show(getChildFragmentManager(), FRAGMENT_DIALOG);
+            new ConfirmationDialog().show(getChildFragmentManager(), "Confirm");
         } else {
-            requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, 1);
         }
     }
 
@@ -543,6 +536,8 @@ public class CameraFragment extends Fragment
                         public void onConfigureFailed(
                                 @NonNull CameraCaptureSession cameraCaptureSession) {
                             showToast("Failed");
+                            release();
+                            init();
                         }
                     }, null
             );
@@ -669,33 +664,6 @@ public class CameraFragment extends Fragment
     }
 
     /**
-     * Shows an error message dialog.
-     */
-    public static class ErrorDialog extends DialogFragment {
-
-        private static final String ARG_MESSAGE = "message";
-
-        public static ErrorDialog newInstance(String message) {
-            ErrorDialog dialog = new ErrorDialog();
-            Bundle args = new Bundle();
-            args.putString(ARG_MESSAGE, message);
-            dialog.setArguments(args);
-            return dialog;
-        }
-
-        @NonNull
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            final Activity activity = getActivity();
-            return new AlertDialog.Builder(activity)
-                    .setMessage(getArguments().getString(ARG_MESSAGE))
-                    .setPositiveButton(android.R.string.ok, (dialogInterface, i) -> activity.finish())
-                    .create();
-        }
-
-    }
-
-    /**
      * Shows OK/Cancel confirmation dialog about camera permission.
      */
     public static class ConfirmationDialog extends DialogFragment {
@@ -709,7 +677,7 @@ public class CameraFragment extends Fragment
                     .setPositiveButton(android.R.string.ok, (dialog, which) -> {
                         assert parent != null;
                         parent.requestPermissions(new String[]{Manifest.permission.CAMERA},
-                                REQUEST_CAMERA_PERMISSION);
+                                1);
                     })
                     .setNegativeButton(android.R.string.cancel,
                             (dialog, which) -> {
