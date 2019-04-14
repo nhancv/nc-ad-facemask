@@ -119,7 +119,7 @@ public class STUtils {
     public static void drawFaceRect(Canvas canvas, Rect rect, int width, int height, boolean frontCamera) {
         if (canvas != null) {
             Paint paint = new Paint();
-            paint.setColor(Color.rgb(255, 0, 127));
+            paint.setColor(Color.RED);
             int strokeWidth = Math.max(width / 240, 2);
             paint.setStrokeWidth((float) strokeWidth);
             if (frontCamera) {

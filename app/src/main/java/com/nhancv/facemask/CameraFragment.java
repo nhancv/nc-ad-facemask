@@ -53,7 +53,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -78,15 +77,6 @@ public class CameraFragment extends Fragment
      */
     private HandlerThread preImageProcessThread;
     private Handler mPreImageProcess;
-
-    private HandlerThread trackingThread;
-    private Handler trackingHandler;
-
-    private HandlerThread faceDetectionThread;
-    private Handler faceDetectionHandler;
-
-    private HandlerThread postImageProcessThread;
-    private Handler postImageHandler;
 
     private Handler uiHandler;
 
@@ -124,7 +114,6 @@ public class CameraFragment extends Fragment
     private boolean flashSupported;
     // Size of camera preview
     private Size previewSize;
-
 
     /**
      * UI component
@@ -385,6 +374,8 @@ public class CameraFragment extends Fragment
             requestCameraPermission();
             return;
         }
+        closeCamera();
+
         setUpCameraOutputs(width, height);
         configureTransform(width, height);
         Activity activity = getActivity();
@@ -417,8 +408,6 @@ public class CameraFragment extends Fragment
                 previewReader.close();
                 previewReader = null;
             }
-
-            onGetPreviewListener.deInitialize();
         } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
         } finally {
@@ -432,51 +421,21 @@ public class CameraFragment extends Fragment
         preImageProcessThread.start();
         mPreImageProcess = new Handler(preImageProcessThread.getLooper());
 
-        faceDetectionThread = new HandlerThread("FaceDetectionThread");
-        faceDetectionThread.start();
-        faceDetectionHandler = new Handler(faceDetectionThread.getLooper());
-
-        trackingThread = new HandlerThread("TrackingThread");
-        trackingThread.start();
-        trackingHandler = new Handler(trackingThread.getLooper());
-
-        postImageProcessThread = new HandlerThread("PostImageProcessingThread");
-        postImageProcessThread.start();
-        postImageHandler = new Handler(postImageProcessThread.getLooper());
-
         uiHandler = new Handler(Looper.getMainLooper());
     }
 
     // Stops a background thread and its Handler
     private void stopBackgroundThread() {
         try {
+            onGetPreviewListener.deInitialize();
+
             if (preImageProcessThread != null) {
                 preImageProcessThread.quitSafely();
                 preImageProcessThread.join();
             }
-            if (faceDetectionThread != null) {
-                faceDetectionThread.quitSafely();
-                faceDetectionThread.join();
-            }
-            if (trackingThread != null) {
-                trackingThread.quitSafely();
-                trackingThread.join();
-            }
-            if (postImageProcessThread != null) {
-                postImageProcessThread.quitSafely();
-                postImageProcessThread.join();
-            }
+
             preImageProcessThread = null;
             mPreImageProcess = null;
-
-            faceDetectionThread = null;
-            faceDetectionHandler = null;
-
-            trackingThread = null;
-            trackingHandler = null;
-
-            postImageProcessThread = null;
-            postImageHandler = null;
 
             uiHandler = null;
         } catch (InterruptedException e) {
@@ -544,13 +503,7 @@ public class CameraFragment extends Fragment
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
-        onGetPreviewListener.initialize(getView(), Objects.requireNonNull(getActivity()).getApplicationContext(),
-                cameraId,
-                getActivity().findViewById(R.id.fragment_camera_iv_overlay),
-                getActivity().findViewById(R.id.fragment_camera_tv_fps),
-                trackingHandler,
-                faceDetectionHandler, uiHandler, postImageHandler, this,
-                cameraTextureView, overlapFaceView, transformMatrix);
+        onGetPreviewListener.initialize(transformMatrix, overlapFaceView, this, uiHandler);
     }
 
     /**
