@@ -1,12 +1,12 @@
 package com.nhancv.facemask.m2d;
 
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 
 import com.nhancv.facemask.FaceLandmarkListener;
 import com.nhancv.facemask.OverlayImageListener;
 
 import java.util.HashMap;
-import java.util.List;
 
 import zeusees.tracking.Face;
 
@@ -19,10 +19,10 @@ public class M2DPosController implements FaceLandmarkListener, OverlayImageListe
     }
 
     @Override
-    public void landmarkUpdate(List<Face> visionDetRetList, int bmW, int bmH) {
+    public void landmarkUpdate(Face face, int bmW, int bmH, Matrix scaleMatrix) {
         //1280x720
         //640x480
-        landmarkView.setVisionDetRetList(visionDetRetList, bmW, bmH);
+        landmarkView.setVisionDetRetList(face, bmW, bmH, scaleMatrix);
         landmarkView.invalidate();
     }
 

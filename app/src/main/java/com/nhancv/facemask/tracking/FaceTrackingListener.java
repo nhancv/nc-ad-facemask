@@ -1,5 +1,7 @@
 package com.nhancv.facemask.tracking;
 
+import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -20,6 +22,8 @@ import com.nhancv.facemask.FaceLandmarkListener;
 import com.nhancv.facemask.fps.StableFps;
 import com.nhancv.facemask.util.STUtils;
 
+import java.util.Locale;
+
 import zeusees.tracking.Face;
 import zeusees.tracking.FaceTracking;
 
@@ -30,6 +34,8 @@ public class FaceTrackingListener implements OnImageAvailableListener {
      */
     private static final String TAG = "FaceTrackingListener";
     private static final int FRAME_DATA_READY_MSG = 0x01;
+    private static final int RENDER_OVERLAP_MSG = 0x02;
+    private static final int RENDER_PREVIEW_MSG = 0x03;
 
     /**
      * Thread
@@ -40,10 +46,17 @@ public class FaceTrackingListener implements OnImageAvailableListener {
     private HandlerThread postImageProcessThread;
     private Handler postImageHandler;
 
+    private HandlerThread previewProcessThread;
+    private Handler previewProcessHandler;
+
+    HandlerThread previewRenderThread;
+    private Handler previewHandler;
+
     /**
      * Inject
      */
     private Matrix transformMatrix;
+    private SurfaceView surfacePreview;
     private SurfaceView overlapFaceView;
     private Handler uiHandler;
     private FaceLandmarkListener faceLandmarkListener;
@@ -56,26 +69,30 @@ public class FaceTrackingListener implements OnImageAvailableListener {
     private Paint redPaint;
     private StableFps renderFps;
     private long lastTime;
-    private final Object lockObj;
 
 
     private Paint landmarkPaint;
     private byte[] nv21Data;
     private byte[] tmpBuffer;
+    private byte[] tmpBuffer2;
     private FaceTracking multiTrack106;
     private boolean mTrack106;
+    private Context context;
 
     public FaceTrackingListener() {
-        lockObj = new Object();
     }
 
     public void initialize(
+            final Context context,
             final Matrix transformMatrix,
             final SurfaceView overlapFaceView,
+            final SurfaceView surfacePreview,
             final FaceLandmarkListener faceLandmarkListener,
             final Handler uiHandler) {
+        this.context = context;
         this.transformMatrix = transformMatrix;
         this.overlapFaceView = overlapFaceView;
+        this.surfacePreview = surfacePreview;
         this.faceLandmarkListener = faceLandmarkListener;
         this.uiHandler = uiHandler;
 
@@ -98,7 +115,43 @@ public class FaceTrackingListener implements OnImageAvailableListener {
         // Init threads
         postImageProcessThread = new HandlerThread("PostImageProcessingThread");
         postImageProcessThread.start();
-        postImageHandler = new Handler(postImageProcessThread.getLooper());
+        this.postImageHandler = new Handler(postImageProcessThread.getLooper()) {
+            @Override
+            public void handleMessage(Message msg) {
+                if (msg.what == RENDER_OVERLAP_MSG) {
+                    frameRenderProcess();
+                }
+            }
+        };
+
+        previewRenderThread = new HandlerThread("PreviewRenderThread");
+        previewRenderThread.start();
+        this.previewHandler = new Handler(previewRenderThread.getLooper()) {
+            @Override
+            public void handleMessage(Message msg) {
+                if (msg.what == RENDER_PREVIEW_MSG) {
+                    System.arraycopy(nv21Data, 0, tmpBuffer2, 0, nv21Data.length);
+
+                    if (surfacePreview != null && surfacePreview.getHolder().getSurface().isValid()) {
+                        // Draw bm preview
+                        Bitmap bm = STUtils.NV21ToRGBABitmap(tmpBuffer2, previewWidth, previewHeight, context);
+                        Matrix matrix = new Matrix();
+                        matrix.postRotate(-90);
+                        matrix.postTranslate(0, bm.getWidth());
+                        matrix.postScale(-1, 1);
+                        matrix.postTranslate(bm.getHeight(), 0);
+
+                        Canvas canvas = surfacePreview.getHolder().lockCanvas();
+                        if (canvas != null) {
+                            canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+                            canvas.setMatrix(transformMatrix);
+                            canvas.drawBitmap(bm, matrix, null);
+                            surfacePreview.getHolder().unlockCanvasAndPost(canvas);
+                        }
+                    }
+                }
+            }
+        };
 
         trackingThread = new HandlerThread("TrackingThread");
         trackingThread.start();
@@ -156,7 +209,12 @@ public class FaceTrackingListener implements OnImageAvailableListener {
         if (!renderFps.isStarted()) {
             renderFps.start(fps -> {
                 if (postImageHandler != null) {
-                    postImageHandler.post(() -> frameRenderProcess(fps));
+                    postImageHandler.removeMessages(RENDER_OVERLAP_MSG);
+                    postImageHandler.sendEmptyMessage(RENDER_OVERLAP_MSG);
+                }
+                if (previewHandler != null) {
+                    previewHandler.removeMessages(RENDER_PREVIEW_MSG);
+                    previewHandler.sendEmptyMessage(RENDER_PREVIEW_MSG);
                 }
             });
         }
@@ -178,17 +236,16 @@ public class FaceTrackingListener implements OnImageAvailableListener {
 
                 nv21Data = new byte[previewWidth * previewHeight * 2];
                 tmpBuffer = new byte[previewWidth * previewHeight * 2];
+                tmpBuffer2 = new byte[previewWidth * previewHeight * 2];
             }
 
-            synchronized (lockObj) {
-                byte[] data = ImageUtil.convertYUV420ToNV21(image);
-                System.arraycopy(data, 0, nv21Data, 0, data.length);
-                image.close();
+            byte[] data = ImageUtil.convertYUV420ToNV21(image);
+            System.arraycopy(data, 0, nv21Data, 0, data.length);
+            image.close();
 
-                if (trackingHandler != null) {
-                    trackingHandler.removeMessages(FRAME_DATA_READY_MSG);
-                    trackingHandler.sendEmptyMessage(FRAME_DATA_READY_MSG);
-                }
+            if (trackingHandler != null) {
+                trackingHandler.removeMessages(FRAME_DATA_READY_MSG);
+                trackingHandler.sendEmptyMessage(FRAME_DATA_READY_MSG);
             }
         } catch (final Exception e) {
             if (image != null) {
@@ -200,14 +257,14 @@ public class FaceTrackingListener implements OnImageAvailableListener {
         return true;
     }
 
-    private void frameRenderProcess(int fps) {
+    private void frameRenderProcess() {
         final String log;
         long endTime = System.currentTimeMillis();
         if (lastTime == 0 || endTime == lastTime) {
             lastTime = System.currentTimeMillis();
-            log = "Fps: " + fps;
+            log = "--";
         } else {
-            log = "Fps: " + 1000 / (endTime - lastTime);
+            log = String.format(Locale.getDefault(), "Fps: %d", 1000 / (endTime - lastTime));
             lastTime = endTime;
         }
 
@@ -240,14 +297,7 @@ public class FaceTrackingListener implements OnImageAvailableListener {
             }
         }
         canvas.drawText(log, 10, 30, redPaint);
-        overlapFaceView.getHolder().unlockCanvasAndPost(canvas);
 
-//        if (faceLandmarkListener != null && tvFps != null) {
-//            if (uiHandler != null) {
-//                uiHandler.post(() -> {
-//                    tvFps.setText(log);
-//                });
-//            }
-//        }
+        overlapFaceView.getHolder().unlockCanvasAndPost(canvas);
     }
 }

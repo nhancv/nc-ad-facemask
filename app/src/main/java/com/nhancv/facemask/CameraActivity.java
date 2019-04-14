@@ -3,9 +3,12 @@ package com.nhancv.facemask;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.Display;
 import android.widget.Toast;
 
 import com.nhancv.facemask.util.STUtils;
@@ -43,6 +46,16 @@ public class CameraActivity extends AppCompatActivity {
                     .replace(R.id.container, cameraFragment)
                     .commit();
         }
+
+        Display display = getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        int width = size.x;
+        int height = size.y;
+        Log.e("Width", "" + width);
+        Log.e("height", "" + height);
+        //Sony: 1080x1776
+
 
     }
 

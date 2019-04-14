@@ -1,13 +1,12 @@
 package com.nhancv.facemask.m2d;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
-import android.graphics.PointF;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -23,7 +22,6 @@ import com.nhancv.facemask.m2d.mask.Nose5;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import zeusees.tracking.Face;
 
@@ -34,7 +32,7 @@ public class M2DLandmarkView extends View {
     private int mRatioHeight = 0;
     private float offsetX = 0;
     private float offsetY = 0;
-    private List<Face> visionDetRetList;
+    private Face face;
     //private Paint mFaceLandmarkPaint;
     private Rect bounds;
     private int bmWidth;
@@ -78,8 +76,8 @@ public class M2DLandmarkView extends View {
         bounds = new Rect();
     }
 
-    public void setVisionDetRetList(List<Face> visionDetRetList, int bmWidth, int bmHeight) {
-        this.visionDetRetList = visionDetRetList;
+    public void setVisionDetRetList(Face face, int bmWidth, int bmHeight, Matrix scaleMatrix) {
+        this.face = face;
         this.bmWidth = bmWidth;
         this.bmHeight = bmHeight;
     }
@@ -183,42 +181,5 @@ public class M2DLandmarkView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
 
-        if (visionDetRetList == null) return;
-        for (final Face ret : visionDetRetList) {
-//            List<Point> landmarks = ret.getFaceLandmarks();
-            List<Point> landmarks = new ArrayList<>();
-            List<Point> normLandmark = this.normalizePoint(landmarks);
-
-            bounds.left = (int) (getX(ret.left));
-            bounds.top = (int) (getY(ret.top));
-            bounds.right = (int) getX(ret.right);
-            bounds.bottom = (int) getY(ret.bottom);
-            float centerX = faceCenterX(bounds.left, bounds.right);
-            float centerY = faceCenterY(bounds.top, bounds.bottom);
-            float faceW = bounds.right - bounds.left;
-            float faceH = bounds.bottom - bounds.top;
-            canvas.drawRect(bounds, mFaceLandmarkPaint);
-
-            if (overlayElements != null) {
-                for (Map.Entry<String, Bitmap> entry : overlayElements.entrySet()) {
-                    String elements = entry.getKey();
-                    switch (elements) {
-                        case "head":
-                            maskController.setMaskStrategy(head5);
-                            break;
-                        case "nose":
-                            maskController.setMaskStrategy(nose5);
-                            break;
-                        case "eye":
-                            maskController.setMaskStrategy(eye5);
-                    }
-                    curMask = maskController.defineMask(normLandmark, faceW, faceH, entry.getValue());
-                    PointF position = curMask.getPositionOnFace();
-                    curOverlayResized = curMask.getBmMask();
-                    canvas.drawBitmap(curOverlayResized, position.x, position.y, null);
-                }
-            }
-            //canvas.drawLine(f);
-        }
     }
 }

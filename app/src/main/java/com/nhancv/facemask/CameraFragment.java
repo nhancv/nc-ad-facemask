@@ -69,14 +69,19 @@ public class CameraFragment extends Fragment
     private static final int MAX_PREVIEW_WIDTH = 640;//1920
     private static final int MAX_PREVIEW_HEIGHT = 480;//1080
 
+    //Surface: 1080x1440
+
     private static final int READER_WIDTH = 320;
     private static final int READER_HEIGHT = 240;
 
     /**
      * Thread
      */
+    private HandlerThread cameraSessionThread;
+    private Handler cameraSessionHandler;
+
     private HandlerThread preImageProcessThread;
-    private Handler mPreImageProcess;
+    private Handler preImageProcess;
 
     private Handler uiHandler;
 
@@ -119,6 +124,7 @@ public class CameraFragment extends Fragment
      * UI component
      */
     private AutoFitTextureView cameraTextureView;
+    private SurfaceView surfacePreview;
     private SurfaceView overlapFaceView;
     private M2DLandmarkView landmarkView;
     private boolean permissionReady = false;
@@ -200,7 +206,11 @@ public class CameraFragment extends Fragment
         cameraTextureView.setSurfaceTextureListener(surfaceTextureListener);
 
         landmarkView = view.findViewById(R.id.fragment_camera_2dlandmarkview);
-        overlapFaceView = view.findViewById(R.id.surfaceViewOverlap);
+
+        surfacePreview = view.findViewById(R.id.surfacePreview);
+        surfacePreview.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+
+        overlapFaceView = view.findViewById(R.id.surfaceOverlap);
         overlapFaceView.setZOrderOnTop(true);
         overlapFaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
         return view;
@@ -249,11 +259,6 @@ public class CameraFragment extends Fragment
         view.setEnabled(false);
         view.postDelayed(() -> view.setEnabled(true), 500);
 
-    }
-
-    @Override
-    public void landmarkUpdate(List<Face> visionDetRetList, int bmW, int bmH) {
-        uiHandler.post(() -> m2DPosController.landmarkUpdate(visionDetRetList, bmW, bmH));
     }
 
     private void requestCameraPermission() {
@@ -384,7 +389,7 @@ public class CameraFragment extends Fragment
             if (!cameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
             }
-            manager.openCamera(cameraId, stateCallback, mPreImageProcess);
+            manager.openCamera(cameraId, stateCallback, cameraSessionHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -417,9 +422,13 @@ public class CameraFragment extends Fragment
 
     // Starts a background thread and its Handler
     private void startBackgroundThread() {
+        cameraSessionThread = new HandlerThread("CameraSessionThread");
+        cameraSessionThread.start();
+        cameraSessionHandler = new Handler(cameraSessionThread.getLooper());
+
         preImageProcessThread = new HandlerThread("PreProcessingImageThread");
         preImageProcessThread.start();
-        mPreImageProcess = new Handler(preImageProcessThread.getLooper());
+        preImageProcess = new Handler(preImageProcessThread.getLooper());
 
         uiHandler = new Handler(Looper.getMainLooper());
     }
@@ -433,9 +442,8 @@ public class CameraFragment extends Fragment
                 preImageProcessThread.quitSafely();
                 preImageProcessThread.join();
             }
-
             preImageProcessThread = null;
-            mPreImageProcess = null;
+            preImageProcess = null;
 
             uiHandler = null;
         } catch (InterruptedException e) {
@@ -458,15 +466,15 @@ public class CameraFragment extends Fragment
             // We set up a CaptureRequest.Builder with the output Surface.
             previewRequestBuilder
                     = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            previewRequestBuilder.addTarget(surface);
+//            previewRequestBuilder.addTarget(surface);
 
             // Create the reader for the preview frames.
             previewReader = ImageReader.newInstance(READER_WIDTH, READER_HEIGHT, ImageFormat.YUV_420_888, 2);
-            previewReader.setOnImageAvailableListener(onGetPreviewListener, mPreImageProcess);
+            previewReader.setOnImageAvailableListener(onGetPreviewListener, preImageProcess);
             previewRequestBuilder.addTarget(previewReader.getSurface());
 
             // Here, we create a CameraCaptureSession for camera preview.
-            cameraDevice.createCaptureSession(Arrays.asList(surface, previewReader.getSurface()),
+            cameraDevice.createCaptureSession(Arrays.asList(previewReader.getSurface()),
                     new CameraCaptureSession.StateCallback() {
 
                         @Override
@@ -485,7 +493,7 @@ public class CameraFragment extends Fragment
                                 }
                                 // Finally, we start displaying the camera preview.
                                 previewRequest = previewRequestBuilder.build();
-                                captureSession.setRepeatingRequest(previewRequest, null, mPreImageProcess);
+                                captureSession.setRepeatingRequest(previewRequest, null, cameraSessionHandler);
                             } catch (CameraAccessException e) {
                                 e.printStackTrace();
                             }
@@ -503,7 +511,8 @@ public class CameraFragment extends Fragment
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
-        onGetPreviewListener.initialize(transformMatrix, overlapFaceView, this, uiHandler);
+        onGetPreviewListener.initialize(getContext(), transformMatrix, overlapFaceView, surfacePreview,
+                this, uiHandler);
     }
 
     /**
@@ -600,6 +609,11 @@ public class CameraFragment extends Fragment
             Log.e(TAG, "Couldn't find any suitable preview size");
             return choices[0];
         }
+    }
+
+    @Override
+    public void landmarkUpdate(Face face, int bmW, int bmH, Matrix scaleMatrix) {
+        uiHandler.post(() -> m2DPosController.landmarkUpdate(face, bmW, bmH, scaleMatrix));
     }
 
     /**

@@ -13,7 +13,12 @@
         />
 
     <SurfaceView
-        android:id="@+id/surfaceViewOverlap"
+        android:id="@+id/surfacePreview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <SurfaceView
+        android:id="@+id/surfaceOverlap"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
