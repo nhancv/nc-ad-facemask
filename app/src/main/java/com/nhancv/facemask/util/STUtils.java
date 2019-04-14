@@ -13,6 +13,7 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.media.Image;
 import android.os.Environment;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
@@ -29,6 +30,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 
 /**
  * Created by 海米 on 2018/11/28.
@@ -320,5 +322,20 @@ public class STUtils {
             }
         }
         return true;
+    }
+
+    public static byte[] convertYUV420ToNV21(Image imgYUV420) {
+        byte[] rez;
+
+        ByteBuffer buffer0 = imgYUV420.getPlanes()[0].getBuffer();
+        ByteBuffer buffer2 = imgYUV420.getPlanes()[2].getBuffer();
+        int buffer0_size = buffer0.remaining();
+        int buffer2_size = buffer2.remaining();
+        rez = new byte[buffer0_size + buffer2_size];
+
+        buffer0.get(rez, 0, buffer0_size);
+        buffer2.get(rez, buffer0_size, buffer2_size);
+
+        return rez;
     }
 }

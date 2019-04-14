@@ -3,7 +3,7 @@ package com.nhancv.facemask.m2d;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 
-import com.nhancv.facemask.FaceLandmarkListener;
+import com.nhancv.facemask.tracking.FaceLandmarkListener;
 import com.nhancv.facemask.OverlayImageListener;
 
 import java.util.HashMap;
