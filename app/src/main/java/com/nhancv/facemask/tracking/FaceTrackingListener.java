@@ -12,6 +12,7 @@ import android.graphics.Rect;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.ImageReader.OnImageAvailableListener;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
@@ -43,14 +44,14 @@ public class FaceTrackingListener implements OnImageAvailableListener {
     private HandlerThread trackingThread;
     private Handler trackingHandler;
 
-    private HandlerThread postImageProcessThread;
-    private Handler postImageHandler;
+    private HandlerThread uiRenderThread;
+    private Handler uiRenderHandler;
 
     private HandlerThread previewProcessThread;
     private Handler previewProcessHandler;
 
     HandlerThread previewRenderThread;
-    private Handler previewHandler;
+    private Handler previewRenderHandler;
 
     /**
      * Inject
@@ -73,10 +74,10 @@ public class FaceTrackingListener implements OnImageAvailableListener {
 
     private Paint landmarkPaint;
     private byte[] nv21Data;
-    private byte[] tmpBuffer;
-    private byte[] tmpBuffer2;
+    private byte[] trackingFrameBuffer;
+    private byte[] previewRenderBuffer;
     private FaceTracking multiTrack106;
-    private boolean mTrack106;
+    private boolean initTrack106;
     private Context context;
 
     public FaceTrackingListener() {
@@ -109,13 +110,15 @@ public class FaceTrackingListener implements OnImageAvailableListener {
         landmarkPaint.setStyle(Paint.Style.FILL);
 
         if (multiTrack106 == null) {
-            multiTrack106 = new FaceTracking("/sdcard/ZeuseesFaceTracking/models");
+            multiTrack106 = new FaceTracking(
+                    Environment.getExternalStorageDirectory().getPath() +
+                    "/ZeuseesFaceTracking/models");
         }
 
         // Init threads
-        postImageProcessThread = new HandlerThread("PostImageProcessingThread");
-        postImageProcessThread.start();
-        this.postImageHandler = new Handler(postImageProcessThread.getLooper()) {
+        uiRenderThread = new HandlerThread("UIRenderThread");
+        uiRenderThread.start();
+        uiRenderHandler = new Handler(uiRenderThread.getLooper()) {
             @Override
             public void handleMessage(Message msg) {
                 if (msg.what == RENDER_OVERLAP_MSG) {
@@ -126,15 +129,15 @@ public class FaceTrackingListener implements OnImageAvailableListener {
 
         previewRenderThread = new HandlerThread("PreviewRenderThread");
         previewRenderThread.start();
-        this.previewHandler = new Handler(previewRenderThread.getLooper()) {
+        previewRenderHandler = new Handler(previewRenderThread.getLooper()) {
             @Override
             public void handleMessage(Message msg) {
                 if (msg.what == RENDER_PREVIEW_MSG) {
-                    System.arraycopy(nv21Data, 0, tmpBuffer2, 0, nv21Data.length);
+                    System.arraycopy(nv21Data, 0, previewRenderBuffer, 0, nv21Data.length);
 
                     if (surfacePreview != null && surfacePreview.getHolder().getSurface().isValid()) {
                         // Draw bm preview
-                        Bitmap bm = STUtils.NV21ToRGBABitmap(tmpBuffer2, previewWidth, previewHeight, context);
+                        Bitmap bm = STUtils.NV21ToRGBABitmap(previewRenderBuffer, previewWidth, previewHeight, context);
                         Matrix matrix = new Matrix();
                         matrix.postRotate(-90);
                         matrix.postTranslate(0, bm.getWidth());
@@ -159,12 +162,12 @@ public class FaceTrackingListener implements OnImageAvailableListener {
             @Override
             public void handleMessage(Message msg) {
                 if (msg.what == FRAME_DATA_READY_MSG) {
-                    System.arraycopy(nv21Data, 0, tmpBuffer, 0, nv21Data.length);
-                    if (!mTrack106) {
-                        multiTrack106.faceTrackingInit(tmpBuffer, previewHeight, previewWidth);
-                        mTrack106 = true;
+                    System.arraycopy(nv21Data, 0, trackingFrameBuffer, 0, nv21Data.length);
+                    if (!initTrack106) {
+                        multiTrack106.faceTrackingInit(trackingFrameBuffer, previewHeight, previewWidth);
+                        initTrack106 = true;
                     } else {
-                        multiTrack106.faceTrackingUpdate(tmpBuffer, previewHeight, previewWidth);
+                        multiTrack106.faceTrackingUpdate(trackingFrameBuffer, previewHeight, previewWidth);
                     }
                 }
             }
@@ -175,18 +178,18 @@ public class FaceTrackingListener implements OnImageAvailableListener {
     public void deInitialize() {
         renderFps.stop();
 
-        mTrack106 = false;
+        initTrack106 = false;
         if (multiTrack106 != null) {
             multiTrack106 = null;
         }
 
         try {
-            if (postImageProcessThread != null) {
-                postImageProcessThread.quitSafely();
-                postImageProcessThread.join();
+            if (uiRenderThread != null) {
+                uiRenderThread.quitSafely();
+                uiRenderThread.join();
             }
-            postImageProcessThread = null;
-            postImageHandler = null;
+            uiRenderThread = null;
+            uiRenderHandler = null;
 
             if (trackingThread != null) {
                 trackingThread.quitSafely();
@@ -208,13 +211,13 @@ public class FaceTrackingListener implements OnImageAvailableListener {
         // Fps for render to ui thread
         if (!renderFps.isStarted()) {
             renderFps.start(fps -> {
-                if (postImageHandler != null) {
-                    postImageHandler.removeMessages(RENDER_OVERLAP_MSG);
-                    postImageHandler.sendEmptyMessage(RENDER_OVERLAP_MSG);
+                if (uiRenderHandler != null) {
+                    uiRenderHandler.removeMessages(RENDER_OVERLAP_MSG);
+                    uiRenderHandler.sendEmptyMessage(RENDER_OVERLAP_MSG);
                 }
-                if (previewHandler != null) {
-                    previewHandler.removeMessages(RENDER_PREVIEW_MSG);
-                    previewHandler.sendEmptyMessage(RENDER_PREVIEW_MSG);
+                if (previewRenderHandler != null) {
+                    previewRenderHandler.removeMessages(RENDER_PREVIEW_MSG);
+                    previewRenderHandler.sendEmptyMessage(RENDER_PREVIEW_MSG);
                 }
             });
         }
@@ -235,8 +238,8 @@ public class FaceTrackingListener implements OnImageAvailableListener {
                 Log.d(TAG, String.format("Tracking at size %dx%d", previewWidth, previewHeight));
 
                 nv21Data = new byte[previewWidth * previewHeight * 2];
-                tmpBuffer = new byte[previewWidth * previewHeight * 2];
-                tmpBuffer2 = new byte[previewWidth * previewHeight * 2];
+                trackingFrameBuffer = new byte[previewWidth * previewHeight * 2];
+                previewRenderBuffer = new byte[previewWidth * previewHeight * 2];
             }
 
             byte[] data = ImageUtil.convertYUV420ToNV21(image);
