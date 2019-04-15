@@ -151,10 +151,10 @@ public class M3DPosController implements FaceLandmarkListener {
     }
 
     @Override
-    public void landmarkUpdate(Face face, int bmW, int bmH, Matrix scaleMatrix) {
+    public void landmarkUpdate(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
         this.face = face;
-        this.bmWidth = bmW;
-        this.bmHeight = bmH;
+        this.bmWidth = previewWidth;
+        this.bmHeight = previewHeight;
         this.surfaceWidth = surfaceView.getCurrentWidth();
         this.surfaceHeight = surfaceView.getCurrentHeight();
         this.centerX = this.surfaceWidth / 2;

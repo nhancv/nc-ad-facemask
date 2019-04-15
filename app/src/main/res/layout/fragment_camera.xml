@@ -21,7 +21,7 @@
         android:id="@+id/fragment_camera_2dlandmarkview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="invisible"
+        android:visibility="visible"
         />
 
     <com.nhancv.facemask.m3d.M3DSurfaceView

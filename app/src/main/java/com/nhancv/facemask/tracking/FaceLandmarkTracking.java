@@ -27,16 +27,16 @@ import java.util.Locale;
 import zeusees.tracking.Face;
 import zeusees.tracking.FaceTracking;
 
-public class FaceTrackingListener implements OnImageAvailableListener {
+public class FaceLandmarkTracking implements OnImageAvailableListener {
 
     /**
      * Static
      */
-    private static final String TAG = "FaceTrackingListener";
+    private static final String TAG = "FaceLandmarkTracking";
     private static final int FRAME_DATA_READY_MSG = 0x01;
     private static final int RENDER_OVERLAP_MSG = 0x02;
     private static final int RENDER_PREVIEW_MSG = 0x03;
-
+    private static final boolean SHOW_LANDMARK = false;
     /**
      * Thread
      */
@@ -214,13 +214,13 @@ public class FaceTrackingListener implements OnImageAvailableListener {
         // Fps for render to ui thread
         if (!renderFps.isStarted()) {
             renderFps.start(fps -> {
-                if (uiRenderHandler != null) {
-                    uiRenderHandler.removeMessages(RENDER_OVERLAP_MSG);
-                    uiRenderHandler.sendEmptyMessage(RENDER_OVERLAP_MSG);
-                }
                 if (previewRenderHandler != null) {
                     previewRenderHandler.removeMessages(RENDER_PREVIEW_MSG);
                     previewRenderHandler.sendEmptyMessage(RENDER_PREVIEW_MSG);
+                }
+                if (uiRenderHandler != null) {
+                    uiRenderHandler.removeMessages(RENDER_OVERLAP_MSG);
+                    uiRenderHandler.sendEmptyMessage(RENDER_OVERLAP_MSG);
                 }
             });
         }
@@ -264,50 +264,53 @@ public class FaceTrackingListener implements OnImageAvailableListener {
     }
 
     private void frameOverlapRenderProcess() {
-        final String log;
-        long endTime = System.currentTimeMillis();
-        if (lastTime == 0 || endTime == lastTime) {
-            lastTime = System.currentTimeMillis();
-            log = "--";
-        } else {
-            log = String.format(Locale.getDefault(), "Fps: %d", 1000 / (endTime - lastTime));
-            lastTime = endTime;
-        }
-
-        if (!overlapFaceView.getHolder().getSurface().isValid()) {
-            return;
-        }
-        Canvas canvas = overlapFaceView.getHolder().lockCanvas();
-        if (canvas == null)
-            return;
-        canvas.drawColor(0, PorterDuff.Mode.CLEAR);
-        canvas.setMatrix(transformMatrix);
-
         if (multiTrack106 != null) {
             Face face = multiTrack106.getTrackingInfo();
-            if (face != null) {
-                Rect rect = new Rect(previewHeight - face.left, face.top, previewHeight - face.right, face.bottom);
-                PointF[] points = new PointF[106];
-                for (int i = 0; i < 106; i++) {
-                    points[i] = new PointF(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
-                }
-
-                float[] visibles = new float[106];
-                for (int i = 0; i < points.length; i++) {
-                    visibles[i] = 1.0f;
-                    points[i].x = previewHeight - points[i].x;
-                }
-
-                STUtils.drawFaceRect(canvas, rect, previewHeight, previewWidth, true);
-                STUtils.drawPoints(canvas, landmarkPaint, points, visibles, previewHeight, previewWidth, true);
-            }
             if (faceLandmarkListener != null) {
-                faceLandmarkListener.landmarkUpdate(face, previewHeight, previewWidth, transformMatrix);
+                faceLandmarkListener.landmarkUpdate(face, previewWidth, previewHeight, transformMatrix);
+            }
+
+            if (SHOW_LANDMARK) {
+                final String log;
+                long endTime = System.currentTimeMillis();
+                if (lastTime == 0 || endTime == lastTime) {
+                    lastTime = System.currentTimeMillis();
+                    log = "--";
+                } else {
+                    log = String.format(Locale.getDefault(), "Fps: %d", 1000 / (endTime - lastTime));
+                    lastTime = endTime;
+                }
+
+                // Draw landmarks to SurfaceView
+                if (!overlapFaceView.getHolder().getSurface().isValid()) {
+                    return;
+                }
+                Canvas canvas = overlapFaceView.getHolder().lockCanvas();
+                if (canvas == null)
+                    return;
+                canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+                canvas.setMatrix(transformMatrix);
+
+                if (face != null) {
+                    Rect rect = new Rect(previewHeight - face.left, face.top, previewHeight - face.right, face.bottom);
+                    PointF[] point2Ds = new PointF[106];
+                    for (int i = 0; i < 106; i++) {
+                        point2Ds[i] = new PointF(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
+                    }
+                    float[] visibles = new float[106];
+                    for (int i = 0; i < point2Ds.length; i++) {
+                        visibles[i] = 1.0f;
+                        point2Ds[i].x = previewHeight - point2Ds[i].x;
+                    }
+
+                    STUtils.drawFaceRect(canvas, rect, previewHeight, previewWidth, true);
+                    STUtils.drawPoints(canvas, landmarkPaint, point2Ds, visibles, previewHeight, previewWidth, true);
+                }
+                canvas.drawText(log, 10, 30, redPaint);
+                overlapFaceView.getHolder().unlockCanvasAndPost(canvas);
             }
         }
-        canvas.drawText(log, 10, 30, redPaint);
-
-        overlapFaceView.getHolder().unlockCanvasAndPost(canvas);
 
     }
+
 }

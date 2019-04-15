@@ -7,8 +7,6 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.PixelFormat;
@@ -45,13 +43,12 @@ import android.widget.Toast;
 import com.nhancv.facemask.m2d.M2DLandmarkView;
 import com.nhancv.facemask.m2d.M2DPosController;
 import com.nhancv.facemask.tracking.FaceLandmarkListener;
-import com.nhancv.facemask.tracking.FaceTrackingListener;
+import com.nhancv.facemask.tracking.FaceLandmarkTracking;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -66,13 +63,12 @@ public class CameraFragment extends Fragment
      * Static
      */
     private static final String TAG = CameraFragment.class.getSimpleName();
-    private static final int MAX_PREVIEW_WIDTH = 640;//1920
-    private static final int MAX_PREVIEW_HEIGHT = 480;//1080
-    //Surface: 1080x1440
-    private static final int READER_WIDTH = 320;
-    private static final int READER_HEIGHT = 240;
-    private static int SURFACE_WIDTH;
-    private static int SURFACE_HEIGHT;
+    public static final int MAX_PREVIEW_WIDTH = 640;//1920
+    public static final int MAX_PREVIEW_HEIGHT = 480;//1080
+    public static final int READER_WIDTH = 320;
+    public static final int READER_HEIGHT = 240;
+    public static int SURFACE_WIDTH; //1440
+    public static int SURFACE_HEIGHT; //1080
 
     /**
      * Thread
@@ -85,29 +81,25 @@ public class CameraFragment extends Fragment
 
     private Handler uiHandler;
 
-
     /**
      * Global vars
      */
     private String cameraId = "1";
     private M2DPosController m2DPosController;
     private Matrix transformMatrix = new Matrix();
-    // Hash map that includes id and bitmaps
-    private HashMap<String, Bitmap> maskFilterElements = new HashMap<>();
 
     /**
      * Camera component
      */
     // For camera preview.
-    private CameraCaptureSession captureSession;
-    private CameraDevice cameraDevice;
     private ImageReader previewReader;
-    private CaptureRequest.Builder previewRequestBuilder;
+    private CameraDevice cameraDevice;
     private CaptureRequest previewRequest;
+    private CameraCaptureSession captureSession;
+    private CaptureRequest.Builder previewRequestBuilder;
     // A Semaphore to prevent the app from exiting before closing the camera.
     private Semaphore cameraOpenCloseLock = new Semaphore(1);
     private final SparseIntArray ORIENTATIONS = new SparseIntArray();
-
     {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
@@ -126,13 +118,12 @@ public class CameraFragment extends Fragment
     private SurfaceView surfacePreview;
     private SurfaceView overlapFaceView;
     private M2DLandmarkView landmarkView;
-    private boolean permissionReady = false;
-
+    private boolean permissionReady;
 
     /**
      * Listener / Callback
      */
-    private final FaceTrackingListener onGetPreviewListener = new FaceTrackingListener();
+    private final FaceLandmarkTracking onGetPreviewListener = new FaceLandmarkTracking();
 
     // CameraDevice.StateCallback is called when CameraDevice changes its state.
     private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
@@ -187,7 +178,6 @@ public class CameraFragment extends Fragment
         overlapFaceView.setZOrderOnTop(true);
         overlapFaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
-
         Display display = getActivity().getWindowManager().getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
@@ -207,9 +197,7 @@ public class CameraFragment extends Fragment
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        loadImageOverlay();
         m2DPosController = new M2DPosController(landmarkView);
-        m2DPosController.update(maskFilterElements);
     }
 
     @Override
@@ -223,7 +211,6 @@ public class CameraFragment extends Fragment
     public void init() {
         if (!permissionReady) permissionReady = true;
         startBackgroundThread();
-
         openCamera(SURFACE_WIDTH, SURFACE_HEIGHT);
     }
 
@@ -492,12 +479,6 @@ public class CameraFragment extends Fragment
         onGetPreviewListener.initialize(getContext(), transformMatrix, overlapFaceView, surfacePreview, this);
     }
 
-    // Load image resources
-    public void loadImageOverlay() {
-        maskFilterElements.put("head", BitmapFactory.decodeResource(this.getResources(), R.drawable.cat_00001));
-        maskFilterElements.put("nose", BitmapFactory.decodeResource(this.getResources(), R.drawable.cat_00001));
-    }
-
     // Shows a {@link Toast} on the UI thread.
     private void showToast(final String text) {
         final Activity activity = getActivity();
@@ -557,8 +538,8 @@ public class CameraFragment extends Fragment
     }
 
     @Override
-    public void landmarkUpdate(Face face, int bmW, int bmH, Matrix scaleMatrix) {
-        uiHandler.post(() -> m2DPosController.landmarkUpdate(face, bmW, bmH, scaleMatrix));
+    public void landmarkUpdate(final Face face,final int previewWidth,final int previewHeight, final Matrix scaleMatrix) {
+        uiHandler.post(() -> m2DPosController.landmarkUpdate(face, previewWidth, previewHeight, scaleMatrix));
     }
 
     /**
