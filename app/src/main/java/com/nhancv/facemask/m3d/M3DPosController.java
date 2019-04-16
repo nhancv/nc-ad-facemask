@@ -1,14 +1,15 @@
 package com.nhancv.facemask.m3d;
 
+import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Handler;
-import android.util.Log;
 
-import com.nhancv.facemask.FaceLandmarkListener;
-import com.nhancv.facemask.m3d.transformation.*;
+import com.nhancv.facemask.tracking.FaceLandmarkListener;
+import com.nhancv.facemask.m3d.transformation.ObjectTransformation;
+import com.nhancv.facemask.m3d.transformation.RealTimeRotation;
+import com.nhancv.facemask.m3d.transformation.RotationHelper;
 
-import org.opencv.calib3d.Calib3d;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfDouble;
@@ -26,7 +27,7 @@ public class M3DPosController implements FaceLandmarkListener {
     private final static String TAG = M3DPosController.class.getName();
     private M3DSurfaceView surfaceView;
     private M3DRenderer renderer;
-    private List<Face> visionDetRetList;
+    private Face face;
     private Rect bounds;
     private int bmWidth;
     private int bmHeight;
@@ -150,18 +151,17 @@ public class M3DPosController implements FaceLandmarkListener {
     }
 
     @Override
-    public void landmarkUpdate(List<Face> visionDetRetList, int bmW, int bmH) {
-        this.visionDetRetList = visionDetRetList;
-        this.bmWidth = bmW;
-        this.bmHeight = bmH;
+    public void landmarkUpdate(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
+        this.face = face;
+        this.bmWidth = previewWidth;
+        this.bmHeight = previewHeight;
         this.surfaceWidth = surfaceView.getCurrentWidth();
         this.surfaceHeight = surfaceView.getCurrentHeight();
         this.centerX = this.surfaceWidth / 2;
         this.centerY = this.surfaceHeight / 2;
 
-        if (visionDetRetList == null) return;
+        if (face == null) return;
 
-        Log.d(TAG, "landmarkUpdate: " + visionDetRetList.size());
         //Translation
         float ratio = 1.0f;
         handler = new Handler();
@@ -169,70 +169,70 @@ public class M3DPosController implements FaceLandmarkListener {
 
         renderer.setObjectVisible(false);
 
-        for (final Face ret : visionDetRetList) {
-            // TODO: 4/13/19 Need convert from ret.landmarks
-            ArrayList<Point> landmarks = new ArrayList<>();
-
-            renderer.setObjectVisible(true);
-
-            bounds.left = (int) (getX(ret.left));
-            bounds.top = (int) (getY(ret.top));
-            bounds.right = (int) getX(ret.right);
-            bounds.bottom = (int) getY(ret.bottom);
-            //get face width and height
-
-            //get the center of face
-            float centerFaceX = faceCenterX(bounds.left, bounds.right);
-            float centerFaceY = faceCenterY(bounds.top, bounds.bottom);
-            //convert from coord arcooding to center
-            //the current position we get is pixels
-            float objX = objX(centerX, centerFaceX) / 1000;
-            float objY = objY(centerY, centerFaceY) / 1000;
-            float distance = headWidth(landmarks);
-
-            float head_distance = distance_to_camera(knownWidth, focal_length, distance);//calculate the head distance
-
-            //the ratio of our detected face and the default distancnce
-            float objZ = ratioDepth(head_distance);
-
-            Log.d("M3DPos", "" + head_distance);
-            ObjectTransformation objectTransformation;
-            //Using Sovle PNP
-            MatOfPoint2f imagePoints = this.get5ValidPoint(landmarks);
-            this.rotationVector = new Mat();
-            this.translationVector = new Mat();
-            Calib3d.solvePnP(this.objPointMat, imagePoints, this.camMatrix, this.distCoeffs, this.rotationVector, this.translationVector);
-
-            double[] rx = this.rotationVector.get(0, 0);
-            double[] ry = this.rotationVector.get(1, 0);
-            double[] rz = this.rotationVector.get(2, 0);
-            Log.d(TAG, "Radian" + rx + "," + ry + "," + rz);
-            float dx = rotationHelper.normalizeRange((float) rx[0], 10);
-            float dy = rotationHelper.normalizeRange((float) ry[0], 45);
-            float dz = rotationHelper.normalizeRange((float) rz[0], 45);
-            Log.d(TAG, "Degree" + dx + "," + dy + "," + dz);
-
-            Rotation rotation = new Rotation(dx, dy, dz);//rotationValues[curRotationIdx][0],rotationValues[curRotationIdx][1],rotationValues[curRotationIdx][2]);
-            Log.d("M3DPositionController", "x" + objX + ",y" + objY + ",z" + objZ);
-            //
-            MatOfPoint3f projectPoints = this.getProjectPoints();
-            MatOfPoint2f noseEndPoints = new MatOfPoint2f();
-            Mat jacobian = new Mat();
-            Calib3d.projectPoints(projectPoints, rotationVector, translationVector, camMatrix, distCoeffs, noseEndPoints, jacobian);
-
-            Translation translation = new Translation(objX, objY, objZ);//translate back our scale will base on z
-            Scale scale = new Scale(5, 5, 3);//scale obj model
-
-
-            objectTransformation = new ObjectTransformationBuilder().setRotation(rotation)
-                    .setTranslation(translation).setScale(scale).build();
-
-            //Scale scale = new Scale()
-            if (objectTransformation != null)
-                listObjectTransformation.add(objectTransformation);//add each tranformation for each object
-            this.rotationVector.release();//release rotation vector
-            this.translationVector.release();//release translation vector
-        }
+//        for (final Face ret : visionDetRetList) {
+//            // TODO: 4/13/19 Need convert from ret.landmarks
+//            ArrayList<Point> landmarks = new ArrayList<>();
+//
+//            renderer.setObjectVisible(true);
+//
+//            bounds.left = (int) (getX(ret.left));
+//            bounds.top = (int) (getY(ret.top));
+//            bounds.right = (int) getX(ret.right);
+//            bounds.bottom = (int) getY(ret.bottom);
+//            //get face width and height
+//
+//            //get the center of face
+//            float centerFaceX = faceCenterX(bounds.left, bounds.right);
+//            float centerFaceY = faceCenterY(bounds.top, bounds.bottom);
+//            //convert from coord arcooding to center
+//            //the current position we get is pixels
+//            float objX = objX(centerX, centerFaceX) / 1000;
+//            float objY = objY(centerY, centerFaceY) / 1000;
+//            float distance = headWidth(landmarks);
+//
+//            float head_distance = distance_to_camera(knownWidth, focal_length, distance);//calculate the head distance
+//
+//            //the ratio of our detected face and the default distancnce
+//            float objZ = ratioDepth(head_distance);
+//
+//            Log.d("M3DPos", "" + head_distance);
+//            ObjectTransformation objectTransformation;
+//            //Using Sovle PNP
+//            MatOfPoint2f imagePoints = this.get5ValidPoint(landmarks);
+//            this.rotationVector = new Mat();
+//            this.translationVector = new Mat();
+//            Calib3d.solvePnP(this.objPointMat, imagePoints, this.camMatrix, this.distCoeffs, this.rotationVector, this.translationVector);
+//
+//            double[] rx = this.rotationVector.get(0, 0);
+//            double[] ry = this.rotationVector.get(1, 0);
+//            double[] rz = this.rotationVector.get(2, 0);
+//            Log.d(TAG, "Radian" + rx + "," + ry + "," + rz);
+//            float dx = rotationHelper.normalizeRange((float) rx[0], 10);
+//            float dy = rotationHelper.normalizeRange((float) ry[0], 45);
+//            float dz = rotationHelper.normalizeRange((float) rz[0], 45);
+//            Log.d(TAG, "Degree" + dx + "," + dy + "," + dz);
+//
+//            Rotation rotation = new Rotation(dx, dy, dz);//rotationValues[curRotationIdx][0],rotationValues[curRotationIdx][1],rotationValues[curRotationIdx][2]);
+//            Log.d("M3DPositionController", "x" + objX + ",y" + objY + ",z" + objZ);
+//            //
+//            MatOfPoint3f projectPoints = this.getProjectPoints();
+//            MatOfPoint2f noseEndPoints = new MatOfPoint2f();
+//            Mat jacobian = new Mat();
+//            Calib3d.projectPoints(projectPoints, rotationVector, translationVector, camMatrix, distCoeffs, noseEndPoints, jacobian);
+//
+//            Translation translation = new Translation(objX, objY, objZ);//translate back our scale will base on z
+//            Scale scale = new Scale(5, 5, 3);//scale obj model
+//
+//
+//            objectTransformation = new ObjectTransformationBuilder().setRotation(rotation)
+//                    .setTranslation(translation).setScale(scale).build();
+//
+//            //Scale scale = new Scale()
+//            if (objectTransformation != null)
+//                listObjectTransformation.add(objectTransformation);//add each tranformation for each object
+//            this.rotationVector.release();//release rotation vector
+//            this.translationVector.release();//release translation vector
+//        }
 
         renderer.setObjectTransformationList(listObjectTransformation);
 
