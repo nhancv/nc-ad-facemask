@@ -4,7 +4,6 @@ import android.graphics.Point;
 
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint3f;
 import org.opencv.core.Point3;
 
@@ -27,12 +26,12 @@ public class RealTimeRotation {
     private Mat camMatrix;
     public MatOfPoint3f setUpWorldPoints(){
         List<Point3> objPoints = new ArrayList<Point3>();
-        objPoints.add(new Point3(0.0,0.0,0.0));
-        objPoints.add(new Point3(0.0,-330.0,-65.0));
-        objPoints.add(new Point3(-225.0, 170.0, -135.0));
-        objPoints.add(new Point3(225.0, 170.0, -135.0));
-        objPoints.add(new Point3(-150.0, -150.0, -125.0));
-        objPoints.add(new Point3(150.0, -150.0, -125.0) );
+        objPoints.add(new Point3(1.10753, 15.2893, -68.137));
+        objPoints.add(new Point3(0.637927, 75.9671, -51.8616));
+        objPoints.add(new Point3(-48.4752, -23.0419, -31.6016));
+        objPoints.add(new Point3(49.6329, -23.167, -30.1738));
+        objPoints.add(new Point3(-19.1493, 34.4437, -50.5215));
+        objPoints.add(new Point3(20.2692, 34.455, -50.0247) );
         objPointsMat.fromList(objPoints);
         return objPointsMat;
     }

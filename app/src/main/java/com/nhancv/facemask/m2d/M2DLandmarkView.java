@@ -15,7 +15,6 @@ import android.util.Log;
 import android.view.View;
 
 import com.nhancv.facemask.R;
-import com.nhancv.facemask.util.STUtils;
 
 import zeusees.tracking.Face;
 
@@ -139,11 +138,11 @@ public class M2DLandmarkView extends View {
             }
 
             // Draw landmarks
-            for (int i = 0; i < 106; i++) {
-                point2Ds[i].x = previewHeight - face.landmarks[i * 2];
-            }
-            STUtils.drawFaceRect(canvas, faceRect, previewHeight, previewWidth, true);
-            STUtils.drawPoints(canvas, faceLandmarkPaint, point2Ds, visibleIndexes, previewHeight, previewWidth, true);
+//            for (int i = 0; i < 106; i++) {
+//                point2Ds[i].x = previewHeight - face.landmarks[i * 2];
+//            }
+//            STUtils.drawFaceRect(canvas, faceRect, previewHeight, previewWidth, true);
+//            STUtils.drawPoints(canvas, faceLandmarkPaint, point2Ds, visibleIndexes, previewHeight, previewWidth, true);
 
             // Draw 2dMask
             float scaleW = Math.abs(faceRect.width() / MASK_SIZE_STANDARD_W);
@@ -216,7 +215,7 @@ public class M2DLandmarkView extends View {
     }
     private float[] transfomationRenderProcess(){
         float rotation[] = new float[3];
-        float limit = 45f;
+        float limit = 30f;
         //calculate Z degree
         for (int i = 0; i < 106; i++) {
             point2Ds[i].set(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
