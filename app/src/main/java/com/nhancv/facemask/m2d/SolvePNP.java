@@ -27,14 +27,12 @@
 package com.nhancv.facemask.m2d;
 
 import android.graphics.PointF;
-import android.graphics.Point;
 import android.util.Log;
 
 import com.nhancv.facemask.m3d.transformation.RealTimeRotation;
 
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfPoint2f;
@@ -68,8 +66,8 @@ public class SolvePNP {
             point2Ds[i] = new PointF(0,0);
         }
         setUpDistCoeff();
-        camMatrix = realTimeRotation.setUpCamMatrix(new Point((int)(width/2f),(int)(height/2f)));
-        objPointMat = realTimeRotation.setUpWorldPoints();
+        camMatrix = realTimeRotation.getCamMatrix();
+        objPointMat = realTimeRotation.getObjPointsMat();
     }
     public void setUpLandmarks(PointF[] landmarks ){
         this.point2Ds = landmarks;
@@ -125,6 +123,7 @@ public class SolvePNP {
         MatOfPoint2f imagePoints = this.get6ValidPoint();
         this.rotationVector = new Mat();
         this.translationVector = new Mat();
+        Log.d(TAG,"ObjpointMat"+this.objPointMat);
         Calib3d.solvePnP(this.objPointMat, imagePoints, this.camMatrix, this.distCoeffs, this.rotationVector, this.translationVector);
         tx = (float) this.translationVector.get(0, 0)[0];
         ty =(float) this.translationVector.get(1, 0)[0];
@@ -161,15 +160,15 @@ public class SolvePNP {
     }
 
     public float getRx() {
-        return rx;
+        return -rx;
     }
 
     public float getRy() {
-        return ry;
+        return -ry;
     }
 
     public float getRz() {
-        return rz;
+        return -rz;
     }
 
     public float getTx() {

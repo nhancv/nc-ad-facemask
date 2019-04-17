@@ -42,6 +42,7 @@ import android.widget.Toast;
 
 import com.nhancv.facemask.m2d.M2DLandmarkView;
 import com.nhancv.facemask.m2d.M2DPosController;
+import com.nhancv.facemask.m3d.transformation.RealTimeRotation;
 import com.nhancv.facemask.tracking.FaceLandmarkListener;
 import com.nhancv.facemask.tracking.FaceLandmarkTracking;
 
@@ -97,6 +98,8 @@ public class CameraFragment extends Fragment
     private CaptureRequest previewRequest;
     private CameraCaptureSession captureSession;
     private CaptureRequest.Builder previewRequestBuilder;
+
+
     // A Semaphore to prevent the app from exiting before closing the camera.
     private Semaphore cameraOpenCloseLock = new Semaphore(1);
     private final SparseIntArray ORIENTATIONS = new SparseIntArray();
@@ -119,6 +122,7 @@ public class CameraFragment extends Fragment
     private SurfaceView overlapFaceView;
     private M2DLandmarkView landmarkView;
     private boolean permissionReady;
+    private RealTimeRotation realTimeRotation;
 
     /**
      * Listener / Callback
@@ -421,6 +425,7 @@ public class CameraFragment extends Fragment
             imagePreviewHandler = null;
 
             uiHandler = null;
+            realTimeRotation.releaseMatrix();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -476,6 +481,11 @@ public class CameraFragment extends Fragment
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
+        //setup one time variables for solving pnp
+        realTimeRotation = RealTimeRotation.getInstance();
+        realTimeRotation.setUpWorldPoints();
+        realTimeRotation.setUpCamMatrix(new Point((int)(READER_WIDTH/2f),(int)(READER_HEIGHT/2f)));
+
         onGetPreviewListener.initialize(getContext(), transformMatrix, overlapFaceView, surfacePreview, this);
     }
 

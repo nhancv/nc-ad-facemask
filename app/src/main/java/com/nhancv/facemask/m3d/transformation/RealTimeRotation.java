@@ -26,7 +26,7 @@ public class RealTimeRotation {
     private Mat camMatrix;
     public MatOfPoint3f setUpWorldPoints(){
         List<Point3> objPoints = new ArrayList<Point3>();
-        objPoints.add(new Point3(1.10753, 15.2893, -68.137));
+        objPoints.add(new Point3(1.10753, 15.2893, -68.137));//
         objPoints.add(new Point3(0.637927, 75.9671, -51.8616));
         objPoints.add(new Point3(-48.4752, -23.0419, -31.6016));
         objPoints.add(new Point3(49.6329, -23.167, -30.1738));
@@ -57,5 +57,10 @@ public class RealTimeRotation {
 
     public Mat getCamMatrix() {
         return camMatrix;
+    }
+    public void releaseMatrix(){
+        camMatrix.release();
+        objPointsMat.release();
+
     }
 }
