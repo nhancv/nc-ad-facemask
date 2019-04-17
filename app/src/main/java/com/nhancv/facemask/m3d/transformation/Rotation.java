@@ -18,4 +18,9 @@ public class Rotation {
     {
         return new float[]{x,y,z};
     }
+
+    @Override
+    public String toString(){
+        return ""+x+","+y+","+z;
+    }
 }

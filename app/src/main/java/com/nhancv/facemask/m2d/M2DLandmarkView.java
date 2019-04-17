@@ -92,7 +92,7 @@ public class M2DLandmarkView extends View {
         this.previewHeight = previewHeight;
         this.scaleMatrix = scaleMatrix;
         //init solve pnp variables
-        solvePNP.initialize(previewWidth,previewHeight);
+        solvePNP.initialize();
     }
 
     @Override

@@ -5,17 +5,17 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.Log;
 
+import com.nhancv.facemask.m3d.transformation.ObjectTransformation;
+
 import org.andresoviedo.android_3d_model_engine.animation.Animator;
 import org.andresoviedo.android_3d_model_engine.drawer.DrawerFactory;
 import org.andresoviedo.android_3d_model_engine.drawer.Object3DImpl;
 import org.andresoviedo.android_3d_model_engine.model.AnimatedModel;
-import org.andresoviedo.android_3d_model_engine.model.BoundingBox;
 import org.andresoviedo.android_3d_model_engine.model.Camera;
 import org.andresoviedo.android_3d_model_engine.model.Object3D;
 import org.andresoviedo.android_3d_model_engine.model.Object3DData;
 import org.andresoviedo.android_3d_model_engine.services.Object3DBuilder;
 import org.andresoviedo.util.android.GLUtil;
-import com.nhancv.facemask.m3d.transformation.*;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -90,26 +90,26 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
     public float getFar() {
         return far;
     }
-    int value = -1;
-    public void setRotate(float angle,float x, float y, float z) {
-        Matrix.rotateM(modelProjectionMatrix, 0,angle, x, y, z);
-    }
-    public void setScale(float x, float y ,float z){
-        //default is 1, 1, 1
-        if(x ==0) {
-            x =1;
-        }
-        if(y == 0) {
-            y = 1;
-        }
-        if(z==0) {
-            z =1;
-        }
-        Matrix.scaleM(modelProjectionMatrix, 0, x, y, z);
-    }
-    public void setTranslate(float x, float y, float z) {
-       Matrix.translateM(modelProjectionMatrix, 0, x, y, z);
-    }
+//    int value = -1;
+//    public void setRotate(float angle,float x, float y, float z) {
+//        Matrix.rotateM(modelProjectionMatrix, 0,angle, x, y, z);
+//    }
+//    public void setScale(float x, float y ,float z){
+//        //default is 1, 1, 1
+//        if(x ==0) {
+//            x =1;
+//        }
+//        if(y == 0) {
+//            y = 1;
+//        }
+//        if(z==0) {
+//            z =1;
+//        }
+//        Matrix.scaleM(modelProjectionMatrix, 0, x, y, z);
+//    }
+//    public void setTranslate(float x, float y, float z) {
+//       Matrix.translateM(modelProjectionMatrix, 0, x, y, z);
+//    }
 
     @Override
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
@@ -160,8 +160,6 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
 
     }
 
-
-    int i = -1;
     public void performTranformation(Object3DData objData,ObjectTransformation transformation)
     {
         float[] rotation = transformation.getRotationValue();
