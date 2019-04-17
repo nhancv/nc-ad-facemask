@@ -105,9 +105,22 @@ public class SolvePNP {
         objPoints.add(new org.opencv.core.Point(point2Ds[69].x, point2Ds[69].y)); //nose tip
         objPoints.add(new org.opencv.core.Point(point2Ds[0].x, point2Ds[0].y));//Chin
         objPoints.add(new org.opencv.core.Point(point2Ds[94].x, point2Ds[94].y)); //left eye left corner
-        objPoints.add(new org.opencv.core.Point(point2Ds[20].x, point2Ds[20].y)); //right eye right corner
-        objPoints.add(new org.opencv.core.Point(point2Ds[45].x, point2Ds[45].y)); //left mouth corner
+        objPoints.add(new org.opencv.core.Point(point2Ds[59].x, point2Ds[59].y)); //left eye right corner
+        objPoints.add(new org.opencv.core.Point(point2Ds[27].x, point2Ds[27].y)); //right eye left corner
+        objPoints.add(new org.opencv.core.Point(point2Ds[20].x, point2Ds[20].y));//right eye right corner
+        objPoints.add(new org.opencv.core.Point(point2Ds[45].x, point2Ds[45].y));//left mouth corner
         objPoints.add(new org.opencv.core.Point(point2Ds[50].x, point2Ds[50].y));//right mouth corner
+        objPoints.add(new org.opencv.core.Point(point2Ds[38].x, point2Ds[38].y));//top mouth corner
+        objPoints.add(new org.opencv.core.Point(point2Ds[32].x, point2Ds[32].y));//bottom mouth corner
+        objPoints.add(new org.opencv.core.Point(point2Ds[11].x, point2Ds[11].y));//top left chin
+        objPoints.add(new org.opencv.core.Point(point2Ds[13].x, point2Ds[13].y));//top right chin
+
+//        objPoints.add(new org.opencv.core.Point(point2Ds[69].x, point2Ds[69].y)); //nose tip
+//        objPoints.add(new org.opencv.core.Point(point2Ds[0].x, point2Ds[0].y));//Chin
+//        objPoints.add(new org.opencv.core.Point(point2Ds[94].x, point2Ds[94].y)); //left eye left corner
+//        objPoints.add(new org.opencv.core.Point(point2Ds[20].x, point2Ds[20].y));//right eye right corner
+//        objPoints.add(new org.opencv.core.Point(point2Ds[45].x, point2Ds[45].y));//left mouth corner
+//        objPoints.add(new org.opencv.core.Point(point2Ds[50].x, point2Ds[50].y));//right mouth corner
         imagePoints.fromList(objPoints);
         return imagePoints;
     }
@@ -160,7 +173,7 @@ public class SolvePNP {
     }
 
     public float getRx() {
-        return -rx;
+        return rx-180;
     }
 
     public float getRy() {
@@ -170,7 +183,17 @@ public class SolvePNP {
     public float getRz() {
         return -rz;
     }
-
+//    public float getRx() {
+//        return -rx;
+//    }
+//
+//    public float getRy() {
+//        return -ry;
+//    }
+//
+//    public float getRz() {
+//        return -rz;
+//    }
     public float getTx() {
         return tx;
     }
