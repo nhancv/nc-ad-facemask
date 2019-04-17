@@ -27,7 +27,6 @@
 package com.nhancv.facemask.m2d;
 
 import android.graphics.PointF;
-import android.util.Log;
 
 import com.nhancv.facemask.m3d.transformation.RealTimeRotation;
 
@@ -57,9 +56,11 @@ public class SolvePNP {
     private Mat rotationVector;
     private Mat translationVector;
     private RealTimeRotation realTimeRotation = RealTimeRotation.getInstance();
+
     public SolvePNP(){
 
     }
+
     public void initialize(float width, float height){
         point2Ds = new PointF[106];
         for (int i = 0; i < 106; i++) {
@@ -69,9 +70,11 @@ public class SolvePNP {
         camMatrix = realTimeRotation.getCamMatrix();
         objPointMat = realTimeRotation.getObjPointsMat();
     }
+
     public void setUpLandmarks(PointF[] landmarks ){
         this.point2Ds = landmarks;
     }
+
     public void releaseMat() {
         if (camMatrix != null) {
             camMatrix.release();
@@ -89,18 +92,21 @@ public class SolvePNP {
             distCoeffs.release();
         }
     }
+
     private void setUpDistCoeff() {
         Mat coeffMat = new Mat();
         Mat.zeros(4, 1, CV_64FC1).copyTo(coeffMat);
         distCoeffs = new MatOfDouble(coeffMat);
     }
+
     private Mat setUpRotM() {
         Mat rotM = new Mat();
         Mat.zeros(3, 3, CV_64FC1).copyTo(rotM);
         return rotM;
     }
+
     private MatOfPoint2f get6ValidPoint() {
-        List<org.opencv.core.Point> objPoints = new ArrayList<org.opencv.core.Point>();
+        List<org.opencv.core.Point> objPoints = new ArrayList<>();
         MatOfPoint2f imagePoints = new MatOfPoint2f();
         objPoints.add(new org.opencv.core.Point(point2Ds[69].x, point2Ds[69].y)); //nose tip
         objPoints.add(new org.opencv.core.Point(point2Ds[0].x, point2Ds[0].y));//Chin
@@ -115,28 +121,24 @@ public class SolvePNP {
         objPoints.add(new org.opencv.core.Point(point2Ds[11].x, point2Ds[11].y));//top left chin
         objPoints.add(new org.opencv.core.Point(point2Ds[13].x, point2Ds[13].y));//top right chin
 
-//        objPoints.add(new org.opencv.core.Point(point2Ds[69].x, point2Ds[69].y)); //nose tip
-//        objPoints.add(new org.opencv.core.Point(point2Ds[0].x, point2Ds[0].y));//Chin
-//        objPoints.add(new org.opencv.core.Point(point2Ds[94].x, point2Ds[94].y)); //left eye left corner
-//        objPoints.add(new org.opencv.core.Point(point2Ds[20].x, point2Ds[20].y));//right eye right corner
-//        objPoints.add(new org.opencv.core.Point(point2Ds[45].x, point2Ds[45].y));//left mouth corner
-//        objPoints.add(new org.opencv.core.Point(point2Ds[50].x, point2Ds[50].y));//right mouth corner
+
         imagePoints.fromList(objPoints);
         return imagePoints;
     }
 
     private MatOfPoint3f getProjectPoints() {
         MatOfPoint3f projectPoints = new MatOfPoint3f();
-        List<org.opencv.core.Point3> objPoints = new ArrayList<org.opencv.core.Point3>();
+        List<org.opencv.core.Point3> objPoints = new ArrayList<>();
         objPoints.add(new org.opencv.core.Point3(0f, 0f, 1000.0f));
         projectPoints.fromList(objPoints);
         return projectPoints;
     }
+
     public void solvePNP(){
         MatOfPoint2f imagePoints = this.get6ValidPoint();
         this.rotationVector = new Mat();
         this.translationVector = new Mat();
-        Log.d(TAG,"ObjpointMat"+this.objPointMat);
+
         Calib3d.solvePnP(this.objPointMat, imagePoints, this.camMatrix, this.distCoeffs, this.rotationVector, this.translationVector);
         tx = (float) this.translationVector.get(0, 0)[0];
         ty =(float) this.translationVector.get(1, 0)[0];
@@ -144,19 +146,18 @@ public class SolvePNP {
         Mat rotM = setUpRotM();
         //convert from rotation vector to rotM
         Calib3d.Rodrigues(rotationVector,rotM);
-        Log.d(TAG,"translate"+tx+ ","+ty+","+tz);
         Mat projMatrix = setUpProjMatrix(rotM);
         Mat eav = new Mat();
         Calib3d.decomposeProjectionMatrix(projMatrix,new Mat(), new Mat(), new Mat(), new Mat(), new Mat(), new Mat(), eav);
-//        Log.d(TAG,eav.toString());
+
         rx = (float) eav.get(0, 0)[0];
         ry =(float) eav.get(1, 0)[0];
         rz =(float)eav.get(2,0)[0];
-        Log.d(TAG,"Rotate:"+rx+","+ry+","+rz);
         rotM.release();
         projMatrix.release();
 
     }
+
     /**
      * Input: rotMatrix
      * Output: projection Matrix
@@ -183,17 +184,7 @@ public class SolvePNP {
     public float getRz() {
         return -rz;
     }
-//    public float getRx() {
-//        return -rx;
-//    }
-//
-//    public float getRy() {
-//        return -ry;
-//    }
-//
-//    public float getRz() {
-//        return -rz;
-//    }
+
     public float getTx() {
         return tx;
     }

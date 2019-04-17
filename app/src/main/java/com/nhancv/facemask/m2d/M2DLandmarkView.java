@@ -51,7 +51,6 @@ public class M2DLandmarkView extends View {
     private Matrix bmScaleMatrix;
 
     private SolvePNP solvePNP = new SolvePNP();
-    private float rx,ry,rz;
 
     public M2DLandmarkView(Context context) {
         this(context, null, 0, 0);
@@ -148,6 +147,7 @@ public class M2DLandmarkView extends View {
 //            STUtils.drawFaceRect(canvas, faceRect, previewHeight, previewWidth, true);
 //            STUtils.drawPoints(canvas, faceLandmarkPaint, point2Ds, visibleIndexes, previewHeight, previewWidth, true);
             //Solve PNP
+
             solvePNP.solvePNP();
 
 
@@ -178,20 +178,6 @@ public class M2DLandmarkView extends View {
             transformationMatrix = transformMat(rightTmp.getWidth()/2,rightTmp.getHeight()/2,rightEarF.x , rightEarF.y - earH,rotation,translation);
 
             canvas.drawBitmap(rightTmp, transformationMatrix, null);
-//            float ratio = ear.getHeight()*1.0f/ear.getWidth();
-//            float earW = 1.5f*Math.abs(faceRect.width());
-//            Log.d(TAG,"Face Width: "+faceRect.width());
-//            Log.d(TAG,"Ratio: "+ratio);
-//
-//            float earH = earW*ratio;
-//            PointF centerEyeF = point2Ds[21];
-//            float maskX =centerEyeF.x - earW/2f;
-//            float maskY = centerEyeF.y - earH*2;
-//            Log.d(TAG,"maskX"+maskX+"maskY"+maskY);
-//            Bitmap earTmp = Bitmap.createScaledBitmap(ear, (int) earW, (int) earH, false);
-//            transformationMatrix = transformMat(earTmp.getWidth()/2,earTmp.getHeight()/2,maskX,maskY,angle[0],angle[1],angle[2]);
-//
-//            canvas.drawBitmap(earTmp, transformationMatrix,null);
 
             PointF noseF = point2Ds[46];
             float nratio = nose.getHeight()*1.0f/nose.getWidth();

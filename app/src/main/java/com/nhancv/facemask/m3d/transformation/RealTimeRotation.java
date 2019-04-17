@@ -11,19 +11,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RealTimeRotation {
+    MatOfPoint3f objPointsMat = new MatOfPoint3f();
+    private float focalLength = 543.45f;
+    private Mat camMatrix;
 
     private RealTimeRotation(){
 
     }
+
     private static class LazyHolder{
         private static final RealTimeRotation INSTANCE  = new RealTimeRotation();
     }
+
     public static RealTimeRotation getInstance(){
         return LazyHolder.INSTANCE;
     }
-     MatOfPoint3f objPointsMat = new MatOfPoint3f();
-    private float focalLength = 543.45f;
-    private Mat camMatrix;
+
+
     public MatOfPoint3f setUpWorldPoints(){
         List<Point3> objPoints = new ArrayList<Point3>();
 //        objPoints.add(new Point3(1.10753, 15.2893, -68.137));//nose tip
@@ -48,6 +52,7 @@ public class RealTimeRotation {
         objPointsMat.fromList(objPoints);
         return objPointsMat;
     }
+
     //receive the center point of the frame
     public Mat setUpCamMatrix(Point centerPoint){
         float[] camArray = new float[] {focalLength, 0, centerPoint.x, 0, focalLength, centerPoint.y, 0, 0, 1};
@@ -71,6 +76,7 @@ public class RealTimeRotation {
     public Mat getCamMatrix() {
         return camMatrix;
     }
+    
     public void releaseMatrix(){
         camMatrix.release();
         objPointsMat.release();

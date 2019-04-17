@@ -5,6 +5,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Handler;
 
+import com.nhancv.facemask.m2d.SolvePNP;
 import com.nhancv.facemask.m3d.transformation.ObjectTransformation;
 import com.nhancv.facemask.m3d.transformation.RealTimeRotation;
 import com.nhancv.facemask.tracking.FaceLandmarkListener;
@@ -39,7 +40,8 @@ public class M3DPosController implements FaceLandmarkListener {
     MatOfPoint3f objPointMat;
 
 
-
+    //solvePNP object
+    SolvePNP solvePNP;
 
     public float distance_to_camera(float knownWidth, float focalLength, float perWidth) {
         return knownWidth * focalLength / perWidth;
@@ -53,6 +55,7 @@ public class M3DPosController implements FaceLandmarkListener {
         this.listObjectTransformation = new ArrayList<ObjectTransformation>();
         this.bounds = new Rect();
         this.focal_length = realTimeRotation.getFocalLength();
+
     }
 
 

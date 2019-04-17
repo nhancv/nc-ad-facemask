@@ -9,18 +9,21 @@ public class ObjectTransformation {
         scale = scale_;
         translation = translation_;
     }
+
     public float [] getRotationValue()
     {
         if(rotation!=null)
             return rotation.rotationValue();
         return null;
     }
+
     public float[] getScaleValue()
     {
         if(scale!=null)
             return scale.scaleValue();
         return null;
     }
+
     public float[] getTranslationValue()
     {
         if(translation!=null)
