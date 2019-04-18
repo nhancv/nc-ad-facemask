@@ -109,19 +109,23 @@ public class M3DPosController implements FaceLandmarkListener {
 
     @Override
     public void landmarkUpdate(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
+        float [] vals = new float[9];
+        scaleMatrix.getValues(vals);
+        float scaleX = vals[0];
+        float scaleY = vals[4];
         this.solvePNP.initialize();
 
         this.face = face;
-        this.bmWidth = previewWidth; //320
-        this.bmHeight = previewHeight;//
-        this.surfaceWidth = surfaceView.getCurrentWidth();
-        this.surfaceHeight = surfaceView.getCurrentHeight();
+        this.bmWidth = previewWidth*(int)scaleX; //320
+        this.bmHeight = previewHeight*(int)scaleY;//240
+        this.surfaceWidth = surfaceView.getCurrentWidth();//720
+        this.surfaceHeight = surfaceView.getCurrentHeight();//1480
         //Object center position
-        this.centerX = this.surfaceWidth/2;
-        this.centerY = this.surfaceHeight/2;
+        this.centerX = this.bmWidth/2;
+        this.centerY = this.bmHeight/2;
         float hRatio = this.surfaceHeight*1.0f/this.bmHeight;
         float wRatio = this.surfaceWidth*1.0f/this.bmWidth;
-        Log.d(TAG,"w,h"+this.bmWidth+","+bmHeight);
+
         renderer.setObjectVisible(false);
 
         if (face == null) return;
@@ -132,7 +136,7 @@ public class M3DPosController implements FaceLandmarkListener {
         handler = new Handler();
         listObjectTransformation = new ArrayList<>();
 
-        faceRect.set(previewHeight - face.left, face.top, previewHeight - face.right, face.bottom);
+        faceRect.set((int) ((previewHeight - face.left)*scaleX), (int) (face.top*scaleY), (int) ((previewHeight - face.right)*scaleX), (int) (face.bottom*scaleY));
         for (int i = 0; i < 106; i++) {
             point2Ds[i].set(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
         }
@@ -147,15 +151,23 @@ public class M3DPosController implements FaceLandmarkListener {
 
 
         //get the center of face
-        float centerFaceX =faceCenterX(faceRect.left,faceRect.right)*wRatio;
-        float centerFaceY =faceCenterY(faceRect.bottom,faceRect.top)*hRatio;
+        float centerFaceX =faceCenterX(faceRect.left,faceRect.right);
 
 
         Log.d(TAG,"Point"+"("+centerFaceX+","+centerFaceY+")");
+        centerFaceX = (point2Ds[69].x)*wRatio;
+        float centerFaceY = point2Ds[69].y*hRatio;
+        Log.d(TAG,"Point"+"("+centerFaceX+","+centerFaceY+")");
+
         //convert from coord arcooding to center
         //the current position we get is pixels
-        float objX = objX(centerX, centerFaceX)/ 1000;
-        float objY = objY(centerY, centerFaceY)/ 1000;
+        //convert from 320x240 ->720x1480
+        //160
+        float objX = objX(centerX, centerFaceX)*wRatio/ 1000;
+
+        float diff= this.surfaceHeight/2 - centerY;
+        float objY= (objY(centerY, centerFaceY)*hRatio+diff)/ 1000;
+
         float distance = face.width;
 
         float head_distance = distance_to_camera(knownWidth, focal_length, distance);//calculate the head distance
@@ -171,7 +183,7 @@ public class M3DPosController implements FaceLandmarkListener {
         //translate object to the face origina
         //using
         float tx = -objX;//solvePNP.getTx()/1000;
-        float ty = 1+objY;
+        float ty = objY;
         float tz = 0;//(2000-solvePNP.getTz())/2000;
         Log.d(TAG,"Translation Value"+tx+","+ty+","+tz);
         Translation translation = new Translation(tx,ty,tz);
