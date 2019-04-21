@@ -5,17 +5,17 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.Log;
 
+import com.nhancv.facemask.m3d.transformation.ObjectTransformation;
+
 import org.andresoviedo.android_3d_model_engine.animation.Animator;
 import org.andresoviedo.android_3d_model_engine.drawer.DrawerFactory;
 import org.andresoviedo.android_3d_model_engine.drawer.Object3DImpl;
 import org.andresoviedo.android_3d_model_engine.model.AnimatedModel;
-import org.andresoviedo.android_3d_model_engine.model.BoundingBox;
 import org.andresoviedo.android_3d_model_engine.model.Camera;
 import org.andresoviedo.android_3d_model_engine.model.Object3D;
 import org.andresoviedo.android_3d_model_engine.model.Object3DData;
 import org.andresoviedo.android_3d_model_engine.services.Object3DBuilder;
 import org.andresoviedo.util.android.GLUtil;
-import com.nhancv.facemask.m3d.transformation.*;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -26,20 +26,26 @@ import java.util.Map;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class M3DRenderer implements GLSurfaceView.Renderer  {
+public class M3DRenderer implements GLSurfaceView.Renderer {
     private final static String TAG = M3DRenderer.class.getName();
-
+    // frustrum - nearest pixel
+    private static final float near = 1f;
+    // frustrum - fartest pixel
+    private static final float far = 100f;
+    // 3D matrices to project our 3D world
+    private final float[] modelProjectionMatrix = new float[16];
+    private final float[] modelViewMatrix = new float[16];
+    // mvpMatrix is an abbreviation for "Model View Projection Matrix"
+    private final float[] mvpMatrix = new float[16];
+    // light position required to render with lighting
+    private final float[] lightPosInEyeSpace = new float[4];
+    boolean visible = false;
     // 3D window (parent component)
     private M3DSurfaceView main;
     // width of the screen
     private int width;
     // height of the screen
     private int height;
-    // frustrum - nearest pixel
-    private static final float near = 1f;
-    // frustrum - fartest pixel
-    private static final float far = 100f;
-
     private DrawerFactory drawer;
     // The wireframe associated shape (it should be made of lines only)
     private Map<Object3DData, Object3DData> wireframes = new HashMap<Object3DData, Object3DData>();
@@ -50,30 +56,20 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
     // The corresponding opengl bounding boxes
     private Map<Object3DData, Object3DData> normals = new HashMap<Object3DData, Object3DData>();
     private Map<Object3DData, Object3DData> skeleton = new HashMap<>();
-
-    // 3D matrices to project our 3D world
-    private final float[] modelProjectionMatrix = new float[16];
-    private final float[] modelViewMatrix = new float[16];
-    // mvpMatrix is an abbreviation for "Model View Projection Matrix"
-    private final float[] mvpMatrix = new float[16];
-
-    // light position required to render with lighting
-    private final float[] lightPosInEyeSpace = new float[4];
     /**
      * Whether the info of the model has been written to console log
      */
     private boolean infoLogged = false;
-
     /**
      * Skeleton Animator
      */
     private Animator animator = new Animator();
     private List<ObjectTransformation> objectTransformationList = new ArrayList<>();
+
     /**
      * Construct a new renderer for the specified surface view
      *
-     * @param modelSurfaceView
-     *            the 3D window
+     * @param modelSurfaceView the 3D window
      */
     public M3DRenderer(M3DSurfaceView modelSurfaceView) {
         this.main = modelSurfaceView;
@@ -86,29 +82,29 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
     public float getNear() {
         return near;
     }
+//    int value = -1;
+//    public void setRotate(float angle,float x, float y, float z) {
+//        Matrix.rotateM(modelProjectionMatrix, 0,angle, x, y, z);
+//    }
+//    public void setScale(float x, float y ,float z){
+//        //default is 1, 1, 1
+//        if(x ==0) {
+//            x =1;
+//        }
+//        if(y == 0) {
+//            y = 1;
+//        }
+//        if(z==0) {
+//            z =1;
+//        }
+//        Matrix.scaleM(modelProjectionMatrix, 0, x, y, z);
+//    }
+//    public void setTranslate(float x, float y, float z) {
+//       Matrix.translateM(modelProjectionMatrix, 0, x, y, z);
+//    }
 
     public float getFar() {
         return far;
-    }
-    int value = -1;
-    public void setRotate(float angle,float x, float y, float z) {
-        Matrix.rotateM(modelProjectionMatrix, 0,angle, x, y, z);
-    }
-    public void setScale(float x, float y ,float z){
-        //default is 1, 1, 1
-        if(x ==0) {
-            x =1;
-        }
-        if(y == 0) {
-            y = 1;
-        }
-        if(z==0) {
-            z =1;
-        }
-        Matrix.scaleM(modelProjectionMatrix, 0, x, y, z);
-    }
-    public void setTranslate(float x, float y, float z) {
-       Matrix.translateM(modelProjectionMatrix, 0, x, y, z);
     }
 
     @Override
@@ -119,7 +115,7 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
         GLES20.glDisable(GL10.GL_DITHER);
         GLES20.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_FASTEST);
 
-        GLES20.glClearColor(0,0,0,0);
+        GLES20.glClearColor(0, 0, 0, 0);
 
         // Use culling to remove back faces.
         // Don't remove back faces so we can see them
@@ -160,24 +156,22 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
 
     }
 
-
-    int i = -1;
-    public void performTranformation(Object3DData objData,ObjectTransformation transformation)
-    {
+    public void performTranformation(Object3DData objData, ObjectTransformation transformation) {
         float[] rotation = transformation.getRotationValue();
-        if(rotation!=null)
+        if (rotation != null)
             objData.setRotation(rotation);
         float[] translation = transformation.getTranslationValue();
-        if(translation!=null)
+        if (translation != null)
             objData.setPosition(translation);
         float[] scale = transformation.getScaleValue();
-        if(scale!=null)
+        if (scale != null)
             objData.setScale(scale);
     }
-    boolean visible = false;
+
     public void setObjectVisible(boolean visible) {
         this.visible = visible;
     }
+
     @Override
     public void onDrawFrame(GL10 unused) {
 
@@ -205,11 +199,11 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
         }
 
         // draw light
-       if (scene.isDrawLighting()) {
+        if (scene.isDrawLighting()) {
 
             Object3DImpl lightBulbDrawer = (Object3DImpl) drawer.getPointDrawer();
 
-            float[] lightModelViewMatrix = lightBulbDrawer.getMvMatrix(lightBulbDrawer.getMMatrix(scene.getLightBulb()),modelViewMatrix);
+            float[] lightModelViewMatrix = lightBulbDrawer.getMvMatrix(lightBulbDrawer.getMMatrix(scene.getLightBulb()), modelViewMatrix);
 
             // Calculate position of the light in eye space to support lighting
             Matrix.multiplyMV(lightPosInEyeSpace, 0, lightModelViewMatrix, 0, scene.getLightPosition(), 0);
@@ -221,7 +215,7 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
         axis.setColor(new float[]{1.0f,0,0,1.0f});
         scene.addObject(axis);*/
         List<Object3DData> objects = scene.getObjects();
-        for (int i=0; i<objects.size(); i++) {
+        for (int i = 0; i < objects.size(); i++) {
             Object3DData objData = null;
             ObjectTransformation transformation = null;
 
@@ -229,7 +223,7 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
                 objData = objects.get(i);
                 objData.setVisible(visible);
 
-                if(objData.isVisible()) {
+                if (objData.isVisible()) {
                     if (objectTransformationList != null && i < objectTransformationList.size()) {
                         transformation = objectTransformationList.get(i);
                         //perform tranformation with objectData using tranformation
@@ -331,7 +325,7 @@ public class M3DRenderer implements GLSurfaceView.Renderer  {
                 // TODO: enable this only when user wants it
                 // obj3D.drawVectorNormals(result, modelViewMatrix);
             } catch (Exception ex) {
-                Log.e("ModelRenderer","There was a problem rendering the object '"+objData.getId()+"':"+ex.getMessage(),ex);
+                Log.e("ModelRenderer", "There was a problem rendering the object '" + objData.getId() + "':" + ex.getMessage(), ex);
             }
         }
     }

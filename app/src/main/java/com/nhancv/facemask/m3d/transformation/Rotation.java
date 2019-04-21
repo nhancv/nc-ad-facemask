@@ -1,4 +1,5 @@
 package com.nhancv.facemask.m3d.transformation;
+
 /*
 Define the rotation value along x-y-z axis
  */
@@ -7,15 +8,18 @@ public class Rotation {
     float y = 0;
     float z = 0;
 
-    public Rotation( float x, float y, float z)
-    {
+    public Rotation(float x, float y, float z) {
         this.x = x;
         this.y = y;
         this.z = z;
     }
 
-    public float[] rotationValue()
-    {
-        return new float[]{x,y,z};
+    public float[] rotationValue() {
+        return new float[]{x, y, z};
+    }
+
+    @Override
+    public String toString() {
+        return "" + x + "," + y + "," + z;
     }
 }

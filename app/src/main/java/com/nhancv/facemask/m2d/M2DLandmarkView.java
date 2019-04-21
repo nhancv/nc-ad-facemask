@@ -102,7 +102,7 @@ public class M2DLandmarkView extends View {
         this.previewHeight = previewHeight;
         this.scaleMatrix = scaleMatrix;
         //init solve pnp variables
-        solvePNP.initialize(previewWidth, previewHeight);
+        solvePNP.initialize();
     }
 
     @Override
@@ -171,7 +171,7 @@ public class M2DLandmarkView extends View {
             Rotation rotation = new Rotation(solvePNP.getRx(), solvePNP.getRy(), solvePNP.getRz());
             Translation translation = new Translation(0, 0, solvePNP.getTz());
 
-            if(myRenderer != null) {
+            if (myRenderer != null) {
                 myRenderer.updateRotation(new Vector3(solvePNP.getRx(), solvePNP.getRy(), solvePNP.getRz()));
             }
 

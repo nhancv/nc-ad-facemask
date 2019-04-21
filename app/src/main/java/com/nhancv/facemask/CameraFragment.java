@@ -20,6 +20,7 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.ImageReader;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -43,9 +44,14 @@ import android.widget.Toast;
 import com.nhancv.facemask.m2d.M2DLandmarkView;
 import com.nhancv.facemask.m2d.M2DPosController;
 import com.nhancv.facemask.m3d.MyRenderer;
+import com.nhancv.facemask.m3d.M3DPosController;
+import com.nhancv.facemask.m3d.M3DSceneLoader;
+import com.nhancv.facemask.m3d.M3DSurfaceView;
 import com.nhancv.facemask.m3d.transformation.RealTimeRotation;
 import com.nhancv.facemask.tracking.FaceLandmarkListener;
 import com.nhancv.facemask.tracking.FaceLandmarkTracking;
+
+import org.andresoviedo.util.android.ContentUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -88,6 +94,7 @@ public class CameraFragment extends Fragment
      */
     private String cameraId = "1";
     private M2DPosController m2DPosController;
+    private M3DPosController m3DPosController;
     private Matrix transformMatrix = new Matrix();
 
     /**
@@ -211,6 +218,15 @@ public class CameraFragment extends Fragment
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        Uri uri = Uri.parse("assets://com.nhancv.facemask/models/Mask.obj");
+        ContentUtils.provideAssets(getActivity());
+        M3DSceneLoader scene = new M3DSceneLoader(getActivity());
+        M3DSurfaceView gLView = getActivity().findViewById(R.id.fragment_camera_gl_3dsurfaceview);
+        scene.init(uri, 0, gLView);
+        gLView.setupScene(scene);
+        m3DPosController = new M3DPosController(gLView);
+
+
         m2DPosController = new M2DPosController(landmarkView);
     }
 
@@ -561,7 +577,8 @@ public class CameraFragment extends Fragment
 
     @Override
     public void landmarkUpdate(final Face face,final int previewWidth,final int previewHeight, final Matrix scaleMatrix) {
-        uiHandler.post(() -> m2DPosController.landmarkUpdate(face, previewWidth, previewHeight, scaleMatrix));
+//        uiHandler.post(() -> m2DPosController.landmarkUpdate(face, previewWidth, previewHeight, scaleMatrix));
+        m3DPosController.landmarkUpdate(face,previewWidth,previewHeight,scaleMatrix);
     }
 
     /**

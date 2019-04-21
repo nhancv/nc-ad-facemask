@@ -35,6 +35,14 @@ public class M3DSceneLoader implements LoaderTask.Callback {
      */
     protected final Activity parent;
     /**
+     * Initial light position
+     */
+    private final float[] lightPosition = new float[]{0, 0, 20, 1};
+    /**
+     * Light bulb 3d data
+     */
+    private final Object3DData lightPoint = Object3DBuilder.buildPoint(lightPosition).setId("light");
+    /**
      * List of data objects containing info for building the opengl objects
      */
     private List<Object3DData> objects = new ArrayList<>();
@@ -91,14 +99,6 @@ public class M3DSceneLoader implements LoaderTask.Callback {
      */
     private Object3DData selectedObject = null;
     /**
-     * Initial light position
-     */
-    private final float[] lightPosition = new float[]{0, 0, 20, 1};
-    /**
-     * Light bulb 3d data
-     */
-    private final Object3DData lightPoint = Object3DBuilder.buildPoint(lightPosition).setId("light");
-    /**
      * Animator
      */
     private Animator animator = new Animator();
@@ -113,7 +113,6 @@ public class M3DSceneLoader implements LoaderTask.Callback {
 
     /**
      * GLSurfaceView
-     * @param main
      */
     private M3DSurfaceView glSurfaceView;
 
@@ -131,10 +130,10 @@ public class M3DSceneLoader implements LoaderTask.Callback {
         if (uri.toString().toLowerCase().endsWith(".obj") || modelType == 0) {
             new WavefrontLoaderTask(parent, uri, this).execute();
         } else if (uri.toString().toLowerCase().endsWith(".stl") || modelType == 1) {
-            Log.i("Object3DBuilder", "Loading STL object from: "+uri);
+            Log.i("Object3DBuilder", "Loading STL object from: " + uri);
             new STLLoaderTask(parent, uri, this).execute();
         } else if (uri.toString().toLowerCase().endsWith(".dae") || modelType == 2) {
-            Log.i("Object3DBuilder", "Loading Collada object from: "+uri);
+            Log.i("Object3DBuilder", "Loading Collada object from: " + uri);
             new ColladaLoaderTask(parent, uri, this).execute();
         }
     }
@@ -173,7 +172,7 @@ public class M3DSceneLoader implements LoaderTask.Callback {
         if (objects.isEmpty()) return;
 
         if (animateModel) {
-            for (int i=0; i<objects.size(); i++) {
+            for (int i = 0; i < objects.size(); i++) {
                 Object3DData obj = objects.get(i);
                 animator.update(obj);
             }
@@ -189,7 +188,7 @@ public class M3DSceneLoader implements LoaderTask.Callback {
         lightPoint.setRotationY(angleInDegrees);
     }
 
-    private void animateCamera(){
+    private void animateCamera() {
         camera.translateCamera(0.0025f, 0f);
     }
 
@@ -249,7 +248,7 @@ public class M3DSceneLoader implements LoaderTask.Callback {
 
     public void toggleTextures() {
         this.drawTextures = !drawTextures;
-        makeToastText("Textures "+this.drawTextures, Toast.LENGTH_SHORT);
+        makeToastText("Textures " + this.drawTextures, Toast.LENGTH_SHORT);
     }
 
     public void toggleLighting() {
@@ -268,10 +267,10 @@ public class M3DSceneLoader implements LoaderTask.Callback {
     }
 
     public void toggleAnimation() {
-        if (animateModel && !drawSkeleton){
+        if (animateModel && !drawSkeleton) {
             this.drawSkeleton = true;
             makeToastText("Skeleton on", Toast.LENGTH_SHORT);
-        } else if (animateModel){
+        } else if (animateModel) {
             this.drawSkeleton = false;
             this.animateModel = false;
             makeToastText("Animation off", Toast.LENGTH_SHORT);
@@ -287,7 +286,7 @@ public class M3DSceneLoader implements LoaderTask.Callback {
 
     public void toggleCollision() {
         this.isCollision = !isCollision;
-        makeToastText("Collisions: "+isCollision, Toast.LENGTH_SHORT);
+        makeToastText("Collisions: " + isCollision, Toast.LENGTH_SHORT);
     }
 
     public boolean isDrawTextures() {
@@ -311,7 +310,7 @@ public class M3DSceneLoader implements LoaderTask.Callback {
     }
 
     @Override
-    public void onStart(){
+    public void onStart() {
         ContentUtils.setThreadActivity(parent);
     }
 
@@ -320,8 +319,8 @@ public class M3DSceneLoader implements LoaderTask.Callback {
         // TODO: move texture load to LoaderTask
         for (Object3DData data : datas) {
             if (data.getTextureData() == null && data.getTextureFile() != null) {
-                Log.i("LoaderTask","Loading texture... "+data.getTextureFile());
-                try (InputStream stream = ContentUtils.getInputStream(data.getTextureFile())){
+                Log.i("LoaderTask", "Loading texture... " + data.getTextureFile());
+                try (InputStream stream = ContentUtils.getInputStream(data.getTextureFile())) {
                     if (stream != null) {
                         data.setTextureData(IOUtils.read(stream));
                     }
@@ -336,7 +335,7 @@ public class M3DSceneLoader implements LoaderTask.Callback {
             addObject(data);
             allErrors.addAll(data.getErrors());
         }
-        if (!allErrors.isEmpty()){
+        if (!allErrors.isEmpty()) {
             makeToastText(allErrors.toString(), Toast.LENGTH_LONG);
         }
         final String elapsed = (SystemClock.uptimeMillis() - startTime) / 1000 + " secs";

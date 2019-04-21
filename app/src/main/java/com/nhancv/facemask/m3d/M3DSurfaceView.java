@@ -1,6 +1,5 @@
 package com.nhancv.facemask.m3d;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
@@ -32,7 +31,7 @@ public class M3DSurfaceView extends GLSurfaceView {
 
         // Create an OpenGL ES 2.0 context.
         setEGLContextClientVersion(2);
-        setEGLConfigChooser(8,8,8,8,16,0);
+        setEGLConfigChooser(8, 8, 8, 8, 16, 0);
         camera = new Camera();
         // This is the actual renderer of the 3D space
         renderer = new M3DRenderer(this);
@@ -47,7 +46,7 @@ public class M3DSurfaceView extends GLSurfaceView {
         this.scene = sceneLoader;
     }
 
-    public M3DRenderer getModelRenderer(){
+    public M3DRenderer getModelRenderer() {
         return renderer;
     }
 
@@ -62,7 +61,6 @@ public class M3DSurfaceView extends GLSurfaceView {
     public Camera getCamera() {
         return camera;
     }
-
 
 
     @Override

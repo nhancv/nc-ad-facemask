@@ -5,15 +5,13 @@ public class Scale {
     float y = 1;
     float z = 1;
 
-    public Scale( float x, float y, float z)
-    {
+    public Scale(float x, float y, float z) {
         this.x = x;
         this.y = y;
         this.z = z;
     }
 
-    public float[] scaleValue()
-    {
-        return new float[]{x,y,z};
+    public float[] scaleValue() {
+        return new float[]{x, y, z};
     }
 }

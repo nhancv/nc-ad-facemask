@@ -60,7 +60,7 @@ public class SolvePNP {
 
     }
 
-    public void initialize(float width, float height) {
+    public void initialize(){
         point2Ds = new PointF[106];
         for (int i = 0; i < 106; i++) {
             point2Ds[i] = new PointF(0, 0);
