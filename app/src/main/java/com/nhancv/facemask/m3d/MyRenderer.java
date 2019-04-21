@@ -65,6 +65,7 @@ public class MyRenderer extends Renderer {
 
     public void updatePosition(Vector3 position) {
         this.position = position;
+//        getCurrentCamera().setPosition(-position.x/250, -position.y/250, position.z/250);
     }
 
     @Override
@@ -72,13 +73,16 @@ public class MyRenderer extends Renderer {
         super.onRender(ellapsedRealtime, deltaTime);
 //        maskObj.setPosition(maskObj.getX() + offset, maskObj.getY() + offset, maskObj.getZ() + offset);
 //        maskObj.rotate(maskObj.getRotX() + offset, maskObj.getRotY() + offset, maskObj.getRotZ() + offset, 1f);
-//        if (Math.abs(maskObj.getX()) > 1) {
-//            offset = -offset;
+        if (Math.abs(maskObj.getX()) > 1) {
+            offset = -offset;
 //            maskObj.setRotation(0, 0, 0);
 //            maskObj.setPosition(0, 0, 0);
-//        }
+        }
         if (this.rotation != null) {
             maskObj.setRotation(this.rotation);
+        }
+        if(this.position != null) {
+            maskObj.setPosition(this.position);
         }
 
     }
@@ -103,8 +107,8 @@ public class MyRenderer extends Renderer {
             Log.d("DEBUG", "TEXTURE ERROR");
         }
 
-        maskObj.setScale(1.2f);
-        maskObj.setPosition(0, 0, 0);
+//        maskObj.setScale(1.2f);
+//        maskObj.setPosition(0, 0, 0);
 
         Ornament mask = getVMask();
         LoaderOBJ objParser1 = new LoaderOBJ(mContext.getResources(), mTextureManager, mask.getModelResId());
@@ -137,7 +141,7 @@ public class MyRenderer extends Renderer {
         ornament.setModelResId(R.raw.v_mask_obj);
         ornament.setImgResId(R.drawable.ic_v_mask);
         ornament.setScale(0.12f);
-        ornament.setOffset(0, -0.1f, 0.0f);
+//        ornament.setOffset(0, -0.1f, 0.0f);
         ornament.setRotate(0, 0, 0);
         ornament.setColor(Color.BLACK);
         return ornament;

@@ -172,7 +172,19 @@ public class M2DLandmarkView extends View {
             Translation translation = new Translation(0, 0, solvePNP.getTz());
 
             if (myRenderer != null) {
-                myRenderer.updateRotation(new Vector3(solvePNP.getRx(), solvePNP.getRy(), solvePNP.getRz()));
+                myRenderer.updateRotation(new Vector3(solvePNP.getRx(), 1 - solvePNP.getRy(), 1 - solvePNP.getRz()));
+
+                /*
+                About position, in OpenGL, the axis from (-1 1) for both x and y with (0, 0) is the center.
+                In the solvePNP return the position of bitmap, the (0,0) located at top-right and the max-x with max-y
+                located at bottom-left. We need to convert from bitmap coordinate to OpenGL coordinate.
+                 */
+
+//                myRenderer.updatePosition(new Vector3((previewHeight - 2 * (-solvePNP.getTx())) / previewHeight,
+//                        (previewWidth - 2 * solvePNP.getTy()) / previewWidth, -0.1f));
+                PointF posF = point2Ds[46];
+                myRenderer.updatePosition(new Vector3((2 * posF.x - previewHeight) / previewHeight,
+                        -(2 * posF.y - previewWidth) / previewWidth, -0.1f));
             }
 
 
