@@ -24,7 +24,7 @@
  * @author Nhan Cao <nhan.cao@beesightsoft.com>
  */
 
-package com.nhancv.facemask.m2d;
+package com.nhancv.facemask.util;
 
 import android.graphics.PointF;
 
@@ -45,33 +45,32 @@ import static org.opencv.core.CvType.CV_32FC1;
 import static org.opencv.core.CvType.CV_64FC1;
 
 public class SolvePNP {
-
-    private final String TAG ="SolvePNP";
-    private float rx,ry,rz;
-    private float tx,ty,tz;
+    private static final String TAG = SolvePNP.class.getSimpleName();
+    private float rx, ry, rz;
+    private float tx, ty, tz;
     private PointF[] point2Ds;
-    MatOfPoint3f objPointMat;
+    private MatOfPoint3f objPointMat;
     private Mat camMatrix;
     private MatOfDouble distCoeffs;
     private Mat rotationVector;
     private Mat translationVector;
     private RealTimeRotation realTimeRotation = RealTimeRotation.getInstance();
 
-    public SolvePNP(){
+    public SolvePNP() {
 
     }
 
-    public void initialize(float width, float height){
+    public void initialize(float width, float height) {
         point2Ds = new PointF[106];
         for (int i = 0; i < 106; i++) {
-            point2Ds[i] = new PointF(0,0);
+            point2Ds[i] = new PointF(0, 0);
         }
         setUpDistCoeff();
         camMatrix = realTimeRotation.getCamMatrix();
         objPointMat = realTimeRotation.getObjPointsMat();
     }
 
-    public void setUpLandmarks(PointF[] landmarks ){
+    public void setUpLandmarks(PointF[] landmarks) {
         this.point2Ds = landmarks;
     }
 
@@ -134,25 +133,25 @@ public class SolvePNP {
         return projectPoints;
     }
 
-    public void solvePNP(){
+    public void solvePNP() {
         MatOfPoint2f imagePoints = this.get6ValidPoint();
         this.rotationVector = new Mat();
         this.translationVector = new Mat();
 
         Calib3d.solvePnP(this.objPointMat, imagePoints, this.camMatrix, this.distCoeffs, this.rotationVector, this.translationVector);
         tx = (float) this.translationVector.get(0, 0)[0];
-        ty =(float) this.translationVector.get(1, 0)[0];
-        tz =(float)this.translationVector.get(2,0)[0];
+        ty = (float) this.translationVector.get(1, 0)[0];
+        tz = (float) this.translationVector.get(2, 0)[0];
         Mat rotM = setUpRotM();
         //convert from rotation vector to rotM
-        Calib3d.Rodrigues(rotationVector,rotM);
+        Calib3d.Rodrigues(rotationVector, rotM);
         Mat projMatrix = setUpProjMatrix(rotM);
         Mat eav = new Mat();
-        Calib3d.decomposeProjectionMatrix(projMatrix,new Mat(), new Mat(), new Mat(), new Mat(), new Mat(), new Mat(), eav);
+        Calib3d.decomposeProjectionMatrix(projMatrix, new Mat(), new Mat(), new Mat(), new Mat(), new Mat(), new Mat(), eav);
 
         rx = (float) eav.get(0, 0)[0];
-        ry =(float) eav.get(1, 0)[0];
-        rz =(float)eav.get(2,0)[0];
+        ry = (float) eav.get(1, 0)[0];
+        rz = (float) eav.get(2, 0)[0];
         rotM.release();
         projMatrix.release();
 
@@ -161,20 +160,19 @@ public class SolvePNP {
     /**
      * Input: rotMatrix
      * Output: projection Matrix
-     * */
+     */
     private Mat setUpProjMatrix(Mat rotM) {
-        float tv[] = new float[]{0,0,1};
-        Mat tvMat = new Mat(3,1,CV_32FC1);
-        tvMat.put(0,0,tv);
+        float tv[] = new float[]{0, 0, 1};
+        Mat tvMat = new Mat(3, 1, CV_32FC1);
+        tvMat.put(0, 0, tv);
         Mat projMat = new Mat();
-        List<Mat> src = Arrays.asList(rotM,  tvMat);
-        Core.hconcat(src,projMat);
-//        Log.d(TAG,"Project Matrix"+projMat.toString());
+        List<Mat> src = Arrays.asList(rotM, tvMat);
+        Core.hconcat(src, projMat);
         return projMat;
     }
 
     public float getRx() {
-        return rx-180;
+        return rx - 180;
     }
 
     public float getRy() {

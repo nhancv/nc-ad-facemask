@@ -133,7 +133,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
         trackingHandler = new Handler(trackingThread.getLooper()) {
             @Override
             public void handleMessage(Message msg) {
-                if (msg.what == FRAME_DATA_READY_MSG) {
+                if (msg.what == FRAME_DATA_READY_MSG && multiTrack106 != null) {
                     System.arraycopy(nv21Data, 0, trackingFrameBuffer, 0, nv21Data.length);
                     if (!initTrack106) {
                         multiTrack106.faceTrackingInit(trackingFrameBuffer, previewHeight, previewWidth);

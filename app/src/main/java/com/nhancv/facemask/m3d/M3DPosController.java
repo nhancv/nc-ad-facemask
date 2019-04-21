@@ -5,7 +5,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Handler;
 
-import com.nhancv.facemask.m2d.SolvePNP;
+import com.nhancv.facemask.util.SolvePNP;
 import com.nhancv.facemask.m3d.transformation.ObjectTransformation;
 import com.nhancv.facemask.m3d.transformation.RealTimeRotation;
 import com.nhancv.facemask.tracking.FaceLandmarkListener;
