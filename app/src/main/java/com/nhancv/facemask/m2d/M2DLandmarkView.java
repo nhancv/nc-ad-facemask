@@ -158,7 +158,11 @@ public class M2DLandmarkView extends View {
 //            STUtils.drawPoints(canvas, faceLandmarkPaint, point2Ds, visibleIndexes, previewHeight, previewWidth, true);
             //Solve PNP
             solvePNP.setUpLandmarks(point2Ds);
-            solvePNP.solvePNP();
+            try {
+                solvePNP.solvePNP();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
 
             // Draw 2dMask
@@ -172,7 +176,8 @@ public class M2DLandmarkView extends View {
             Translation translation = new Translation(0, 0, solvePNP.getTz());
 
             if (myRenderer != null) {
-                myRenderer.updateRotation(new Vector3(solvePNP.getRx(), 1 - solvePNP.getRy(), 1 - solvePNP.getRz()));
+//                myRenderer.updateRotation(new Vector3(solvePNP.getRx(), 1 - solvePNP.getRy(), 1 - solvePNP.getRz()));
+                myRenderer.updateRotation(new Vector3(solvePNP.getRx(), 1 - solvePNP.getRy(), 0));
 
                 /*
                 About position, in OpenGL, the axis from (-1 1) for both x and y with (0, 0) is the center.

@@ -73,11 +73,11 @@ public class MyRenderer extends Renderer {
         super.onRender(ellapsedRealtime, deltaTime);
 //        maskObj.setPosition(maskObj.getX() + offset, maskObj.getY() + offset, maskObj.getZ() + offset);
 //        maskObj.rotate(maskObj.getRotX() + offset, maskObj.getRotY() + offset, maskObj.getRotZ() + offset, 1f);
-        if (Math.abs(maskObj.getX()) > 1) {
-            offset = -offset;
+//        if (Math.abs(maskObj.getX()) > 1) {
+//            offset = -offset;
 //            maskObj.setRotation(0, 0, 0);
 //            maskObj.setPosition(0, 0, 0);
-        }
+//        }
         if (this.rotation != null) {
             maskObj.setRotation(this.rotation);
         }
@@ -110,7 +110,7 @@ public class MyRenderer extends Renderer {
 //        maskObj.setScale(1.2f);
 //        maskObj.setPosition(0, 0, 0);
 
-        Ornament mask = getVMask();
+        Ornament mask = getPantherMask();
         LoaderOBJ objParser1 = new LoaderOBJ(mContext.getResources(), mTextureManager, mask.getModelResId());
         try {
             objParser1.parse();
@@ -136,13 +136,36 @@ public class MyRenderer extends Renderer {
 
     }
 
-    private Ornament getVMask() {
+
+    private Ornament getPantherMask() {
         Ornament ornament = new Ornament();
-        ornament.setModelResId(R.raw.v_mask_obj);
-        ornament.setImgResId(R.drawable.ic_v_mask);
+        ornament.setModelResId(R.raw.panther_obj);
+        ornament.setImgResId(R.drawable.ic_panther_mask);
         ornament.setScale(0.12f);
-//        ornament.setOffset(0, -0.1f, 0.0f);
+        ornament.setOffset(0, -0.1f, 0.0f);
         ornament.setRotate(0, 0, 0);
+        ornament.setColor(2333);
+        return ornament;
+    }
+
+    private Ornament getGlass() {
+        Ornament ornament = new Ornament();
+        ornament.setModelResId(R.raw.glasses_obj);
+        ornament.setImgResId(R.drawable.ic_glasses);
+        ornament.setScale(0.005f);
+        ornament.setOffset(0, 0, 0.2f);
+        ornament.setRotate(-90.0f, 90.0f, 90.0f);
+        ornament.setColor(Color.BLACK);
+        return ornament;
+    }
+
+    private Ornament getMoustache() {
+        Ornament ornament = new Ornament();
+        ornament.setModelResId(R.raw.moustache_obj);
+        ornament.setImgResId(R.drawable.ic_moustache);
+        ornament.setScale(0.15f);
+        ornament.setOffset(0, -0.25f, 0.2f);
+        ornament.setRotate(-90.0f, 90.0f, 90.0f);
         ornament.setColor(Color.BLACK);
         return ornament;
     }

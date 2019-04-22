@@ -60,7 +60,7 @@ public class SolvePNP {
 
     }
 
-    public void initialize(){
+    public void initialize() {
         point2Ds = new PointF[106];
         for (int i = 0; i < 106; i++) {
             point2Ds[i] = new PointF(0, 0);
@@ -104,11 +104,11 @@ public class SolvePNP {
         return rotM;
     }
 
-    private MatOfPoint2f get6ValidPoint() {
+    private MatOfPoint2f getValidPoints() {
         List<org.opencv.core.Point> objPoints = new ArrayList<>();
         MatOfPoint2f imagePoints = new MatOfPoint2f();
         objPoints.add(new org.opencv.core.Point(point2Ds[69].x, point2Ds[69].y)); //nose tip
-        objPoints.add(new org.opencv.core.Point(point2Ds[0].x, point2Ds[0].y));//Chin
+        objPoints.add(new org.opencv.core.Point(point2Ds[0].x, point2Ds[0].y)); //chin
         objPoints.add(new org.opencv.core.Point(point2Ds[94].x, point2Ds[94].y)); //left eye left corner
         objPoints.add(new org.opencv.core.Point(point2Ds[59].x, point2Ds[59].y)); //left eye right corner
         objPoints.add(new org.opencv.core.Point(point2Ds[27].x, point2Ds[27].y)); //right eye left corner
@@ -134,7 +134,7 @@ public class SolvePNP {
     }
 
     public void solvePNP() {
-        MatOfPoint2f imagePoints = this.get6ValidPoint();
+        MatOfPoint2f imagePoints = this.getValidPoints();
         this.rotationVector = new Mat();
         this.translationVector = new Mat();
 

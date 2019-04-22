@@ -36,7 +36,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     private static final int FRAME_DATA_READY_MSG = 0x01;
     private static final int RENDER_OVERLAP_MSG = 0x02;
     private static final int RENDER_PREVIEW_MSG = 0x03;
-    private static final boolean SHOW_LANDMARK = false;
+    private static final boolean SHOW_LANDMARK = true;
     /**
      * Thread
      */
