@@ -69,6 +69,7 @@ public class CameraFragment extends Fragment
      * Static
      */
     private static final String TAG = CameraFragment.class.getSimpleName();
+    public static final Point SCREEN_SIZE = new Point();
     public static final int MAX_PREVIEW_WIDTH = 640;//1920
     public static final int MAX_PREVIEW_HEIGHT = 480;//1080
     public static final int READER_WIDTH = 320;
@@ -109,6 +110,7 @@ public class CameraFragment extends Fragment
     // A Semaphore to prevent the app from exiting before closing the camera.
     private Semaphore cameraOpenCloseLock = new Semaphore(1);
     private final SparseIntArray ORIENTATIONS = new SparseIntArray();
+
     {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
@@ -183,7 +185,6 @@ public class CameraFragment extends Fragment
 
         landmarkView = view.findViewById(R.id.fragment_camera_2dlandmarkview);
 
-
         rajwaliSurface = view.findViewById(R.id.rajwali_surface);
         myRenderer = new MyRenderer(getActivity());
         rajwaliSurface.setTransparent(true);
@@ -198,10 +199,9 @@ public class CameraFragment extends Fragment
         overlapFaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
         Display display = getActivity().getWindowManager().getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        int screenWidth = size.x;
-        int screenHeight = size.y;
+        display.getSize(SCREEN_SIZE);
+        int screenWidth = SCREEN_SIZE.x;
+        int screenHeight = SCREEN_SIZE.y;
         Log.e("Width", "" + screenWidth);
         Log.e("height", "" + screenHeight);
         //Sony: 1080x1776
@@ -467,49 +467,55 @@ public class CameraFragment extends Fragment
             previewReader = ImageReader.newInstance(READER_WIDTH, READER_HEIGHT, ImageFormat.YUV_420_888, 2);
             previewReader.setOnImageAvailableListener(onGetPreviewListener, imagePreviewHandler);
             previewRequestBuilder.addTarget(previewReader.getSurface());
-
+            cameraOpenCloseLock.acquire();
             // Here, we create a CameraCaptureSession for camera preview.
-            cameraDevice.createCaptureSession(Arrays.asList(previewReader.getSurface()),
-                    new CameraCaptureSession.StateCallback() {
+            if (previewReader != null) {
+                cameraDevice.createCaptureSession(Arrays.asList(previewReader.getSurface()),
+                        new CameraCaptureSession.StateCallback() {
 
-                        @Override
-                        public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
-                            // The camera is already closed
-                            if (null == cameraDevice) {
-                                return;
-                            }
-
-                            // When the session is ready, we start displaying the preview.
-                            captureSession = cameraCaptureSession;
-                            try {
-                                // Turn Off auto mode
-                                if (flashSupported) {
-                                    previewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF);
+                            @Override
+                            public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
+                                // The camera is already closed
+                                if (null == cameraDevice) {
+                                    return;
                                 }
-                                // Finally, we start displaying the camera preview.
-                                previewRequest = previewRequestBuilder.build();
-                                captureSession.setRepeatingRequest(previewRequest, null, cameraSessionHandler);
-                            } catch (CameraAccessException e) {
-                                e.printStackTrace();
-                            }
-                        }
 
-                        @Override
-                        public void onConfigureFailed(
-                                @NonNull CameraCaptureSession cameraCaptureSession) {
-                            showToast("Failed");
-                            release();
-                            init();
-                        }
-                    }, null
-            );
+                                // When the session is ready, we start displaying the preview.
+                                captureSession = cameraCaptureSession;
+                                try {
+                                    // Turn Off auto mode
+                                    if (flashSupported) {
+                                        previewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF);
+                                    }
+                                    // Finally, we start displaying the camera preview.
+                                    previewRequest = previewRequestBuilder.build();
+                                    captureSession.setRepeatingRequest(previewRequest, null, cameraSessionHandler);
+                                } catch (CameraAccessException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            @Override
+                            public void onConfigureFailed(
+                                    @NonNull CameraCaptureSession cameraCaptureSession) {
+                                showToast("Failed");
+                                release();
+                                init();
+                            }
+                        }, null
+                );
+            }
         } catch (CameraAccessException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            cameraOpenCloseLock.release();
         }
         //setup one time variables for solving pnp
         realTimeRotation = RealTimeRotation.getInstance();
         realTimeRotation.setUpWorldPoints();
-        realTimeRotation.setUpCamMatrix(new Point((int)(READER_WIDTH/2f),(int)(READER_HEIGHT/2f)));
+        realTimeRotation.setUpCamMatrix(new Point((int) (READER_WIDTH / 2f), (int) (READER_HEIGHT / 2f)));
 
         onGetPreviewListener.initialize(getContext(), transformMatrix, overlapFaceView, surfacePreview, this);
     }
@@ -573,7 +579,7 @@ public class CameraFragment extends Fragment
     }
 
     @Override
-    public void landmarkUpdate(final Face face,final int previewWidth,final int previewHeight, final Matrix scaleMatrix) {
+    public void landmarkUpdate(final Face face, final int previewWidth, final int previewHeight, final Matrix scaleMatrix) {
         uiHandler.post(() -> m2DPosController.landmarkUpdate(face, previewWidth, previewHeight, scaleMatrix));
 //        m3DPosController.landmarkUpdate(face,previewWidth,previewHeight,scaleMatrix);
     }

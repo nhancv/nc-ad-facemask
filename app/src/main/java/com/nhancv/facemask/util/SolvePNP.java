@@ -107,7 +107,13 @@ public class SolvePNP {
     private MatOfPoint2f getValidPoints() {
         List<org.opencv.core.Point> objPoints = new ArrayList<>();
         MatOfPoint2f imagePoints = new MatOfPoint2f();
+        objPoints.add(new org.opencv.core.Point(point2Ds[44].x, point2Ds[44].y)); //nose tip
+        objPoints.add(new org.opencv.core.Point(point2Ds[60].x, point2Ds[60].y)); //nose tip
         objPoints.add(new org.opencv.core.Point(point2Ds[69].x, point2Ds[69].y)); //nose tip
+        objPoints.add(new org.opencv.core.Point(point2Ds[46].x, point2Ds[46].y)); //nose
+        objPoints.add(new org.opencv.core.Point(point2Ds[93].x, point2Ds[93].y)); //nose
+        objPoints.add(new org.opencv.core.Point(point2Ds[31].x, point2Ds[31].y)); //nose
+        objPoints.add(new org.opencv.core.Point(point2Ds[21].x, point2Ds[21].y)); //v2224 -> 21 lm
         objPoints.add(new org.opencv.core.Point(point2Ds[0].x, point2Ds[0].y)); //chin
         objPoints.add(new org.opencv.core.Point(point2Ds[94].x, point2Ds[94].y)); //left eye left corner
         objPoints.add(new org.opencv.core.Point(point2Ds[59].x, point2Ds[59].y)); //left eye right corner
@@ -117,8 +123,10 @@ public class SolvePNP {
         objPoints.add(new org.opencv.core.Point(point2Ds[50].x, point2Ds[50].y));//right mouth corner
         objPoints.add(new org.opencv.core.Point(point2Ds[38].x, point2Ds[38].y));//top mouth corner
         objPoints.add(new org.opencv.core.Point(point2Ds[32].x, point2Ds[32].y));//bottom mouth corner
-        objPoints.add(new org.opencv.core.Point(point2Ds[11].x, point2Ds[11].y));//top left chin
-        objPoints.add(new org.opencv.core.Point(point2Ds[13].x, point2Ds[13].y));//top right chin
+        objPoints.add(new org.opencv.core.Point(point2Ds[7].x, point2Ds[7].y));//top left chin
+        objPoints.add(new org.opencv.core.Point(point2Ds[57].x, point2Ds[57].y));//top left chin
+        objPoints.add(new org.opencv.core.Point(point2Ds[16].x, point2Ds[16].y));//top right chin
+        objPoints.add(new org.opencv.core.Point(point2Ds[100].x, point2Ds[100].y));//top right chin
 
 
         imagePoints.fromList(objPoints);
