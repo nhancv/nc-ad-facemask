@@ -36,7 +36,7 @@
         android:id="@+id/rajwali_surface"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        surfaceview:frameRate="60.0"
+        surfaceview:frameRate="30.0"
         surfaceview:renderMode="RENDER_WHEN_DIRTY"
         />
 </RelativeLayout>

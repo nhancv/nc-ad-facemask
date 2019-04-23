@@ -14,6 +14,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
+import com.nhancv.facemask.CameraFragment;
 import com.nhancv.facemask.R;
 import com.nhancv.facemask.m3d.MyRenderer;
 import com.nhancv.facemask.m3d.transformation.Rotation;
@@ -158,7 +159,11 @@ public class M2DLandmarkView extends View {
 //            STUtils.drawPoints(canvas, faceLandmarkPaint, point2Ds, visibleIndexes, previewHeight, previewWidth, true);
             //Solve PNP
             solvePNP.setUpLandmarks(point2Ds);
-            solvePNP.solvePNP();
+            try {
+                solvePNP.solvePNP();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
 
             // Draw 2dMask
@@ -172,7 +177,8 @@ public class M2DLandmarkView extends View {
             Translation translation = new Translation(0, 0, solvePNP.getTz());
 
             if (myRenderer != null) {
-                myRenderer.updateRotation(new Vector3(solvePNP.getRx(), 1 - solvePNP.getRy(), 1 - solvePNP.getRz()));
+//                myRenderer.updateRotation(new Vector3(solvePNP.getRx(), -solvePNP.getRy(), -solvePNP.getRz()));
+//                myRenderer.updatePosition(new Vector3(solvePNP.getTx(), solvePNP.getTy(), solvePNP.getTz()));
 
                 /*
                 About position, in OpenGL, the axis from (-1 1) for both x and y with (0, 0) is the center.
@@ -182,40 +188,41 @@ public class M2DLandmarkView extends View {
 
 //                myRenderer.updatePosition(new Vector3((previewHeight - 2 * (-solvePNP.getTx())) / previewHeight,
 //                        (previewWidth - 2 * solvePNP.getTy()) / previewWidth, -0.1f));
+                int fullScreenAspectRatio = (int) (previewWidth * (CameraFragment.SCREEN_SIZE.y * 1f / CameraFragment.SCREEN_SIZE.x));
                 PointF posF = point2Ds[46];
-                myRenderer.updatePosition(new Vector3((2 * posF.x - previewHeight) / previewHeight,
-                        -(2 * posF.y - previewWidth) / previewWidth, -0.1f));
+//                myRenderer.updatePosition(new Vector3((2 * posF.x - previewHeight) / previewHeight,
+//                        (fullScreenAspectRatio - 2 * posF.y) / fullScreenAspectRatio, 1/solvePNP.getTz()));
             }
 
 
             // TODO: 4/21/19 Comment for 3d testing
-//            Matrix transformationMatrix = new Matrix();
-//
-//            PointF leftEarF = point2Ds[29];
-//            //leftEarF.x - 130 * scaleW, leftEarF.y - 130 * scaleH,
-//            float ratio = leftEar.getHeight() * 1.0f / leftEar.getWidth();
-//            float earW = Math.abs(0.5f * faceRect.width());
-//            float earH = earW * ratio;
-//            Bitmap leftTmp = Bitmap.createScaledBitmap(leftEar, (int) (earW), (int) (earH), false);
-//            transformationMatrix = transformMat(leftTmp.getWidth() / 2, leftTmp.getHeight() / 2, leftEarF.x - earW, leftEarF.y - earH, rotation, translation);
-//
-//            canvas.drawBitmap(leftTmp, transformationMatrix, null);
-//
-//            PointF rightEarF = point2Ds[70];
-//
-//            Bitmap rightTmp = Bitmap.createScaledBitmap(rightEar, (int) (earW), (int) (earH), false);
-//            transformationMatrix = transformMat(rightTmp.getWidth() / 2, rightTmp.getHeight() / 2, rightEarF.x, rightEarF.y - earH, rotation, translation);
-//
-//            canvas.drawBitmap(rightTmp, transformationMatrix, null);
-//
-//            PointF noseF = point2Ds[46];
-//            float nratio = nose.getHeight() * 1.0f / nose.getWidth();
-//            float nwidth = 2 * (point2Ds[93].x - point2Ds[31].x);
-//            float nheight = nwidth * nratio;
-//            Bitmap noseTmp = Bitmap.createScaledBitmap(nose, (int) (nwidth), (int) (nheight), false);
-//            transformationMatrix = transformMat(noseTmp.getWidth() / 2, noseTmp.getHeight() / 2, noseF.x - noseTmp.getWidth() / 2f, noseF.y - noseTmp.getHeight() / 2f, rotation, translation);
-//
-//            canvas.drawBitmap(noseTmp, transformationMatrix, null);
+            Matrix transformationMatrix = new Matrix();
+
+            PointF leftEarF = point2Ds[29];
+            //leftEarF.x - 130 * scaleW, leftEarF.y - 130 * scaleH,
+            float ratio = leftEar.getHeight() * 1.0f / leftEar.getWidth();
+            float earW = Math.abs(0.5f * faceRect.width());
+            float earH = earW * ratio;
+            Bitmap leftTmp = Bitmap.createScaledBitmap(leftEar, (int) (earW), (int) (earH), false);
+            transformationMatrix = transformMat(leftTmp.getWidth() / 2, leftTmp.getHeight() / 2, leftEarF.x - earW, leftEarF.y - earH, rotation, translation);
+
+            canvas.drawBitmap(leftTmp, transformationMatrix, null);
+
+            PointF rightEarF = point2Ds[70];
+
+            Bitmap rightTmp = Bitmap.createScaledBitmap(rightEar, (int) (earW), (int) (earH), false);
+            transformationMatrix = transformMat(rightTmp.getWidth() / 2, rightTmp.getHeight() / 2, rightEarF.x, rightEarF.y - earH, rotation, translation);
+
+            canvas.drawBitmap(rightTmp, transformationMatrix, null);
+
+            PointF noseF = point2Ds[46];
+            float nratio = nose.getHeight() * 1.0f / nose.getWidth();
+            float nwidth = 2 * (point2Ds[93].x - point2Ds[31].x);
+            float nheight = nwidth * nratio;
+            Bitmap noseTmp = Bitmap.createScaledBitmap(nose, (int) (nwidth), (int) (nheight), false);
+            transformationMatrix = transformMat(noseTmp.getWidth() / 2, noseTmp.getHeight() / 2, noseF.x - noseTmp.getWidth() / 2f, noseF.y - noseTmp.getHeight() / 2f, rotation, translation);
+
+            canvas.drawBitmap(noseTmp, transformationMatrix, null);
         }
     }
 

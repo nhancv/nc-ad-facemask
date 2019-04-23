@@ -65,7 +65,7 @@ public class MyRenderer extends Renderer {
 
     public void updatePosition(Vector3 position) {
         this.position = position;
-//        getCurrentCamera().setPosition(-position.x/250, -position.y/250, position.z/250);
+        getCurrentCamera().setPosition(-position.x/250, -position.y/250, 0);
     }
 
     @Override
@@ -73,57 +73,54 @@ public class MyRenderer extends Renderer {
         super.onRender(ellapsedRealtime, deltaTime);
 //        maskObj.setPosition(maskObj.getX() + offset, maskObj.getY() + offset, maskObj.getZ() + offset);
 //        maskObj.rotate(maskObj.getRotX() + offset, maskObj.getRotY() + offset, maskObj.getRotZ() + offset, 1f);
-        if (Math.abs(maskObj.getX()) > 1) {
-            offset = -offset;
+//        if (Math.abs(maskObj.getX()) > 1) {
+//            offset = -offset;
 //            maskObj.setRotation(0, 0, 0);
 //            maskObj.setPosition(0, 0, 0);
-        }
+//        }
         if (this.rotation != null) {
             maskObj.setRotation(this.rotation);
         }
         if(this.position != null) {
-            maskObj.setPosition(this.position);
+//            maskObj.setPosition(this.position);
         }
 
     }
 
     @Override
     protected void initScene() {
-        DirectionalLight directionalLight = new DirectionalLight(1f, .2f, -1.0f);
-        directionalLight.setColor(1.0f, 1.0f, 1.0f);
-        directionalLight.setPower(2);
-        getCurrentScene().addLight(directionalLight);
-
-        Material material = new Material();
-        material.enableLighting(true);
-        material.setDiffuseMethod(new DiffuseMethod.Lambert());
-        material.setColor(0);
-
-        Texture earthTexture = new Texture("Earth", R.drawable.earthtruecolor_nasa_big);
-        try {
-            material.addTexture(earthTexture);
-
-        } catch (ATexture.TextureException error) {
-            Log.d("DEBUG", "TEXTURE ERROR");
-        }
-
-//        maskObj.setScale(1.2f);
-//        maskObj.setPosition(0, 0, 0);
-
-        Ornament mask = getVMask();
-        LoaderOBJ objParser1 = new LoaderOBJ(mContext.getResources(), mTextureManager, mask.getModelResId());
-        try {
-            objParser1.parse();
-        } catch (ParsingException e) {
-            e.printStackTrace();
-        }
-        maskObj = objParser1.getParsedObject();
-        maskObj.setScale(mask.getScale());
-        maskObj.setPosition(mask.getOffsetX(), mask.getOffsetY(), mask.getOffsetZ());
-        maskObj.setRotation(mask.getRotateX(), mask.getRotateY(), mask.getRotateZ());
-
-        maskObj.setMaterial(material);
-        getCurrentScene().addChild(maskObj);
+//        DirectionalLight directionalLight = new DirectionalLight(1f, .2f, -1.0f);
+//        directionalLight.setColor(1.0f, 1.0f, 1.0f);
+//        directionalLight.setPower(2);
+//        getCurrentScene().addLight(directionalLight);
+//
+//        Material material = new Material();
+//        material.enableLighting(true);
+//        material.setDiffuseMethod(new DiffuseMethod.Lambert());
+//        material.setColor(0);
+//
+//        Texture earthTexture = new Texture("Earth", R.drawable.earthtruecolor_nasa_big);
+//        try {
+//            material.addTexture(earthTexture);
+//
+//        } catch (ATexture.TextureException error) {
+//            Log.d("DEBUG", "TEXTURE ERROR");
+//        }
+//
+//        Ornament mask = getVMask();
+//        LoaderOBJ objParser1 = new LoaderOBJ(mContext.getResources(), mTextureManager, mask.getModelResId());
+//        try {
+//            objParser1.parse();
+//        } catch (ParsingException e) {
+//            e.printStackTrace();
+//        }
+//        maskObj = objParser1.getParsedObject();
+//        maskObj.setScale(mask.getScale());
+//        maskObj.setPosition(mask.getOffsetX(), mask.getOffsetY(), mask.getOffsetZ());
+//        maskObj.setRotation(mask.getRotateX(), mask.getRotateY(), mask.getRotateZ());
+//
+//        maskObj.setMaterial(material);
+//        getCurrentScene().addChild(maskObj);
     }
 
     @Override
@@ -136,13 +133,59 @@ public class MyRenderer extends Renderer {
 
     }
 
+
+    private Ornament getPantherMask() {
+        Ornament ornament = new Ornament();
+        ornament.setModelResId(R.raw.panther_obj);
+        ornament.setImgResId(R.drawable.ic_panther_mask);
+        ornament.setScale(0.12f);
+        ornament.setOffset(0, -0.1f, 0.0f);
+        ornament.setRotate(0, 0, 0);
+        ornament.setColor(2333);
+        return ornament;
+    }
+
+    private Ornament getGlass() {
+        Ornament ornament = new Ornament();
+        ornament.setModelResId(R.raw.glasses_obj);
+        ornament.setImgResId(R.drawable.ic_glasses);
+        ornament.setScale(0.15f);
+        ornament.setOffset(0, 0, 0.2f);
+//        ornament.setRotate(-90.0f, 90.0f, 90.0f);
+        ornament.setRotate(-90, 0, 0);
+        ornament.setColor(Color.BLACK);
+        return ornament;
+    }
+
+    private Ornament getMoustache() {
+        Ornament ornament = new Ornament();
+        ornament.setModelResId(R.raw.moustache_obj);
+        ornament.setImgResId(R.drawable.ic_moustache);
+        ornament.setScale(0.15f);
+        ornament.setOffset(0, -0.25f, 0.2f);
+        ornament.setRotate(-90.0f, 90.0f, 90.0f);
+        ornament.setColor(Color.BLACK);
+        return ornament;
+    }
+
+    private Ornament get3dHead() {
+        Ornament ornament = new Ornament();
+        ornament.setModelResId(R.raw.head_obj);
+        ornament.setImgResId(R.drawable.ic_moustache);
+        ornament.setScale(0.01f);
+        ornament.setOffset(0, 0, 0f);
+        ornament.setRotate(0, 0, 0f);
+        ornament.setColor(Color.BLACK);
+        return ornament;
+    }
+
     private Ornament getVMask() {
         Ornament ornament = new Ornament();
         ornament.setModelResId(R.raw.v_mask_obj);
         ornament.setImgResId(R.drawable.ic_v_mask);
-        ornament.setScale(0.12f);
-//        ornament.setOffset(0, -0.1f, 0.0f);
-        ornament.setRotate(0, 0, 0);
+        ornament.setScale(0.15f);
+        ornament.setOffset(0, 0, 0f);
+        ornament.setRotate(0, 0, 0f);
         ornament.setColor(Color.BLACK);
         return ornament;
     }
