@@ -26,26 +26,26 @@ public class RealTimeRotation {
     public MatOfPoint3f setUpWorldPoints() {
         List<Point3> objPoints = new ArrayList<Point3>();
 
+        objPoints.add(new Point3(36.8301, 78.3185, 52.0345));//nose tip 1879
         objPoints.add(new Point3(46.391205, 121.975700, 36.571663));//v897 -> 44 lm
         objPoints.add(new Point3(26.833687, 121.975700, 36.849419));//v1873 -> 60 lm
-        objPoints.add(new Point3(36.8301, 78.3185, 52.0345));//nose tip 1879
         objPoints.add(new Point3(36.6623, 68.8159, 40.2229));//nose tip -> 46 lm
         objPoints.add(new Point3(49.6196, 71.8481, 38.7055));//nose tip -> 93 lm
         objPoints.add(new Point3(23.6672, 71.8481, 39.074));//nose tip -> 31 lm
         objPoints.add(new Point3(36.599148, 109.525101, 35.774132));//v2224 -> 21 lm
         objPoints.add(new Point3(36.547054, 9.838245, 32.105911));//chin 1398 -> 0 lm
-        objPoints.add(new Point3(-12.574795, 108.580139, 11.793648));//left eye left corner 1853
-        objPoints.add(new Point3(18.656631, 106.811218, 18.971336));//left eye right corner 1698
-        objPoints.add(new Point3(54.057266, 106.811218, 18.468582));//right eye  left corner 837
-        objPoints.add(new Point3(86.058228, 109.108177, 10.279884));//right eye right corner 846
-        objPoints.add(new Point3(14.8498, 51.0115, 30.2378));//left mouth corner 1502
-        objPoints.add(new Point3(58.1825, 51.0115, 29.6224));//right mouth corner 695
-        objPoints.add(new Point3(36.708527, 59.016479, 43.475983));//top mouth corner 1881
-        objPoints.add(new Point3(36.649536, 43.362301, 39.322105));//bottom mouth corner 2225
-        objPoints.add(new Point3(-38.432171, 70.417862, -63.840374));//v1638 -> 7 lm
-        objPoints.add(new Point3(-6.301723, 26.228161, 7.439697));//v1541 -> 57 lm
-        objPoints.add(new Point3(108.668671, 70.417862, -65.929474));//v1321 -> 16 lm
-        objPoints.add(new Point3(78.678078, 26.228161, 6.232826));//v690 -> 100 lm
+        objPoints.add(new Point3(-14.982872, 108.473167, 10.518028));//left eye left corner
+        objPoints.add(new Point3(18.656631, 106.811218, 18.971336));//left eye right corner
+        objPoints.add(new Point3(54.057266, 106.811218, 18.4685822));//right eye left corner
+        objPoints.add(new Point3(87.579941, 109.308273, 8.945969));//right eye right corner
+        objPoints.add(new Point3(11.319393, 53.651268, 33.162163));//left mouth corner
+        objPoints.add(new Point3(61.794533, 53.651268, 32.445320));//right mouth corner
+        objPoints.add(new Point3(-47.058544, 129.762482, -65.171806));// -> 11 lm
+        objPoints.add(new Point3(115.961105, 129.078583, -56.371410));// -> 13 lm
+        objPoints.add(new Point3(-40.034130, 74.127586, -55.912411));// -> 7 lm
+        objPoints.add(new Point3(78.678078, 26.228161, 6.232826));// -> 100 lm
+        objPoints.add(new Point3(-6.301723, 26.228161, 7.439697));// -> 57 lm
+        objPoints.add(new Point3(110.495117, 74.127586, -58.050194));// -> 16 lm
         objPointsMat.fromList(objPoints);
         return objPointsMat;
     }
