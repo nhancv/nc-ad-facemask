@@ -65,7 +65,7 @@ public class MyRenderer extends Renderer {
 
     public void updatePosition(Vector3 position) {
         this.position = position;
-        getCurrentCamera().setPosition(-position.x/250, -position.y/250, 0);
+//        getCurrentCamera().setPosition(-position.x/250, -position.y/250, 0);
     }
 
     @Override
@@ -82,7 +82,7 @@ public class MyRenderer extends Renderer {
             maskObj.setRotation(this.rotation);
         }
         if(this.position != null) {
-//            maskObj.setPosition(this.position);
+            maskObj.setPosition(this.position);
         }
 
     }

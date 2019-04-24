@@ -30,8 +30,8 @@ public class RealTimeRotation {
         objPoints.add(new Point3(46.391205, 121.975700, 36.571663));//v897 -> 44 lm
         objPoints.add(new Point3(26.833687, 121.975700, 36.849419));//v1873 -> 60 lm
         objPoints.add(new Point3(36.6623, 68.8159, 40.2229));//nose tip -> 46 lm
-        objPoints.add(new Point3(49.6196, 71.8481, 38.7055));//nose tip -> 93 lm
-        objPoints.add(new Point3(23.6672, 71.8481, 39.074));//nose tip -> 31 lm
+//        objPoints.add(new Point3(49.6196, 71.8481, 38.7055));//nose tip -> 93 lm
+//        objPoints.add(new Point3(23.6672, 71.8481, 39.074));//nose tip -> 31 lm
         objPoints.add(new Point3(36.599148, 109.525101, 35.774132));//v2224 -> 21 lm
         objPoints.add(new Point3(36.547054, 9.838245, 32.105911));//chin 1398 -> 0 lm
         objPoints.add(new Point3(-14.982872, 108.473167, 10.518028));//left eye left corner
