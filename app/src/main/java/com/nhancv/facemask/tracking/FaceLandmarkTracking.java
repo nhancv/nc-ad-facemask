@@ -64,6 +64,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     private int previewHeight; //240
     private Paint redPaint;
     private StableFps renderFps;
+    private StableFps overlayFps;
     private long lastTime;
 
 
@@ -87,7 +88,8 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
         this.surfacePreview = surfacePreview;
         this.faceLandmarkListener = faceLandmarkListener;
 
-        renderFps = new StableFps(30);
+        renderFps = new StableFps(20);
+        overlayFps = new StableFps(30);
 
         redPaint = new Paint();
         redPaint.setColor(Color.RED);
@@ -174,6 +176,10 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
             renderFps.stop();
         }
 
+        if (overlayFps != null) {
+            overlayFps.stop();
+        }
+
         initTrack106 = false;
         if (multiTrack106 != null) {
             multiTrack106 = null;
@@ -218,6 +224,18 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
                     previewRenderHandler.removeMessages(RENDER_PREVIEW_MSG);
                     previewRenderHandler.sendEmptyMessage(RENDER_PREVIEW_MSG);
                 }
+//                if (uiRenderHandler != null) {
+//                    uiRenderHandler.removeMessages(RENDER_OVERLAP_MSG);
+//                    uiRenderHandler.sendEmptyMessage(RENDER_OVERLAP_MSG);
+//                }
+            });
+        }
+        if (!overlayFps.isStarted()) {
+            overlayFps.start(fps -> {
+//                if (previewRenderHandler != null) {
+//                    previewRenderHandler.removeMessages(RENDER_PREVIEW_MSG);
+//                    previewRenderHandler.sendEmptyMessage(RENDER_PREVIEW_MSG);
+//                }
                 if (uiRenderHandler != null) {
                     uiRenderHandler.removeMessages(RENDER_OVERLAP_MSG);
                     uiRenderHandler.sendEmptyMessage(RENDER_OVERLAP_MSG);

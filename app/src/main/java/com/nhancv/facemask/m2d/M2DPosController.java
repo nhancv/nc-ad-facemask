@@ -19,6 +19,6 @@ public class M2DPosController implements FaceLandmarkListener {
         //1280x720
         //640x480
         landmarkView.setVisionDetRetList(face, previewWidth, previewHeight, scaleMatrix);
-        landmarkView.invalidate();
+//        landmarkView.invalidate();
     }
 }

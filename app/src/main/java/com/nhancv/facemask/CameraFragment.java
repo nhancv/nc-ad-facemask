@@ -88,6 +88,9 @@ public class CameraFragment extends Fragment
 
     private Handler uiHandler;
 
+
+    private HandlerThread handlerThread;
+    private Handler handler;
     /**
      * Global vars
      */
@@ -428,6 +431,12 @@ public class CameraFragment extends Fragment
         imagePreviewHandler = new Handler(imagePreviewThread.getLooper());
 
         uiHandler = new Handler(Looper.getMainLooper());
+
+        handlerThread = new HandlerThread("M2DLM");
+        handlerThread.start();
+        handler = new Handler(handlerThread.getLooper());
+        landmarkView.setHandler(handler);
+
     }
 
     // Stops a background thread and its Handler
@@ -450,6 +459,14 @@ public class CameraFragment extends Fragment
             imagePreviewHandler = null;
 
             uiHandler = null;
+
+            if (handlerThread != null) {
+                handlerThread.quitSafely();
+                handlerThread.join();
+            }
+            handlerThread = null;
+            handler = null;
+
             realTimeRotation.releaseMatrix();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -580,7 +597,8 @@ public class CameraFragment extends Fragment
 
     @Override
     public void landmarkUpdate(final Face face, final int previewWidth, final int previewHeight, final Matrix scaleMatrix) {
-        uiHandler.post(() -> m2DPosController.landmarkUpdate(face, previewWidth, previewHeight, scaleMatrix));
+//        uiHandler.post(() -> m2DPosController.landmarkUpdate(face, previewWidth, previewHeight, scaleMatrix));
+        m2DPosController.landmarkUpdate(face, previewWidth, previewHeight, scaleMatrix);
 //        m3DPosController.landmarkUpdate(face,previewWidth,previewHeight,scaleMatrix);
     }
 

@@ -55,19 +55,23 @@ public class SolvePNP {
     private Mat rotationVector;
     private Mat translationVector;
     private RealTimeRotation realTimeRotation = RealTimeRotation.getInstance();
+    private boolean initialized = false;
 
     public SolvePNP() {
 
     }
 
     public void initialize() {
-        point2Ds = new PointF[106];
-        for (int i = 0; i < 106; i++) {
-            point2Ds[i] = new PointF(0, 0);
+        if (!initialized) {
+            initialized = true;
+            point2Ds = new PointF[106];
+            for (int i = 0; i < 106; i++) {
+                point2Ds[i] = new PointF(0, 0);
+            }
+            setUpDistCoeff();
+            camMatrix = realTimeRotation.getCamMatrix();
+            objPointMat = realTimeRotation.getObjPointsMat();
         }
-        setUpDistCoeff();
-        camMatrix = realTimeRotation.getCamMatrix();
-        objPointMat = realTimeRotation.getObjPointsMat();
     }
 
     public void setUpLandmarks(PointF[] landmarks) {
@@ -78,6 +82,7 @@ public class SolvePNP {
     }
 
     public void releaseMat() {
+        initialized = false;
         if (camMatrix != null) {
             camMatrix.release();
         }
@@ -163,6 +168,11 @@ public class SolvePNP {
         rx = (float) eav.get(0, 0)[0];
         ry = (float) eav.get(1, 0)[0];
         rz = (float) eav.get(2, 0)[0];
+
+        // Limit ry
+        if (ry > 30) ry = 30;
+        else if (ry < -30) ry = -30;
+
         rotM.release();
         projMatrix.release();
 

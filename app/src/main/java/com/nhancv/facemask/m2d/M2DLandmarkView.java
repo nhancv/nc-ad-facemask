@@ -11,11 +11,14 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
 import com.nhancv.facemask.R;
+import com.nhancv.facemask.fps.StableFps;
 import com.nhancv.facemask.m3d.MyRenderer;
 import com.nhancv.facemask.m3d.transformation.Rotation;
 import com.nhancv.facemask.m3d.transformation.Translation;
@@ -55,6 +58,10 @@ public class M2DLandmarkView extends View {
     private Bitmap dog;
     private Matrix bmScaleMatrix;
 
+    private StableFps stableFps;
+    private HandlerThread handlerThread;
+    private Handler handler;
+
     private MyRenderer myRenderer;
 
     private SolvePNP solvePNP = new SolvePNP();
@@ -92,6 +99,21 @@ public class M2DLandmarkView extends View {
         ear = BitmapFactory.decodeResource(this.getResources(), R.drawable.ear);
         dog = BitmapFactory.decodeResource(this.getResources(), R.drawable.dog);
 
+        //start thread
+//        handlerThread = new HandlerThread("M2DLM");
+//        handlerThread.start();
+//        handler = new Handler(handlerThread.getLooper());
+        stableFps = new StableFps(25);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        stableFps.stop();
+        super.onDetachedFromWindow();
+    }
+
+    public void setHandler(Handler handler) {
+        this.handler = handler;
     }
 
     public void setRenderer(MyRenderer renderer) {
@@ -103,8 +125,85 @@ public class M2DLandmarkView extends View {
         this.previewWidth = previewWidth;
         this.previewHeight = previewHeight;
         this.scaleMatrix = scaleMatrix;
-        //init solve pnp variables
-        solvePNP.initialize();
+
+        if (!stableFps.isStarted()) {
+            stableFps.start(fps -> {
+                postInvalidate();
+            });
+        }
+        if (handler != null)
+            handler.post(() -> {
+                //init solve pnp variables
+                solvePNP.initialize();
+
+                if (face != null) {
+                    faceRect.set(previewHeight - face.left, face.top, previewHeight - face.right, face.bottom);
+                    for (int i = 0; i < 106; i++) {
+//                point2Ds[i].set(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
+                        point2Ds[i].set(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
+                        visibleIndexes[i] = 1.0f;
+                    }
+
+                    chinF = point2Ds[0];
+                    if (acceptNoise.isEmpty() || !acceptNoise.contains(chinF.x, chinF.y)) {
+
+                        float anchorX = chinF.x;
+                        float anchorY = chinF.y;
+                        float radius = 0.25f;
+                        acceptNoise.set(anchorX - radius, anchorY - radius, anchorX + radius, anchorY + radius);
+
+                        //Buffer coors
+                        noseF = new PointF(point2Ds[46].x, point2Ds[46].y);
+                        leftEarF = new PointF(point2Ds[29].x, point2Ds[29].y);
+                        rightEarF = new PointF(point2Ds[70].x, point2Ds[70].y);
+
+                        //Solve PNP
+                        solvePNP.setUpLandmarks(point2Ds);
+                        try {
+                            solvePNP.solvePNP();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+
+                        Rotation rotation = new Rotation(solvePNP.getRx(), solvePNP.getRy(), solvePNP.getRz());
+                        Translation translation = new Translation(0, 0, solvePNP.getTz());
+
+                        // TODO: 4/21/19 Comment for 3d testing
+                        float ratio = leftEar.getHeight() * 1.0f / leftEar.getWidth();
+                        float earW = Math.abs(0.5f * faceRect.width());
+                        float earH = earW * ratio;
+
+                        float R = 0.6f * (float) Math.sqrt((noseF.x - leftEarF.x) * (noseF.x - leftEarF.x) + (noseF.y - leftEarF.y) * (noseF.y - leftEarF.y));
+                        float Ox = noseF.x, Oy = noseF.y;
+                        float Ax = leftEarF.x, Ay = leftEarF.y;
+                        ND01ForwardPoint forwardPoint = new ND01ForwardPoint();
+                        forwardPoint.solve(Ox, Oy, Ax, Ay, R);
+
+                        leftTmp = Bitmap.createScaledBitmap(leftEar, (int) (earW), (int) (earH), false);
+                        leftMt = transformMat(leftTmp.getWidth() / 2, leftTmp.getHeight() / 2, forwardPoint.x - earW / 2, forwardPoint.y - earH / 2, rotation, translation);
+
+
+                        Ax = rightEarF.x;
+                        Ay = rightEarF.y;
+                        forwardPoint.solve(Ox, Oy, Ax, Ay, R);
+
+                        float ratio2 = rightEar.getHeight() * 1.0f / rightEar.getWidth();
+                        float earW2 = Math.abs(0.5f * faceRect.width());
+                        float earH2 = earW2 * ratio2;
+                        rightTmp = Bitmap.createScaledBitmap(rightEar, (int) (earW), (int) (earH), false);
+                        rightMt = transformMat(rightTmp.getWidth() / 2, rightTmp.getHeight() / 2, forwardPoint.x - earW2 / 2, forwardPoint.y - earH2 / 2, rotation, translation);
+
+                        float nratio = nose.getHeight() * 1.0f / nose.getWidth();
+                        float nwidth = Math.abs(0.5f * faceRect.width());
+                        float nheight = nwidth * nratio;
+                        noseTmp = Bitmap.createScaledBitmap(nose, (int) (nwidth), (int) (nheight), false);
+                        noseMt = transformMat(noseTmp.getWidth() / 2, noseTmp.getHeight() / 2, noseF.x - noseTmp.getWidth() / 2f, noseF.y - noseTmp.getHeight() / 2f, rotation, translation);
+                    }
+                } else {
+                    leftTmp = rightTmp = noseTmp = null;
+                }
+            });
     }
 
     @Override
@@ -142,60 +241,35 @@ public class M2DLandmarkView extends View {
         requestLayout();
     }
 
-    private float faceRatio = 1;
     private RectF acceptNoise = new RectF();
     private PointF chinF, noseF, leftEarF, rightEarF;
+
+    Bitmap leftTmp = null, rightTmp = null, noseTmp = null;
+    Matrix leftMt = new Matrix();
+    Matrix rightMt = new Matrix();
+    Matrix noseMt = new Matrix();
+
 
     @Override
     protected void onDraw(Canvas canvas) {
         canvas.setMatrix(scaleMatrix);
-        if (face != null) {
-            faceRect.set(previewHeight - face.left, face.top, previewHeight - face.right, face.bottom);
-            for (int i = 0; i < 106; i++) {
-//                point2Ds[i].set(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
-                point2Ds[i].set(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
-                visibleIndexes[i] = 1.0f;
-            }
 
-            chinF = point2Ds[0];
-            if (acceptNoise.isEmpty() || !acceptNoise.contains(chinF.x, chinF.y)) {
-
-                float anchorX = chinF.x;
-                float anchorY = chinF.y;
-                float radius = 1.5f;
-                acceptNoise.set(anchorX - radius, anchorY - radius, anchorX + radius, anchorY + radius);
-
-                //Buffer coors
-                noseF = point2Ds[46];
-                leftEarF = point2Ds[29];
-                rightEarF = point2Ds[70];
-
-                //Solve PNP
-                solvePNP.setUpLandmarks(point2Ds);
-                try {
-                    solvePNP.solvePNP();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-            }
-
-            // Draw landmarks
+        // Draw landmarks
 //            for (int i = 0; i < 106; i++) {
 //                point2Ds[i].x = previewHeight - face.landmarks[i * 2];
 //            }
 //            STUtils.drawFaceRect(canvas, faceRect, previewHeight, previewWidth, true);
 //            STUtils.drawPoints(canvas, faceLandmarkPaint, point2Ds, visibleIndexes, previewHeight, previewWidth, true);
 
-            // Draw 2dMask
-            float scaleW = Math.abs(faceRect.width() / MASK_SIZE_STANDARD_W);
-            float scaleH = Math.abs(faceRect.height() / MASK_SIZE_STANDARD_H);
+        // Draw 2dMask
+//            float scaleW = Math.abs(faceRect.width() / MASK_SIZE_STANDARD_W);
+//            float scaleH = Math.abs(faceRect.height() / MASK_SIZE_STANDARD_H);
 
 //            float[] angle = transfomationRenderProcess();
-            Rotation rotation = new Rotation(solvePNP.getRx(), solvePNP.getRy(), solvePNP.getRz());
-            Translation translation = new Translation(0, 0, solvePNP.getTz());
+//            Rotation rotation = new Rotation(solvePNP.getRx(), solvePNP.getRy(), solvePNP.getRz());
+//            Translation translation = new Translation(0, 0, solvePNP.getTz());
 
-            if (myRenderer != null) {
+        if (myRenderer != null) {
 //                myRenderer.updateRotation(new Vector3(-solvePNP.getRx(), -solvePNP.getRy(), -solvePNP.getRz()));
 //                myRenderer.updatePosition(new Vector3(solvePNP.getTx(), solvePNP.getTy(), solvePNP.getTz()));
 
@@ -211,56 +285,13 @@ public class M2DLandmarkView extends View {
 //                PointF posF = point2Ds[46];
 //                myRenderer.updatePosition(new Vector3((2 * posF.x - previewHeight) / previewHeight,
 //                        (fullScreenAspectRatio - 2 * posF.y) / fullScreenAspectRatio, -0.5));
-            }
-
-
-            // TODO: 4/21/19 Comment for 3d testing
-            Matrix transformationMatrix = new Matrix();
-
-            float R = 50;
-            float Ox = noseF.x, Oy = noseF.y;
-            float Ax = leftEarF.x, Ay = leftEarF.y;
-            ND01ForwardPoint forwardPoint = new ND01ForwardPoint();
-            forwardPoint.solve(Ox, Oy, Ax, Ay, R);
-
-            //leftEarF.x - 130 * scaleW, leftEarF.y - 130 * scaleH,
-            float ratio = leftEar.getHeight() * 1.0f / leftEar.getWidth();
-            float earW = Math.abs(0.5f * faceRect.width());
-            float earH = earW * ratio;
-            Bitmap leftTmp = Bitmap.createScaledBitmap(leftEar, (int) (earW), (int) (earH), false);
-            transformationMatrix = transformMat(leftTmp.getWidth() / 2, leftTmp.getHeight() / 2, forwardPoint.x - earW / 2, forwardPoint.y - earH / 2, rotation, translation);
-            canvas.drawBitmap(leftTmp, transformationMatrix, null);
-
-
-            Ax = rightEarF.x;
-            Ay = rightEarF.y;
-            forwardPoint.solve(Ox, Oy, Ax, Ay, R);
-
-            float ratio2 = rightEar.getHeight() * 1.0f / rightEar.getWidth();
-            float earW2 = Math.abs(0.5f * faceRect.width());
-            float earH2 = earW2 * ratio2;
-            Bitmap rightTmp = Bitmap.createScaledBitmap(rightEar, (int) (earW), (int) (earH), false);
-            transformationMatrix = transformMat(rightTmp.getWidth() / 2, rightTmp.getHeight() / 2, forwardPoint.x - earW2 / 2, forwardPoint.y - earH2 / 2, rotation, translation);
-            canvas.drawBitmap(rightTmp, transformationMatrix, null);
-
-//            PointF noseF = point2Ds[46];
-            float nratio = nose.getHeight() * 1.0f / nose.getWidth();
-            float nwidth = 2 * (point2Ds[93].x - point2Ds[31].x);
-            float nheight = nwidth * nratio;
-            Bitmap noseTmp = Bitmap.createScaledBitmap(nose, (int) (nwidth), (int) (nheight), false);
-            transformationMatrix = transformMat(noseTmp.getWidth() / 2, noseTmp.getHeight() / 2, noseF.x - noseTmp.getWidth() / 2f, noseF.y - noseTmp.getHeight() / 2f, rotation, translation);
-            canvas.drawBitmap(noseTmp, transformationMatrix, null);
-
-//            if(faceRatio == 1 || Math.abs(solvePNP.getRy()) < 85) {
-            faceRatio = 2 * (point2Ds[16].x - point2Ds[7].x);
-//            }
-            nratio = dog.getHeight() * 1.0f / dog.getWidth();
-            nwidth = faceRatio;
-            nheight = nwidth * nratio;
-            Bitmap dogTmp = Bitmap.createScaledBitmap(dog, (int) (nwidth), (int) (nheight), false);
-            transformationMatrix = transformMat(dogTmp.getWidth() / 2, dogTmp.getHeight() / 2, noseF.x - dogTmp.getWidth() / 2f, noseF.y - dogTmp.getHeight() / 2f, rotation, translation);
-//            canvas.drawBitmap(dogTmp, transformationMatrix, null);
         }
+
+
+        if (leftTmp != null) canvas.drawBitmap(leftTmp, leftMt, null);
+        if (rightTmp != null) canvas.drawBitmap(rightTmp, rightMt, null);
+        if (noseTmp != null) canvas.drawBitmap(noseTmp, noseMt, null);
+
     }
 
 

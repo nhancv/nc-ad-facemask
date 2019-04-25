@@ -29,7 +29,7 @@
         android:id="@+id/fragment_camera_gl_3dsurfaceview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="invisible"
+        android:visibility="gone"
         />
 
     <org.rajawali3d.view.SurfaceView
@@ -38,5 +38,6 @@
         android:layout_height="match_parent"
         surfaceview:frameRate="30.0"
         surfaceview:renderMode="RENDER_WHEN_DIRTY"
+        android:visibility="gone"
         />
 </RelativeLayout>
