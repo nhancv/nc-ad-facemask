@@ -32,15 +32,14 @@ package com.nhancv.facemask.util;
  * + Length AB^2 = 1.25
  * + B placed on OA line.
  * + By >= Ay
- *
+ * <p>
  * Usage:
- float R = (float) Math.sqrt(1.25);
- float Ox = 0, Oy = 0;
- float Ax = 1, Ay = 2;
- ND01ForwardPoint forwardPoint = new ND01ForwardPoint();
- forwardPoint.solve(Ox, Oy, Ax, Ay, R);
- System.out.println(String.format("x = %f, y = %f", forwardPoint.x, forwardPoint.y));
-
+ * float R = (float) Math.sqrt(1.25);
+ * float Ox = 0, Oy = 0;
+ * float Ax = 1, Ay = 2;
+ * ND01ForwardPoint forwardPoint = new ND01ForwardPoint();
+ * forwardPoint.solve(Ox, Oy, Ax, Ay, R);
+ * System.out.println(String.format("x = %f, y = %f", forwardPoint.x, forwardPoint.y));
  */
 
 public class ND01ForwardPoint {
@@ -56,14 +55,18 @@ public class ND01ForwardPoint {
     }
 
     public void solve(float Ox, float Oy, float Ax, float Ay, float AB) {
-        //Line equation: y = ax + b
+        // Line equation: y = ax + b
         float a = (Oy - Ay) / (Ox - Ax);
         float b = Ay - a * Ax;
+
+        // Circle equation with center A(x, y) and radius R: R^2 = (x-Ax)^2 + (y-Ay)^2
+        // Combine Line with Circle equation to get new function:
+        // x^2*(a^2+1) + x*2*(a*(b-Ay)-Ax) - R^2 + Ax^2 + (b-Ay)^2 = 0
 
         float R = AB;
         float A = a * a + 1;
         float B = 2 * (a * (b - Ay) - Ax);
-        float C = -R * R + Ax * Ax + (b - Ay) * (b - Ay);
+        float C = -(R * R) + Ax * Ax + (b - Ay) * (b - Ay);
 
         Float[] res = quadraticEquation(A, B, C);
         if (res != null && res.length > 0) {
@@ -85,7 +88,7 @@ public class ND01ForwardPoint {
      * @param c: Coefficient level 0
      */
     public static Float[] quadraticEquation(float a, float b, float c) {
-        // Coefficient checkin
+        // Coefficient checking
         if (a == 0) {
             if (b == 0) {
                 return null;
