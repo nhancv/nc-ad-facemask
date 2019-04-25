@@ -83,21 +83,21 @@ public class SolvePNP {
 
     public void releaseMat() {
         initialized = false;
-        if (camMatrix != null) {
-            camMatrix.release();
-        }
-        if (rotationVector != null) {
-            rotationVector.release();
-        }
-        if (translationVector != null) {
-            translationVector.release();
-        }
-        if (objPointMat != null) {
-            objPointMat.release();
-        }
-        if (distCoeffs != null) {
-            distCoeffs.release();
-        }
+//        if (camMatrix != null) {
+//            camMatrix.release();
+//        }
+//        if (objPointMat != null) {
+//            objPointMat.release();
+//        }
+//        if (rotationVector != null) {
+//            rotationVector.release();
+//        }
+//        if (translationVector != null) {
+//            translationVector.release();
+//        }
+//        if (distCoeffs != null) {
+//            distCoeffs.release();
+//        }
     }
 
     private void setUpDistCoeff() {

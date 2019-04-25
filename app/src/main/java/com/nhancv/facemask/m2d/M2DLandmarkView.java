@@ -106,9 +106,18 @@ public class M2DLandmarkView extends View {
         stableFps = new StableFps(25);
     }
 
+    public void onResume() {
+        solvePNP.initialize();
+    }
+
+    public void onPause() {
+        solvePNP.releaseMat();
+    }
+
     @Override
     protected void onDetachedFromWindow() {
         stableFps.stop();
+        solvePNP.releaseMat();
         super.onDetachedFromWindow();
     }
 
@@ -149,7 +158,7 @@ public class M2DLandmarkView extends View {
 
                         float anchorX = chinF.x;
                         float anchorY = chinF.y;
-                        float radius = 0.25f;
+                        float radius = 1.25f;
                         acceptNoise.set(anchorX - radius, anchorY - radius, anchorX + radius, anchorY + radius);
 
                         //Buffer coors
