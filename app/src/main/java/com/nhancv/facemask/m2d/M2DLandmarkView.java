@@ -14,11 +14,11 @@ import android.graphics.RectF;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 import com.nhancv.facemask.R;
 import com.nhancv.facemask.fps.StableFps;
+import com.nhancv.facemask.m2d.mask.CatMask;
 import com.nhancv.facemask.pose.Rotation;
 import com.nhancv.facemask.pose.Translation;
 import com.nhancv.facemask.util.ND01ForwardPoint;
@@ -49,13 +49,22 @@ public class M2DLandmarkView extends View {
 
     private Bitmap nose;
     private Bitmap ear;
-    private Matrix bmScaleMatrix;
+
+
+    private RectF acceptNoise = new RectF();
+    private PointF chinF, noseF, earF;
+
+    private Bitmap earTmp = null, noseTmp = null;
+    private Matrix earMt = new Matrix();
+    private Matrix noseMt = new Matrix();
 
     private StableFps stableFps;
     private HandlerThread handlerThread;
     private Handler handler;
 
     private SolvePNP solvePNP = new SolvePNP();
+
+    private CatMask catMask = new CatMask();
 
     public M2DLandmarkView(Context context) {
         this(context, null, 0, 0);
@@ -83,7 +92,6 @@ public class M2DLandmarkView extends View {
         for (int i = 0; i < 106; i++) {
             point2Ds[i] = new PointF(0, 0);
         }
-        bmScaleMatrix = new Matrix();
         nose = BitmapFactory.decodeResource(this.getResources(), R.drawable.cat_nose);
         ear = BitmapFactory.decodeResource(this.getResources(), R.drawable.cat_ear);
 
@@ -92,13 +100,15 @@ public class M2DLandmarkView extends View {
 //        handlerThread.start();
 //        handler = new Handler(handlerThread.getLooper());
         stableFps = new StableFps(25);
+
+        catMask.init(getContext());
     }
 
-    public void onResume() {
+    public void initPNP() {
         solvePNP.initialize();
     }
 
-    public void onPause() {
+    public void releasePNP() {
         solvePNP.releaseMat();
     }
 
@@ -106,6 +116,7 @@ public class M2DLandmarkView extends View {
     protected void onDetachedFromWindow() {
         stableFps.stop();
         solvePNP.releaseMat();
+        catMask.release();
         super.onDetachedFromWindow();
     }
 
@@ -130,6 +141,7 @@ public class M2DLandmarkView extends View {
                 solvePNP.initialize();
 
                 if (face != null) {
+
                     faceRect.set(previewHeight - face.left, face.top, previewHeight - face.right, face.bottom);
                     for (int i = 0; i < 106; i++) {
                         point2Ds[i].set(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
@@ -154,7 +166,7 @@ public class M2DLandmarkView extends View {
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
-
+                        catMask.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
 
                         Rotation rotation = new Rotation(solvePNP.getRx(), solvePNP.getRy(), solvePNP.getRz());
                         Translation translation = new Translation(0, 0, solvePNP.getTz());
@@ -171,7 +183,7 @@ public class M2DLandmarkView extends View {
                         forwardPoint.solve(Ox, Oy, Ax, Ay, R);
 
                         earTmp = Bitmap.createScaledBitmap(ear, (int) (earW), (int) (earH), false);
-                        if(forwardPoint.isValid()) {
+                        if (forwardPoint.isValid()) {
                             earMt = transformMat(earTmp.getWidth() / 2f, earTmp.getHeight() / 2f, forwardPoint.x - earW / 2, forwardPoint.y - earH / 2, rotation, translation);
                         }
 
@@ -222,13 +234,6 @@ public class M2DLandmarkView extends View {
         requestLayout();
     }
 
-    private RectF acceptNoise = new RectF();
-    private PointF chinF, noseF, earF;
-
-    Bitmap earTmp = null, noseTmp = null;
-    Matrix earMt = new Matrix();
-    Matrix noseMt = new Matrix();
-
 
     @Override
     protected void onDraw(Canvas canvas) {
@@ -249,9 +254,9 @@ public class M2DLandmarkView extends View {
 //            Rotation rotation = new Rotation(solvePNP.getRx(), solvePNP.getRy(), solvePNP.getRz());
 //            Translation translation = new Translation(0, 0, solvePNP.getTz());
 
-
-        if (earTmp != null) canvas.drawBitmap(earTmp, earMt, null);
-        if (noseTmp != null) canvas.drawBitmap(noseTmp, noseMt, null);
+        catMask.draw(canvas);
+//        if (earTmp != null) canvas.drawBitmap(earTmp, earMt, null);
+//        if (noseTmp != null) canvas.drawBitmap(noseTmp, noseMt, null);
 
     }
 
@@ -274,63 +279,6 @@ public class M2DLandmarkView extends View {
         transMat.postTranslate(centerX, centerY);
         transMat.postTranslate(x, y);
         return transMat;
-    }
-
-    private float[] transfomationRenderProcess() {
-        float rotation[] = new float[3];
-        float limit = 30f;
-        //calculate Z degree
-        for (int i = 0; i < 106; i++) {
-            point2Ds[i].set(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
-        }
-        PointF leftEye = point2Ds[94];
-        PointF rightEye = point2Ds[20];
-        float hypo = leftEye.y - rightEye.y;
-        float side = Math.abs(rightEye.x - leftEye.x);
-        //convert radians to degree
-        float angle = (float) Math.toDegrees(Math.tan(hypo / side));
-        Log.d(TAG, "angleZ: " + angle);
-        if (angle > limit) {
-            angle = limit;
-        } else if (angle < -limit) {
-            angle = -limit;
-        }
-        //Xdegree
-        rotation[0] = 0;
-        //Zdegree
-        rotation[2] = angle;
-
-        //calculat Y degree
-
-        PointF mouth = point2Ds[32];
-        float side1 = Math.abs(mouth.x - leftEye.x);
-        float side2 = Math.abs(mouth.x - rightEye.x);
-        float sideC = mouth.y - point2Ds[21].y;
-        //convert radians to degree
-        float angle1 = (float) Math.toDegrees(Math.tan(side1 / sideC));
-        float angle2 = (float) Math.toDegrees(Math.tan(side2 / sideC));
-        angle = angle1 - angle2;
-        Log.d(TAG, "angleY: " + angle);
-
-        if (angle > limit) {
-            angle = limit;
-        } else if (angle < -limit) {
-            angle = -limit;
-        }
-        rotation[1] = angle;
-        return rotation;
-    }
-
-    private float view2openglX(int x, int width) {
-        float centerX = width / 2.0f;
-        float t = x - centerX;
-        return t / centerX;
-    }
-
-    private float view2openglY(int y, int height) {
-        float centerY = height / 2.0f;
-        float s = centerY - y;
-        return s / centerY;
     }
 
 }

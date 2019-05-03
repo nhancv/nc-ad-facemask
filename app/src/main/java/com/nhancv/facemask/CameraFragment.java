@@ -226,7 +226,7 @@ public class CameraFragment extends Fragment
     public void onPause() {
         if (permissionReady) {
             release();
-            landmarkView.onPause();
+            landmarkView.releasePNP();
         }
         super.onPause();
     }
@@ -510,7 +510,7 @@ public class CameraFragment extends Fragment
         realTimeRotation = RealTimeRotation.getInstance();
         realTimeRotation.setUpWorldPoints();
         realTimeRotation.setUpCamMatrix(new Point((int) (READER_WIDTH / 2f), (int) (READER_HEIGHT / 2f)));
-        landmarkView.onResume();
+        landmarkView.initPNP();
         onGetPreviewListener.initialize(getContext(), transformMatrix, overlapFaceView, surfacePreview, this);
     }
 
