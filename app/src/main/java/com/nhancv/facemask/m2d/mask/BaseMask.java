@@ -38,7 +38,7 @@ import com.nhancv.facemask.util.SolvePNP;
 
 import zeusees.tracking.Face;
 
-public abstract class BaseMask implements Mask{
+public abstract class BaseMask implements Mask {
 
     protected Rect faceRect;
     protected PointF[] point2Ds;

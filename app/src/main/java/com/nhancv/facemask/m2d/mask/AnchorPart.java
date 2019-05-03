@@ -26,20 +26,18 @@
 
 package com.nhancv.facemask.m2d.mask;
 
-import com.nhancv.facemask.R;
+public class AnchorPart {
+    public int bmResId;
+    public float scale;
+    public int anchorPointId;
 
-public class DogMask extends TwoPointMask {
-
-    private AnchorPart anchorPart = new AnchorPart(R.drawable.dog_nose);
-    private NearPart nearPart = new NearPart(R.drawable.dog_ear);
-
-    @Override
-    protected AnchorPart anchorPart() {
-        return anchorPart;
+    public AnchorPart(int bmResId) {
+        this(bmResId, 1f, 46);
     }
 
-    @Override
-    protected NearPart nearPart() {
-        return nearPart;
+    public AnchorPart(int bmResId, float scale, int anchorPointId) {
+        this.bmResId = bmResId;
+        this.scale = scale;
+        this.anchorPointId = anchorPointId;
     }
 }

@@ -28,18 +28,13 @@ package com.nhancv.facemask.m2d.mask;
 
 import com.nhancv.facemask.R;
 
-public class DogMask extends TwoPointMask {
+public class NerdMask extends FixedPointMask {
 
-    private AnchorPart anchorPart = new AnchorPart(R.drawable.dog_nose);
-    private NearPart nearPart = new NearPart(R.drawable.dog_ear);
+    private AnchorPart anchorPart = new AnchorPart(R.drawable.nerd_eye, 1f, 23);
 
     @Override
     protected AnchorPart anchorPart() {
         return anchorPart;
     }
 
-    @Override
-    protected NearPart nearPart() {
-        return nearPart;
-    }
 }
