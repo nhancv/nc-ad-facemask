@@ -44,7 +44,7 @@ package com.nhancv.facemask.util;
 
 public class ND01ForwardPoint {
 
-    public float x, y;
+    public float x = Integer.MIN_VALUE, y = Integer.MIN_VALUE;
 
     public ND01ForwardPoint() {
     }
@@ -78,6 +78,14 @@ public class ND01ForwardPoint {
                 y = a * x + b;
             }
         }
+    }
+
+    public void reset() {
+        x = y = Integer.MIN_VALUE;
+    }
+
+    public boolean isValid() {
+        return x != Integer.MIN_VALUE && y != Integer.MIN_VALUE;
     }
 
     /**

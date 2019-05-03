@@ -25,13 +25,6 @@
         android:visibility="visible"
         />
 
-    <com.nhancv.facemask.m3d.M3DSurfaceView
-        android:id="@+id/fragment_camera_gl_3dsurfaceview"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"
-        />
-
     <org.rajawali3d.view.SurfaceView
         android:id="@+id/rajwali_surface"
         android:layout_width="match_parent"

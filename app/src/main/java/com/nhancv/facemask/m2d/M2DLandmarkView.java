@@ -93,9 +93,9 @@ public class M2DLandmarkView extends View {
             point2Ds[i] = new PointF(0, 0);
         }
         bmScaleMatrix = new Matrix();
-        leftEar = BitmapFactory.decodeResource(this.getResources(), R.drawable.leftear);
-        rightEar = BitmapFactory.decodeResource(this.getResources(), R.drawable.rightear);
-        nose = BitmapFactory.decodeResource(this.getResources(), R.drawable.dog_nose);
+        leftEar = BitmapFactory.decodeResource(this.getResources(), R.drawable.left_ear);
+        rightEar = BitmapFactory.decodeResource(this.getResources(), R.drawable.right_ear);
+        nose = BitmapFactory.decodeResource(this.getResources(), R.drawable.nose);
         ear = BitmapFactory.decodeResource(this.getResources(), R.drawable.ear);
         dog = BitmapFactory.decodeResource(this.getResources(), R.drawable.dog);
 
@@ -148,14 +148,12 @@ public class M2DLandmarkView extends View {
                 if (face != null) {
                     faceRect.set(previewHeight - face.left, face.top, previewHeight - face.right, face.bottom);
                     for (int i = 0; i < 106; i++) {
-//                point2Ds[i].set(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
                         point2Ds[i].set(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
                         visibleIndexes[i] = 1.0f;
                     }
 
                     chinF = point2Ds[0];
                     if (acceptNoise.isEmpty() || !acceptNoise.contains(chinF.x, chinF.y)) {
-
                         float anchorX = chinF.x;
                         float anchorY = chinF.y;
                         float radius = 1.25f;
@@ -163,8 +161,7 @@ public class M2DLandmarkView extends View {
 
                         //Buffer coors
                         noseF = new PointF(point2Ds[46].x, point2Ds[46].y);
-                        leftEarF = new PointF(point2Ds[29].x, point2Ds[29].y);
-                        rightEarF = new PointF(point2Ds[70].x, point2Ds[70].y);
+                        earF = new PointF(point2Ds[21].x, point2Ds[21].y);
 
                         //Solve PNP
                         solvePNP.setUpLandmarks(point2Ds);
@@ -179,38 +176,29 @@ public class M2DLandmarkView extends View {
                         Translation translation = new Translation(0, 0, solvePNP.getTz());
 
                         // TODO: 4/21/19 Comment for 3d testing
-                        float ratio = leftEar.getHeight() * 1.0f / leftEar.getWidth();
-                        float earW = Math.abs(0.5f * faceRect.width());
+                        float ratio = ear.getHeight() * 1.0f / ear.getWidth();
+                        float earW = Math.abs(1.2f * faceRect.width());
                         float earH = earW * ratio;
 
-                        float R = 0.6f * (float) Math.sqrt((noseF.x - leftEarF.x) * (noseF.x - leftEarF.x) + (noseF.y - leftEarF.y) * (noseF.y - leftEarF.y));
+                        float R = 1.5f * (float) Math.sqrt((noseF.x - earF.x) * (noseF.x - earF.x) + (noseF.y - earF.y) * (noseF.y - earF.y));
                         float Ox = noseF.x, Oy = noseF.y;
-                        float Ax = leftEarF.x, Ay = leftEarF.y;
+                        float Ax = earF.x, Ay = earF.y;
                         ND01ForwardPoint forwardPoint = new ND01ForwardPoint();
                         forwardPoint.solve(Ox, Oy, Ax, Ay, R);
 
-                        leftTmp = Bitmap.createScaledBitmap(leftEar, (int) (earW), (int) (earH), false);
-                        leftMt = transformMat(leftTmp.getWidth() / 2, leftTmp.getHeight() / 2, forwardPoint.x - earW / 2, forwardPoint.y - earH / 2, rotation, translation);
-
-
-                        Ax = rightEarF.x;
-                        Ay = rightEarF.y;
-                        forwardPoint.solve(Ox, Oy, Ax, Ay, R);
-
-                        float ratio2 = rightEar.getHeight() * 1.0f / rightEar.getWidth();
-                        float earW2 = Math.abs(0.5f * faceRect.width());
-                        float earH2 = earW2 * ratio2;
-                        rightTmp = Bitmap.createScaledBitmap(rightEar, (int) (earW), (int) (earH), false);
-                        rightMt = transformMat(rightTmp.getWidth() / 2, rightTmp.getHeight() / 2, forwardPoint.x - earW2 / 2, forwardPoint.y - earH2 / 2, rotation, translation);
+                        earTmp = Bitmap.createScaledBitmap(ear, (int) (earW), (int) (earH), false);
+                        if(forwardPoint.isValid()) {
+                            earMt = transformMat(earTmp.getWidth() / 2f, earTmp.getHeight() / 2f, forwardPoint.x - earW / 2, forwardPoint.y - earH / 2, rotation, translation);
+                        }
 
                         float nratio = nose.getHeight() * 1.0f / nose.getWidth();
-                        float nwidth = Math.abs(0.5f * faceRect.width());
+                        float nwidth = Math.abs(1f * faceRect.width());
                         float nheight = nwidth * nratio;
                         noseTmp = Bitmap.createScaledBitmap(nose, (int) (nwidth), (int) (nheight), false);
-                        noseMt = transformMat(noseTmp.getWidth() / 2, noseTmp.getHeight() / 2, noseF.x - noseTmp.getWidth() / 2f, noseF.y - noseTmp.getHeight() / 2f, rotation, translation);
+                        noseMt = transformMat(noseTmp.getWidth() / 2f, noseTmp.getHeight() / 2f, noseF.x - noseTmp.getWidth() / 2f, noseF.y - noseTmp.getHeight() / 2f, rotation, translation);
                     }
                 } else {
-                    leftTmp = rightTmp = noseTmp = null;
+                    earTmp = noseTmp = null;
                 }
             });
     }
@@ -251,11 +239,10 @@ public class M2DLandmarkView extends View {
     }
 
     private RectF acceptNoise = new RectF();
-    private PointF chinF, noseF, leftEarF, rightEarF;
+    private PointF chinF, noseF, earF;
 
-    Bitmap leftTmp = null, rightTmp = null, noseTmp = null;
-    Matrix leftMt = new Matrix();
-    Matrix rightMt = new Matrix();
+    Bitmap earTmp = null, noseTmp = null;
+    Matrix earMt = new Matrix();
     Matrix noseMt = new Matrix();
 
 
@@ -297,8 +284,7 @@ public class M2DLandmarkView extends View {
         }
 
 
-        if (leftTmp != null) canvas.drawBitmap(leftTmp, leftMt, null);
-        if (rightTmp != null) canvas.drawBitmap(rightTmp, rightMt, null);
+        if (earTmp != null) canvas.drawBitmap(earTmp, earMt, null);
         if (noseTmp != null) canvas.drawBitmap(noseTmp, noseMt, null);
 
     }
