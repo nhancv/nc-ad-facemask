@@ -5,8 +5,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -28,6 +26,8 @@ public class M2DLandmarkView extends View {
     private float offsetY = 0;
     private Paint faceLandmarkPaint;
 
+    private int previewWidth;
+    private int previewHeight;
     private int currentWidth;
     private int currentHeight;
     private Matrix scaleMatrix;
@@ -84,6 +84,8 @@ public class M2DLandmarkView extends View {
     }
 
     public void setVisionDetRetList(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
+        this.previewWidth = previewWidth;
+        this.previewHeight = previewHeight;
         this.scaleMatrix = scaleMatrix;
         solvePNP.initialize();
 //        catMask.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
@@ -136,5 +138,15 @@ public class M2DLandmarkView extends View {
         dogMask.draw(canvas);
 
     }
+
+
+    private float getX(float x) {
+        return x / previewWidth * ratioWidth + offsetX;
+    }
+
+    private float getY(float y) {
+        return y / previewHeight * ratioHeight + offsetY;
+    }
+
 
 }
