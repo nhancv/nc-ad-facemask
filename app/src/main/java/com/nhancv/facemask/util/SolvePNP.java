@@ -28,7 +28,7 @@ package com.nhancv.facemask.util;
 
 import android.graphics.PointF;
 
-import com.nhancv.facemask.m3d.transformation.RealTimeRotation;
+import com.nhancv.facemask.pose.RealTimeRotation;
 
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;

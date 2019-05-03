@@ -25,12 +25,4 @@
         android:visibility="visible"
         />
 
-    <org.rajawali3d.view.SurfaceView
-        android:id="@+id/rajwali_surface"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        surfaceview:frameRate="30.0"
-        surfaceview:renderMode="RENDER_WHEN_DIRTY"
-        android:visibility="gone"
-        />
 </RelativeLayout>

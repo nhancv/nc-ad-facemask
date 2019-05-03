@@ -42,8 +42,7 @@ import android.widget.Toast;
 
 import com.nhancv.facemask.m2d.M2DLandmarkView;
 import com.nhancv.facemask.m2d.M2DPosController;
-import com.nhancv.facemask.m3d.MyRenderer;
-import com.nhancv.facemask.m3d.transformation.RealTimeRotation;
+import com.nhancv.facemask.pose.RealTimeRotation;
 import com.nhancv.facemask.tracking.FaceLandmarkListener;
 import com.nhancv.facemask.tracking.FaceLandmarkTracking;
 
@@ -126,8 +125,6 @@ public class CameraFragment extends Fragment
      */
     private SurfaceView surfacePreview;
     private SurfaceView overlapFaceView;
-    private org.rajawali3d.view.SurfaceView rajwaliSurface;
-    private MyRenderer myRenderer;
     private M2DLandmarkView landmarkView;
     private boolean permissionReady;
     private RealTimeRotation realTimeRotation;
@@ -183,12 +180,6 @@ public class CameraFragment extends Fragment
 
         landmarkView = view.findViewById(R.id.fragment_camera_2dlandmarkview);
 
-        rajwaliSurface = view.findViewById(R.id.rajwali_surface);
-        myRenderer = new MyRenderer(getActivity());
-        rajwaliSurface.setTransparent(true);
-        rajwaliSurface.setSurfaceRenderer(myRenderer);
-        landmarkView.setRenderer(myRenderer);
-
         surfacePreview = view.findViewById(R.id.surfacePreview);
         surfacePreview.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
@@ -226,7 +217,6 @@ public class CameraFragment extends Fragment
     }
 
     public void init() {
-        myRenderer.onResume();
         if (!permissionReady) permissionReady = true;
         startBackgroundThread();
         openCamera(SURFACE_WIDTH, SURFACE_HEIGHT);
@@ -242,7 +232,6 @@ public class CameraFragment extends Fragment
     }
 
     private void release() {
-        myRenderer.onPause();
         closeCamera();
         stopBackgroundThread();
     }

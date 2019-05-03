@@ -19,9 +19,8 @@ import android.view.View;
 
 import com.nhancv.facemask.R;
 import com.nhancv.facemask.fps.StableFps;
-import com.nhancv.facemask.m3d.MyRenderer;
-import com.nhancv.facemask.m3d.transformation.Rotation;
-import com.nhancv.facemask.m3d.transformation.Translation;
+import com.nhancv.facemask.pose.Rotation;
+import com.nhancv.facemask.pose.Translation;
 import com.nhancv.facemask.util.ND01ForwardPoint;
 import com.nhancv.facemask.util.SolvePNP;
 
@@ -31,9 +30,6 @@ import zeusees.tracking.Face;
 public class M2DLandmarkView extends View {
 
     private static final String TAG = M2DLandmarkView.class.getSimpleName();
-
-    private static final float MASK_SIZE_STANDARD_W = 300f;
-    private static final float MASK_SIZE_STANDARD_H = 305f;
 
     private int ratioWidth = 0;
     private int ratioHeight = 0;
@@ -51,18 +47,13 @@ public class M2DLandmarkView extends View {
     private int currentHeight;
     private Matrix scaleMatrix;
 
-    private Bitmap leftEar;
-    private Bitmap rightEar;
     private Bitmap nose;
     private Bitmap ear;
-    private Bitmap dog;
     private Matrix bmScaleMatrix;
 
     private StableFps stableFps;
     private HandlerThread handlerThread;
     private Handler handler;
-
-    private MyRenderer myRenderer;
 
     private SolvePNP solvePNP = new SolvePNP();
 
@@ -93,11 +84,8 @@ public class M2DLandmarkView extends View {
             point2Ds[i] = new PointF(0, 0);
         }
         bmScaleMatrix = new Matrix();
-        leftEar = BitmapFactory.decodeResource(this.getResources(), R.drawable.left_ear);
-        rightEar = BitmapFactory.decodeResource(this.getResources(), R.drawable.right_ear);
-        nose = BitmapFactory.decodeResource(this.getResources(), R.drawable.nose);
-        ear = BitmapFactory.decodeResource(this.getResources(), R.drawable.ear);
-        dog = BitmapFactory.decodeResource(this.getResources(), R.drawable.dog);
+        nose = BitmapFactory.decodeResource(this.getResources(), R.drawable.cat_nose);
+        ear = BitmapFactory.decodeResource(this.getResources(), R.drawable.cat_ear);
 
         //start thread
 //        handlerThread = new HandlerThread("M2DLM");
@@ -123,10 +111,6 @@ public class M2DLandmarkView extends View {
 
     public void setHandler(Handler handler) {
         this.handler = handler;
-    }
-
-    public void setRenderer(MyRenderer renderer) {
-        this.myRenderer = renderer;
     }
 
     public void setVisionDetRetList(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
@@ -265,24 +249,6 @@ public class M2DLandmarkView extends View {
 //            Rotation rotation = new Rotation(solvePNP.getRx(), solvePNP.getRy(), solvePNP.getRz());
 //            Translation translation = new Translation(0, 0, solvePNP.getTz());
 
-        if (myRenderer != null) {
-//                myRenderer.updateRotation(new Vector3(-solvePNP.getRx(), -solvePNP.getRy(), -solvePNP.getRz()));
-//                myRenderer.updatePosition(new Vector3(solvePNP.getTx(), solvePNP.getTy(), solvePNP.getTz()));
-
-                /*
-                About position, in OpenGL, the axis from (-1 1) for both x and y with (0, 0) is the center.
-                In the solvePNP return the position of bitmap, the (0,0) located at top-right and the max-x with max-y
-                located at bottom-left. We need to convert from bitmap coordinate to OpenGL coordinate.
-                 */
-
-//                myRenderer.updatePosition(new Vector3((previewHeight - 2 * (-solvePNP.getTx())) / previewHeight,
-//                        (previewWidth - 2 * solvePNP.getTy()) / previewWidth, -0.1f));
-//                int fullScreenAspectRatio = (int) (previewWidth * (CameraFragment.SCREEN_SIZE.y * 1f / CameraFragment.SCREEN_SIZE.x));
-//                PointF posF = point2Ds[46];
-//                myRenderer.updatePosition(new Vector3((2 * posF.x - previewHeight) / previewHeight,
-//                        (fullScreenAspectRatio - 2 * posF.y) / fullScreenAspectRatio, -0.5));
-        }
-
 
         if (earTmp != null) canvas.drawBitmap(earTmp, earMt, null);
         if (noseTmp != null) canvas.drawBitmap(noseTmp, noseMt, null);
@@ -300,12 +266,10 @@ public class M2DLandmarkView extends View {
         camera.rotateX(rotValue[0]);
         camera.rotateY(rotValue[1]);
         camera.rotateZ(rotValue[2]);
-//        camera.translate(transValue[0],transValue[1],transValue[2]);
         camera.getMatrix(transMat);
         camera.restore();
 
         transMat.preTranslate(-centerX, -centerY);
-//        transMat.postRotate(degree);
 
         transMat.postTranslate(centerX, centerY);
         transMat.postTranslate(x, y);
