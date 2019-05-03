@@ -26,6 +26,8 @@
 
 package com.nhancv.facemask.util;
 
+import android.util.Log;
+
 /**
  * NDefine 01: Forward Point
  * Assume: In Oxy space; O(0, 0), A (1, 2). Find B where:
@@ -43,15 +45,15 @@ package com.nhancv.facemask.util;
  */
 
 public class ND01ForwardPoint {
-
+    private static final String TAG = ND01ForwardPoint.class.getSimpleName();
     public float x = Integer.MIN_VALUE, y = Integer.MIN_VALUE;
+    public float threshold = 0;
 
     public ND01ForwardPoint() {
     }
 
-    public ND01ForwardPoint(float x, float y) {
-        this.x = x;
-        this.y = y;
+    public ND01ForwardPoint(float threshold) {
+        this.threshold = threshold;
     }
 
     public void solve(float Ox, float Oy, float Ax, float Ay, float AB) {
@@ -69,6 +71,7 @@ public class ND01ForwardPoint {
         float C = -(R * R) + Ax * Ax + (b - Ay) * (b - Ay);
 
         Float[] res = quadraticEquation(A, B, C);
+        float xbk = x, ybk = y;
         if (res != null && res.length > 0) {
             x = res[0];
             y = a * x + b;
@@ -78,6 +81,9 @@ public class ND01ForwardPoint {
                 y = a * x + b;
             }
         }
+        if (Math.abs(x - xbk) > threshold) x = xbk;
+        if (Math.abs(y - ybk) > threshold) y = ybk;
+        Log.e(TAG, "solve: x = " + x + " y = " + y);
     }
 
     public void reset() {

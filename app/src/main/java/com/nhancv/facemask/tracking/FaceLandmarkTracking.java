@@ -224,18 +224,10 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
                     previewRenderHandler.removeMessages(RENDER_PREVIEW_MSG);
                     previewRenderHandler.sendEmptyMessage(RENDER_PREVIEW_MSG);
                 }
-//                if (uiRenderHandler != null) {
-//                    uiRenderHandler.removeMessages(RENDER_OVERLAP_MSG);
-//                    uiRenderHandler.sendEmptyMessage(RENDER_OVERLAP_MSG);
-//                }
             });
         }
         if (!overlayFps.isStarted()) {
             overlayFps.start(fps -> {
-//                if (previewRenderHandler != null) {
-//                    previewRenderHandler.removeMessages(RENDER_PREVIEW_MSG);
-//                    previewRenderHandler.sendEmptyMessage(RENDER_PREVIEW_MSG);
-//                }
                 if (uiRenderHandler != null) {
                     uiRenderHandler.removeMessages(RENDER_OVERLAP_MSG);
                     uiRenderHandler.sendEmptyMessage(RENDER_OVERLAP_MSG);

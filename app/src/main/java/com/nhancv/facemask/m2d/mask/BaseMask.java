@@ -58,6 +58,13 @@ public abstract class BaseMask implements Mask{
         for (int i = 0; i < 106; i++) {
             point2Ds[i].set(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
         }
+        //Solve PNP
+        solvePNP.setUpLandmarks(point2Ds);
+        try {
+            solvePNP.solvePNP();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     protected void transformMat(Matrix inputMt, float centerX, float centerY, float x, float y, Rotation rotation, Translation translation) {

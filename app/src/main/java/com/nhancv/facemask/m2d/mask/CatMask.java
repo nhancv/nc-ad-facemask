@@ -32,6 +32,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PointF;
+import android.util.Log;
 
 import com.nhancv.facemask.R;
 import com.nhancv.facemask.pose.Rotation;
@@ -42,10 +43,13 @@ import com.nhancv.facemask.util.SolvePNP;
 import zeusees.tracking.Face;
 
 public class CatMask extends BaseMask implements Mask {
-
+    private static final String TAG = CatMask.class.getSimpleName();
+    private static final float THRESHOLD = 100;
     private Bitmap nose, ear;
     private Bitmap earTmp, noseTmp;
     private Matrix earMt, noseMt;
+    private ND01ForwardPoint forwardPoint = new ND01ForwardPoint();
+
 
     @Override
     public void init(Context context) {
@@ -55,39 +59,45 @@ public class CatMask extends BaseMask implements Mask {
 
         earMt = new Matrix();
         noseMt = new Matrix();
+        forwardPoint = new ND01ForwardPoint(THRESHOLD);
     }
 
     @Override
     public void update(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix, SolvePNP solvePNP) {
-        super.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
-        //Buffer coors
-        PointF noseF = new PointF(point2Ds[46].x, point2Ds[46].y);
-        PointF earF = new PointF(point2Ds[21].x, point2Ds[21].y);
+        if (face != null) {
+            super.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
+            //Buffer coors
+            PointF noseF = new PointF(point2Ds[46].x, point2Ds[46].y);
+            PointF earF = new PointF(point2Ds[21].x, point2Ds[21].y);
 
-        Rotation rotation = new Rotation(solvePNP.getRx(), solvePNP.getRy(), solvePNP.getRz());
-        Translation translation = new Translation(0, 0, solvePNP.getTz());
+            Rotation rotation = new Rotation(solvePNP.getRx(), solvePNP.getRy(), solvePNP.getRz());
+            Translation translation = new Translation(0, 0, solvePNP.getTz());
 
-        // TODO: 4/21/19 Comment for 3d testing
-        float ratio = ear.getHeight() * 1.0f / ear.getWidth();
-        float earW = Math.abs(1.2f * faceRect.width());
-        float earH = earW * ratio;
+            // TODO: 4/21/19 Comment for 3d testing
+            float ratio = ear.getHeight() * 1.0f / ear.getWidth();
+            float earW = Math.abs(1.2f * faceRect.width());
+            float earH = earW * ratio;
 
-        float R = 1.5f * (float) Math.sqrt((noseF.x - earF.x) * (noseF.x - earF.x) + (noseF.y - earF.y) * (noseF.y - earF.y));
-        float Ox = noseF.x, Oy = noseF.y;
-        float Ax = earF.x, Ay = earF.y;
-        ND01ForwardPoint forwardPoint = new ND01ForwardPoint();
-        forwardPoint.solve(Ox, Oy, Ax, Ay, R);
+            float R = 1.5f * (float) Math.sqrt((noseF.x - earF.x) * (noseF.x - earF.x) + (noseF.y - earF.y) * (noseF.y - earF.y));
+            float Ox = noseF.x, Oy = noseF.y;
+            float Ax = earF.x, Ay = earF.y;
 
-        earTmp = Bitmap.createScaledBitmap(ear, (int) (earW), (int) (earH), false);
-        if (forwardPoint.isValid()) {
-            transformMat(earMt, earTmp.getWidth() / 2f, earTmp.getHeight() / 2f, forwardPoint.x - earW / 2, forwardPoint.y - earH / 2, rotation, translation);
+            forwardPoint.solve(Ox, Oy, Ax, Ay, R);
+
+            earTmp = Bitmap.createScaledBitmap(ear, (int) (earW), (int) (earH), false);
+            if (forwardPoint.isValid()) {
+                transformMat(earMt, earTmp.getWidth() / 2f, earTmp.getHeight() / 2f, forwardPoint.x - earW / 2, forwardPoint.y - earH / 2, rotation, translation);
+            }
+
+            float nratio = nose.getHeight() * 1.0f / nose.getWidth();
+            float nwidth = Math.abs(1f * faceRect.width());
+            float nheight = nwidth * nratio;
+            noseTmp = Bitmap.createScaledBitmap(nose, (int) (nwidth), (int) (nheight), false);
+            transformMat(noseMt, noseTmp.getWidth() / 2f, noseTmp.getHeight() / 2f, noseF.x - noseTmp.getWidth() / 2f, noseF.y - noseTmp.getHeight() / 2f, rotation, translation);
+        } else {
+            Log.e(TAG, "update: null");
+            earTmp = noseTmp = null;
         }
-
-        float nratio = nose.getHeight() * 1.0f / nose.getWidth();
-        float nwidth = Math.abs(1f * faceRect.width());
-        float nheight = nwidth * nratio;
-        noseTmp = Bitmap.createScaledBitmap(nose, (int) (nwidth), (int) (nheight), false);
-        transformMat(noseMt, noseTmp.getWidth() / 2f, noseTmp.getHeight() / 2f, noseF.x - noseTmp.getWidth() / 2f, noseF.y - noseTmp.getHeight() / 2f, rotation, translation);
     }
 
     @Override
