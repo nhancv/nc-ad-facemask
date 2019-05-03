@@ -12,6 +12,7 @@ import android.view.View;
 
 import com.nhancv.facemask.fps.StableFps;
 import com.nhancv.facemask.m2d.mask.CatMask;
+import com.nhancv.facemask.m2d.mask.DogMask;
 import com.nhancv.facemask.util.SolvePNP;
 
 import zeusees.tracking.Face;
@@ -36,6 +37,7 @@ public class M2DLandmarkView extends View {
     private SolvePNP solvePNP = new SolvePNP();
 
     private CatMask catMask = new CatMask();
+    private DogMask dogMask = new DogMask();
 
     public M2DLandmarkView(Context context) {
         this(context, null, 0, 0);
@@ -61,6 +63,7 @@ public class M2DLandmarkView extends View {
         stableFps = new StableFps(20);
 
         catMask.init(getContext());
+        dogMask.init(getContext());
     }
 
     public void initPNP() {
@@ -76,13 +79,15 @@ public class M2DLandmarkView extends View {
         stableFps.stop();
         solvePNP.releaseMat();
         catMask.release();
+        dogMask.release();
         super.onDetachedFromWindow();
     }
 
     public void setVisionDetRetList(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
         this.scaleMatrix = scaleMatrix;
         solvePNP.initialize();
-        catMask.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
+//        catMask.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
+        dogMask.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
         postInvalidate();
     }
 
@@ -127,7 +132,8 @@ public class M2DLandmarkView extends View {
         canvas.setMatrix(scaleMatrix);
 
         // Draw 2dMask
-        catMask.draw(canvas);
+//        catMask.draw(canvas);
+        dogMask.draw(canvas);
 
     }
 
