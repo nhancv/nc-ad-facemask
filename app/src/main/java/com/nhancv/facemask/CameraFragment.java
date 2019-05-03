@@ -83,9 +83,6 @@ public class CameraFragment extends Fragment
 
     private Handler uiHandler;
 
-
-    private HandlerThread handlerThread;
-    private Handler handler;
     /**
      * Global vars
      */
@@ -409,11 +406,6 @@ public class CameraFragment extends Fragment
 
         uiHandler = new Handler(Looper.getMainLooper());
 
-        handlerThread = new HandlerThread("M2DLM");
-        handlerThread.start();
-        handler = new Handler(handlerThread.getLooper());
-        landmarkView.setHandler(handler);
-
     }
 
     // Stops a background thread and its Handler
@@ -436,13 +428,6 @@ public class CameraFragment extends Fragment
             imagePreviewHandler = null;
 
             uiHandler = null;
-
-            if (handlerThread != null) {
-                handlerThread.quitSafely();
-                handlerThread.join();
-            }
-            handlerThread = null;
-            handler = null;
 
             realTimeRotation.releaseMatrix();
         } catch (InterruptedException e) {

@@ -89,7 +89,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
         this.faceLandmarkListener = faceLandmarkListener;
 
         renderFps = new StableFps(20);
-        overlayFps = new StableFps(30);
+        overlayFps = new StableFps(20);
 
         redPaint = new Paint();
         redPaint.setColor(Color.RED);

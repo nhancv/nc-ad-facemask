@@ -32,7 +32,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PointF;
-import android.util.Log;
 
 import com.nhancv.facemask.R;
 import com.nhancv.facemask.pose.Rotation;
@@ -44,7 +43,6 @@ import zeusees.tracking.Face;
 
 public class CatMask extends BaseMask implements Mask {
     private static final String TAG = CatMask.class.getSimpleName();
-    private static final float THRESHOLD = 100;
     private Bitmap nose, ear;
     private Bitmap earTmp, noseTmp;
     private Matrix earMt, noseMt;
@@ -59,7 +57,7 @@ public class CatMask extends BaseMask implements Mask {
 
         earMt = new Matrix();
         noseMt = new Matrix();
-        forwardPoint = new ND01ForwardPoint(THRESHOLD);
+        forwardPoint = new ND01ForwardPoint();
     }
 
     @Override
@@ -95,7 +93,6 @@ public class CatMask extends BaseMask implements Mask {
             noseTmp = Bitmap.createScaledBitmap(nose, (int) (nwidth), (int) (nheight), false);
             transformMat(noseMt, noseTmp.getWidth() / 2f, noseTmp.getHeight() / 2f, noseF.x - noseTmp.getWidth() / 2f, noseF.y - noseTmp.getHeight() / 2f, rotation, translation);
         } else {
-            Log.e(TAG, "update: null");
             earTmp = noseTmp = null;
         }
     }

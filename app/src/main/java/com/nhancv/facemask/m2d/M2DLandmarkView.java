@@ -32,8 +32,6 @@ public class M2DLandmarkView extends View {
     private Matrix scaleMatrix;
 
     private StableFps stableFps;
-    private HandlerThread handlerThread;
-    private Handler handler;
 
     private SolvePNP solvePNP = new SolvePNP();
 
@@ -60,7 +58,7 @@ public class M2DLandmarkView extends View {
         faceLandmarkPaint.setStyle(Paint.Style.FILL);
 
         //start thread
-        stableFps = new StableFps(25);
+        stableFps = new StableFps(20);
 
         catMask.init(getContext());
     }
@@ -81,25 +79,11 @@ public class M2DLandmarkView extends View {
         super.onDetachedFromWindow();
     }
 
-    public void setHandler(Handler handler) {
-        this.handler = handler;
-    }
-
     public void setVisionDetRetList(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
         this.scaleMatrix = scaleMatrix;
-//        postInvalidate();
-
-        if (!stableFps.isStarted()) {
-            stableFps.start(fps -> {
-                postInvalidate();
-            });
-        }
-
-        if (handler != null)
-            handler.post(() -> {
-                solvePNP.initialize();
-                catMask.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
-            });
+        solvePNP.initialize();
+        catMask.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
+        postInvalidate();
     }
 
     @Override
