@@ -74,9 +74,13 @@ public class M2DLandmarkView extends View {
         this.previewWidth = previewWidth;
         this.previewHeight = previewHeight;
         this.scaleMatrix = scaleMatrix;
-        solvePNP.initialize();
-        if(mask != null) mask.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
-        postInvalidate();
+        try {
+            solvePNP.initialize();
+            if (mask != null) mask.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
+            postInvalidate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -128,7 +132,7 @@ public class M2DLandmarkView extends View {
 
         // Draw 2dMask
 //        catMask.draw(canvas);
-        if(mask != null) mask.draw(canvas);
+        if (mask != null) mask.draw(canvas);
 
     }
 
