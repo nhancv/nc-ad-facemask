@@ -9,8 +9,7 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import com.nhancv.facemask.fps.StableFps;
-import com.nhancv.facemask.m2d.mask.CatMask;
-import com.nhancv.facemask.m2d.mask.DogMask;
+import com.nhancv.facemask.m2d.mask.Mask;
 import com.nhancv.facemask.util.SolvePNP;
 
 import zeusees.tracking.Face;
@@ -31,13 +30,9 @@ public class M2DLandmarkView extends View {
     private int currentWidth;
     private int currentHeight;
     private Matrix scaleMatrix;
-
     private StableFps stableFps;
-
     private SolvePNP solvePNP = new SolvePNP();
-
-    private CatMask catMask = new CatMask();
-    private DogMask dogMask = new DogMask();
+    private Mask mask;
 
     public M2DLandmarkView(Context context) {
         this(context, null, 0, 0);
@@ -61,9 +56,6 @@ public class M2DLandmarkView extends View {
 
         //start thread
         stableFps = new StableFps(20);
-
-        catMask.init(getContext());
-        dogMask.init(getContext());
     }
 
     public void initPNP() {
@@ -74,13 +66,8 @@ public class M2DLandmarkView extends View {
         solvePNP.releaseMat();
     }
 
-    @Override
-    protected void onDetachedFromWindow() {
-        stableFps.stop();
-        solvePNP.releaseMat();
-        catMask.release();
-        dogMask.release();
-        super.onDetachedFromWindow();
+    public void setMask(Mask mask) {
+        this.mask = mask;
     }
 
     public void setVisionDetRetList(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
@@ -88,9 +75,15 @@ public class M2DLandmarkView extends View {
         this.previewHeight = previewHeight;
         this.scaleMatrix = scaleMatrix;
         solvePNP.initialize();
-//        catMask.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
-        dogMask.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
+        if(mask != null) mask.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
         postInvalidate();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        stableFps.stop();
+        solvePNP.releaseMat();
+        super.onDetachedFromWindow();
     }
 
     @Override
@@ -135,7 +128,7 @@ public class M2DLandmarkView extends View {
 
         // Draw 2dMask
 //        catMask.draw(canvas);
-        dogMask.draw(canvas);
+        if(mask != null) mask.draw(canvas);
 
     }
 

@@ -24,9 +24,12 @@
  * @author Nhan Cao <nhan.cao@beesightsoft.com>
  */
 
-package com.nhancv.facemask.m2d.mask;
+package com.nhancv.facemask.m2d.mask.imp;
 
 import com.nhancv.facemask.R;
+import com.nhancv.facemask.m2d.mask.AnchorPart;
+import com.nhancv.facemask.m2d.mask.NearPart;
+import com.nhancv.facemask.m2d.mask.TwoPointMask;
 
 public class CatMask extends TwoPointMask {
 

@@ -24,14 +24,17 @@
  * @author Nhan Cao <nhan.cao@beesightsoft.com>
  */
 
-package com.nhancv.facemask.m2d.mask;
+package com.nhancv.facemask.m2d.mask.imp;
 
 import com.nhancv.facemask.R;
+import com.nhancv.facemask.m2d.mask.AnchorPart;
+import com.nhancv.facemask.m2d.mask.NearPart;
+import com.nhancv.facemask.m2d.mask.TwoPointMask;
 
-public class HamsterMask extends TwoPointMask {
+public class DogMask extends TwoPointMask {
 
-    private AnchorPart anchorPart = new AnchorPart(R.drawable.hamster_nose);
-    private NearPart nearPart = new NearPart(R.drawable.hamster_ear);
+    private AnchorPart anchorPart = new AnchorPart(R.drawable.dog_nose);
+    private NearPart nearPart = new NearPart(R.drawable.dog_ear);
 
     @Override
     protected AnchorPart anchorPart() {

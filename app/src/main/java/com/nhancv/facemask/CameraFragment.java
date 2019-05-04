@@ -7,15 +7,11 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
-import android.graphics.PorterDuff;
 import android.graphics.SurfaceTexture;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.StateListDrawable;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -46,6 +42,11 @@ import android.widget.Toast;
 
 import com.nhancv.facemask.m2d.M2DLandmarkView;
 import com.nhancv.facemask.m2d.M2DPosController;
+import com.nhancv.facemask.m2d.mask.imp.CatMask;
+import com.nhancv.facemask.m2d.mask.imp.DogMask;
+import com.nhancv.facemask.m2d.mask.imp.HamsterMask;
+import com.nhancv.facemask.m2d.mask.Mask;
+import com.nhancv.facemask.m2d.mask.imp.NerdMask;
 import com.nhancv.facemask.pose.RealTimeRotation;
 import com.nhancv.facemask.tracking.FaceLandmarkListener;
 import com.nhancv.facemask.tracking.FaceLandmarkTracking;
@@ -55,7 +56,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -105,7 +105,6 @@ public class CameraFragment extends Fragment
     private CameraCaptureSession captureSession;
     private CaptureRequest.Builder previewRequestBuilder;
 
-
     // A Semaphore to prevent the app from exiting before closing the camera.
     private Semaphore cameraOpenCloseLock = new Semaphore(1);
     private final SparseIntArray ORIENTATIONS = new SparseIntArray();
@@ -131,6 +130,13 @@ public class CameraFragment extends Fragment
     private boolean permissionReady;
     private RealTimeRotation realTimeRotation;
 
+    private int activeMaskIndex = -1;
+    private List<Mask> maskList = new ArrayList<Mask>() {{
+        add(new CatMask());
+        add(new DogMask());
+        add(new HamsterMask());
+        add(new NerdMask());
+    }};
     /**
      * Listener / Callback
      */
@@ -180,16 +186,14 @@ public class CameraFragment extends Fragment
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_camera, container, false);
 
-        View catMaskV = view.findViewById(R.id.iv_cat);
-//        addClickEffect(catMaskV);
-        catMaskV.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
-
         landmarkView = view.findViewById(R.id.fragment_camera_2dlandmarkview);
+
+        view.findViewById(R.id.iv_cat).setOnClickListener(v -> changeMask(0));
+        view.findViewById(R.id.iv_dog).setOnClickListener(v -> changeMask(1));
+        view.findViewById(R.id.iv_hamster).setOnClickListener(v -> changeMask(2));
+        view.findViewById(R.id.iv_nerd).setOnClickListener(v -> changeMask(3));
+        changeMask(0);
+
         surfacePreview = view.findViewById(R.id.surfacePreview);
         surfacePreview.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
@@ -210,6 +214,19 @@ public class CameraFragment extends Fragment
         transformMatrix.setScale(SURFACE_HEIGHT / (float) READER_HEIGHT, SURFACE_WIDTH / (float) READER_WIDTH);
 
         return view;
+    }
+
+    private void changeMask(int maskIndex) {
+        if (activeMaskIndex != maskIndex) {
+
+            Mask mask = maskList.get(maskIndex);
+            mask.init(getContext());
+            landmarkView.setMask(mask);
+
+            if (activeMaskIndex > -1) maskList.get(activeMaskIndex).release();
+            activeMaskIndex = maskIndex;
+
+        }
     }
 
     @Override
@@ -573,19 +590,6 @@ public class CameraFragment extends Fragment
     @Override
     public void landmarkUpdate(final Face face, final int previewWidth, final int previewHeight, final Matrix scaleMatrix) {
         m2DPosController.landmarkUpdate(face, previewWidth, previewHeight, scaleMatrix);
-    }
-
-    public void addClickEffect(View view) {
-        Drawable drawableNormal = view.getBackground();
-
-        Drawable drawablePressed = Objects.requireNonNull(view.getBackground().getConstantState()).newDrawable();
-        drawablePressed.mutate();
-        drawablePressed.setColorFilter(Color.argb(50, 0, 0, 0), PorterDuff.Mode.SRC_ATOP);
-
-        StateListDrawable listDrawable = new StateListDrawable();
-        listDrawable.addState(new int[]{android.R.attr.state_pressed}, drawablePressed);
-        listDrawable.addState(new int[]{}, drawableNormal);
-        view.setBackground(listDrawable);
     }
 
     /**

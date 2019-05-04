@@ -55,7 +55,7 @@ public abstract class TwoPointMask extends BaseMask implements Mask {
     public void init(Context context) {
         super.init(context);
         anchorBm = BitmapFactory.decodeResource(context.getResources(), anchorPart().bmResId);
-        nearBm = BitmapFactory.decodeResource(context.getResources(), anchorPart().bmResId);
+        nearBm = BitmapFactory.decodeResource(context.getResources(), nearPart().bmResId);
 
         nearBmMt = new Matrix();
         anchorBmMt = new Matrix();
