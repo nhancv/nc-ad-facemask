@@ -64,7 +64,7 @@ public abstract class TwoPointMask extends BaseMask implements Mask {
 
     @Override
     public void update(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix, SolvePNP solvePNP) {
-        if (face != null) {
+        if (face != null && !anchorBm.isRecycled() && !nearBm.isRecycled()) {
             super.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
             //Buffer coors
             int anchorPointId = anchorPart().anchorPointId;
@@ -75,8 +75,13 @@ public abstract class TwoPointMask extends BaseMask implements Mask {
             Rotation rotation = new Rotation(solvePNP.getRx(), solvePNP.getRy(), solvePNP.getRz());
             Translation translation = new Translation(0, 0, solvePNP.getTz());
 
+            float[] scalePts = new float[9];
+            scaleMatrix.getValues(scalePts);
+            float scaleX = scalePts[0];
+            float scaleY = scalePts[4];
+
             float ratio = nearBm.getHeight() * 1.0f / nearBm.getWidth();
-            float earW = Math.abs(nearPart().scale * faceRect.width());
+            float earW = Math.abs(nearPart().scale * faceRect.width()) * scaleX;
             float earH = earW * ratio;
 
             float R = nearPart().distanceRate * (float) Math.sqrt((noseF.x - earF.x) * (noseF.x - earF.x) + (noseF.y - earF.y) * (noseF.y - earF.y));
@@ -87,14 +92,16 @@ public abstract class TwoPointMask extends BaseMask implements Mask {
 
             nearBmTmp = Bitmap.createScaledBitmap(nearBm, (int) (earW), (int) (earH), false);
             if (forwardPoint.isValid()) {
-                transformMat(nearBmMt, nearBmTmp.getWidth() / 2f, nearBmTmp.getHeight() / 2f, forwardPoint.x - earW / 2, forwardPoint.y - earH / 2, rotation, translation);
+                transformMat(nearBmMt, nearBmTmp.getWidth() / 2f, nearBmTmp.getHeight() / 2f, forwardPoint.x * scaleX - earW / 2,
+                        forwardPoint.y * scaleY - earH / 2, rotation, translation);
             }
 
             float nratio = anchorBm.getHeight() * 1.0f / anchorBm.getWidth();
-            float nwidth = Math.abs(anchorPart().scale * faceRect.width());
+            float nwidth = Math.abs(anchorPart().scale * faceRect.width()) * scaleX;
             float nheight = nwidth * nratio;
             anchorBmTmp = Bitmap.createScaledBitmap(anchorBm, (int) (nwidth), (int) (nheight), false);
-            transformMat(anchorBmMt, anchorBmTmp.getWidth() / 2f, anchorBmTmp.getHeight() / 2f, noseF.x - anchorBmTmp.getWidth() / 2f, noseF.y - anchorBmTmp.getHeight() / 2f, rotation, translation);
+            transformMat(anchorBmMt, anchorBmTmp.getWidth() / 2f, anchorBmTmp.getHeight() / 2f, noseF.x * scaleX - anchorBmTmp.getWidth() / 2f,
+                    noseF.y * scaleY - anchorBmTmp.getHeight() / 2f, rotation, translation);
         } else {
             nearBmTmp = anchorBmTmp = null;
         }
@@ -102,8 +109,8 @@ public abstract class TwoPointMask extends BaseMask implements Mask {
 
     @Override
     public void draw(Canvas canvas) {
-        if (nearBmTmp != null) canvas.drawBitmap(nearBmTmp, nearBmMt, null);
-        if (anchorBmTmp != null) canvas.drawBitmap(anchorBmTmp, anchorBmMt, null);
+        if (nearBmTmp != null && !nearBmTmp.isRecycled()) canvas.drawBitmap(nearBmTmp, nearBmMt, null);
+        if (anchorBmTmp != null && !anchorBmTmp.isRecycled()) canvas.drawBitmap(anchorBmTmp, anchorBmMt, null);
     }
 
     @Override

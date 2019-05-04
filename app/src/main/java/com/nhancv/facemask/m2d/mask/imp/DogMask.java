@@ -33,8 +33,8 @@ import com.nhancv.facemask.m2d.mask.TwoPointMask;
 
 public class DogMask extends TwoPointMask {
 
-    private AnchorPart anchorPart = new AnchorPart(R.drawable.dog_nose);
-    private NearPart nearPart = new NearPart(R.drawable.dog_ear);
+    private AnchorPart anchorPart = new AnchorPart(R.drawable.dog_nose, 0.5f, 46);
+    private NearPart nearPart = new NearPart(R.drawable.dog_ear, 1, 21, 0.9f);
 
     @Override
     protected AnchorPart anchorPart() {

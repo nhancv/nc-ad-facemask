@@ -128,10 +128,9 @@ public class M2DLandmarkView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        canvas.setMatrix(scaleMatrix);
+//        canvas.setMatrix(scaleMatrix);
 
         // Draw 2dMask
-//        catMask.draw(canvas);
         if (mask != null) mask.draw(canvas);
 
     }

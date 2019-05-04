@@ -46,7 +46,8 @@ import android.util.Log;
 
 public class ND01ForwardPoint {
     private static final String TAG = ND01ForwardPoint.class.getSimpleName();
-    public float x = Integer.MIN_VALUE, y = Integer.MIN_VALUE;
+    private static final float INVALID_VALUE = 0;
+    public float x = INVALID_VALUE, y = INVALID_VALUE;
 
     public ND01ForwardPoint() {
     }
@@ -78,11 +79,11 @@ public class ND01ForwardPoint {
     }
 
     public void reset() {
-        x = y = Integer.MIN_VALUE;
+        x = y = INVALID_VALUE;
     }
 
     public boolean isValid() {
-        return x != Integer.MIN_VALUE && y != Integer.MIN_VALUE;
+        return x != INVALID_VALUE && y != INVALID_VALUE;
     }
 
     /**

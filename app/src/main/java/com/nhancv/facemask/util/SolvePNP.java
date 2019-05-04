@@ -170,8 +170,8 @@ public class SolvePNP {
         rz = (float) eav.get(2, 0)[0];
 
         // Limit ry
-        if (ry > 30) ry = 30;
-        else if (ry < -30) ry = -30;
+//        if (ry > 30) ry = 30;
+//        else if (ry < -30) ry = -30;
 
         rotM.release();
         projMatrix.release();

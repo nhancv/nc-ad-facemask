@@ -78,10 +78,10 @@ public abstract class BaseMask implements Mask {
         camera.rotateY(rotValue[1]);
         camera.rotateZ(rotValue[2]);
         camera.getMatrix(inputMt);
-        camera.restore();
-
         inputMt.preTranslate(-centerX, -centerY);
         inputMt.postTranslate(centerX, centerY);
+        camera.restore();
+
         inputMt.postTranslate(x, y);
     }
 }

@@ -34,7 +34,7 @@ import com.nhancv.facemask.m2d.mask.TwoPointMask;
 public class CatMask extends TwoPointMask {
 
     private AnchorPart anchorPart = new AnchorPart(R.drawable.cat_nose);
-    private NearPart nearPart = new NearPart(R.drawable.cat_ear);
+    private NearPart nearPart = new NearPart(R.drawable.cat_ear, 1, 21, 1.3f);
 
     @Override
     protected AnchorPart anchorPart() {

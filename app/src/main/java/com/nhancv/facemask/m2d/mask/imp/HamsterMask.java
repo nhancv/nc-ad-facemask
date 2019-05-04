@@ -34,7 +34,7 @@ import com.nhancv.facemask.m2d.mask.TwoPointMask;
 public class HamsterMask extends TwoPointMask {
 
     private AnchorPart anchorPart = new AnchorPart(R.drawable.hamster_nose);
-    private NearPart nearPart = new NearPart(R.drawable.hamster_ear);
+    private NearPart nearPart = new NearPart(R.drawable.hamster_ear,1, 21, 0.9f);
 
     @Override
     protected AnchorPart anchorPart() {

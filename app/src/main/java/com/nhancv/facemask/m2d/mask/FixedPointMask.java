@@ -57,7 +57,7 @@ public abstract class FixedPointMask extends BaseMask implements Mask {
 
     @Override
     public void update(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix, SolvePNP solvePNP) {
-        if (face != null) {
+        if (face != null && !pointBm.isRecycled()) {
             super.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
             //Buffer coors
             int anchorPointId = anchorPart().anchorPointId;
@@ -66,11 +66,17 @@ public abstract class FixedPointMask extends BaseMask implements Mask {
             Rotation rotation = new Rotation(solvePNP.getRx(), solvePNP.getRy(), solvePNP.getRz());
             Translation translation = new Translation(0, 0, solvePNP.getTz());
 
+            float[] scalePts = new float[9];
+            scaleMatrix.getValues(scalePts);
+            float scaleX = scalePts[0];
+            float scaleY = scalePts[4];
+
             float nratio = pointBm.getHeight() * 1.0f / pointBm.getWidth();
-            float nwidth = Math.abs(anchorPart().scale * faceRect.width());
+            float nwidth = Math.abs(anchorPart().scale * faceRect.width()) * scaleX;
             float nheight = nwidth * nratio;
             pointBmTmp = Bitmap.createScaledBitmap(pointBm, (int) (nwidth), (int) (nheight), false);
-            transformMat(pointBmMt, pointBmTmp.getWidth() / 2f, pointBmTmp.getHeight() / 2f, noseF.x - pointBmTmp.getWidth() / 2f, noseF.y - pointBmTmp.getHeight() / 2f, rotation, translation);
+            transformMat(pointBmMt, pointBmTmp.getWidth() / 2f, pointBmTmp.getHeight() / 2f, (noseF.x * scaleX - pointBmTmp.getWidth() / 2f),
+                    (noseF.y * scaleY - pointBmTmp.getHeight() / 2f), rotation, translation);
         } else {
             pointBmTmp = null;
         }
@@ -78,7 +84,7 @@ public abstract class FixedPointMask extends BaseMask implements Mask {
 
     @Override
     public void draw(Canvas canvas) {
-        if (pointBmTmp != null) canvas.drawBitmap(pointBmTmp, pointBmMt, null);
+        if (pointBmTmp != null && !pointBmTmp.isRecycled()) canvas.drawBitmap(pointBmTmp, pointBmMt, null);
     }
 
     @Override
