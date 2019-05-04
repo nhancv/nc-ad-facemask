@@ -7,11 +7,15 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
+import android.graphics.PorterDuff;
 import android.graphics.SurfaceTexture;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.StateListDrawable;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -51,6 +55,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -175,8 +180,16 @@ public class CameraFragment extends Fragment
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_camera, container, false);
 
-        landmarkView = view.findViewById(R.id.fragment_camera_2dlandmarkview);
+        View catMaskV = view.findViewById(R.id.iv_cat);
+//        addClickEffect(catMaskV);
+        catMaskV.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
 
+            }
+        });
+
+        landmarkView = view.findViewById(R.id.fragment_camera_2dlandmarkview);
         surfacePreview = view.findViewById(R.id.surfacePreview);
         surfacePreview.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
@@ -559,9 +572,20 @@ public class CameraFragment extends Fragment
 
     @Override
     public void landmarkUpdate(final Face face, final int previewWidth, final int previewHeight, final Matrix scaleMatrix) {
-//        uiHandler.post(() -> m2DPosController.landmarkUpdate(face, previewWidth, previewHeight, scaleMatrix));
         m2DPosController.landmarkUpdate(face, previewWidth, previewHeight, scaleMatrix);
-//        m3DPosController.landmarkUpdate(face,previewWidth,previewHeight,scaleMatrix);
+    }
+
+    public void addClickEffect(View view) {
+        Drawable drawableNormal = view.getBackground();
+
+        Drawable drawablePressed = Objects.requireNonNull(view.getBackground().getConstantState()).newDrawable();
+        drawablePressed.mutate();
+        drawablePressed.setColorFilter(Color.argb(50, 0, 0, 0), PorterDuff.Mode.SRC_ATOP);
+
+        StateListDrawable listDrawable = new StateListDrawable();
+        listDrawable.addState(new int[]{android.R.attr.state_pressed}, drawablePressed);
+        listDrawable.addState(new int[]{}, drawableNormal);
+        view.setBackground(listDrawable);
     }
 
     /**
