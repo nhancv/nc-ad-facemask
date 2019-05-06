@@ -40,8 +40,10 @@ import zeusees.tracking.Face;
 
 public abstract class BaseMask implements Mask {
 
+    private static final float NOISE_TH = 3f;
     protected Rect faceRect;
     protected PointF[] point2Ds;
+    protected Face faceBuffer;
 
     @Override
     public void init(Context context) {
@@ -54,9 +56,25 @@ public abstract class BaseMask implements Mask {
 
     @Override
     public void update(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix, SolvePNP solvePNP) {
-        faceRect.set(previewHeight - face.left, face.top, previewHeight - face.right, face.bottom);
+        boolean isNoise = false;
+        if (faceBuffer != null) {
+            for (int i = 0; i < 106; i++) {
+                boolean tmp = checkNoise(face.landmarks[i * 2], faceBuffer.landmarks[i * 2]);
+                if (tmp) {
+                    isNoise = true;
+                    break;
+                }
+            }
+        }
+
+        if (faceBuffer == null || checkNoise(face.top, faceBuffer.top) || isNoise) {
+            faceBuffer = face;
+        }
+        faceRect.set(previewHeight - faceBuffer.left, faceBuffer.top, previewHeight - faceBuffer.right, faceBuffer.bottom);
+
         for (int i = 0; i < 106; i++) {
-            point2Ds[i].set(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
+            point2Ds[i].set(faceBuffer.landmarks[i * 2], faceBuffer.landmarks[i * 2 + 1]);
+
         }
         //Solve PNP
         solvePNP.setUpLandmarks(point2Ds);
@@ -65,6 +83,10 @@ public abstract class BaseMask implements Mask {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private boolean checkNoise(float first, float second) {
+        return Math.abs(first - second) > NOISE_TH;
     }
 
     protected void transformMat(Matrix inputMt, float centerX, float centerY, float x, float y, Rotation rotation, Translation translation) {
