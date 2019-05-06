@@ -91,10 +91,8 @@ public abstract class TwoPointMask extends BaseMask implements Mask {
             forwardPoint.solve(Ox, Oy, Ax, Ay, R);
 
             nearBmTmp = Bitmap.createScaledBitmap(nearBm, (int) (earW), (int) (earH), false);
-            if (forwardPoint.isValid()) {
-                transformMat(nearBmMt, nearBmTmp.getWidth() / 2f, nearBmTmp.getHeight() / 2f, forwardPoint.x * scaleX - earW / 2,
-                        forwardPoint.y * scaleY - earH / 2, rotation, translation);
-            }
+            transformMat(nearBmMt, nearBmTmp.getWidth() / 2f, nearBmTmp.getHeight() / 2f, forwardPoint.x * scaleX - earW / 2,
+                    forwardPoint.y * scaleY - earH / 2, rotation, translation);
 
             float nratio = anchorBm.getHeight() * 1.0f / anchorBm.getWidth();
             float nwidth = Math.abs(anchorPart().scale * faceRect.width()) * scaleX;

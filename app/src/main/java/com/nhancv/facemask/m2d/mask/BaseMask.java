@@ -40,7 +40,7 @@ import zeusees.tracking.Face;
 
 public abstract class BaseMask implements Mask {
 
-    private static final float NOISE_TH = 3f;
+    private static final float NOISE_TH = 2f;
     protected Rect faceRect;
     protected PointF[] point2Ds;
     protected Face faceBuffer;
