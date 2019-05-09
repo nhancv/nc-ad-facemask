@@ -35,6 +35,7 @@ import android.graphics.PointF;
 
 import com.nhancv.facemask.pose.Rotation;
 import com.nhancv.facemask.pose.Translation;
+import com.nhancv.facemask.tracking.KalmanFilter;
 import com.nhancv.facemask.util.ND01ForwardPoint;
 import com.nhancv.facemask.util.SolvePNP;
 
@@ -62,6 +63,12 @@ public abstract class TwoPointMask extends BaseMask implements Mask {
         forwardPoint = new ND01ForwardPoint();
     }
 
+    private PointF lastNoseF = new PointF();
+    private KalmanFilter kmNoseX = new KalmanFilter(1,1, 100f);
+    private KalmanFilter kmNoseY = new KalmanFilter(1,1, 100f);
+    private PointF lastEarF = new PointF();
+    private KalmanFilter kmEarX = new KalmanFilter(1,1, 100f);
+    private KalmanFilter kmEarY = new KalmanFilter(1,1, 100f);
     @Override
     public void update(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix, SolvePNP solvePNP) {
         if (face != null && !anchorBm.isRecycled() && !nearBm.isRecycled()) {
@@ -71,6 +78,8 @@ public abstract class TwoPointMask extends BaseMask implements Mask {
             int nearAnchorPointId = nearPart().anchorPointId;
             PointF noseF = new PointF(point2Ds[anchorPointId].x, point2Ds[anchorPointId].y);
             PointF earF = new PointF(point2Ds[nearAnchorPointId].x, point2Ds[nearAnchorPointId].y);
+            denoise(kmNoseX, kmNoseY, lastNoseF, noseF);
+            denoise(kmEarX, kmEarY, lastEarF, earF);
 
             Rotation rotation = new Rotation(solvePNP.getRx(), solvePNP.getRy(), solvePNP.getRz());
             Translation translation = new Translation(0, 0, solvePNP.getTz());
@@ -88,11 +97,13 @@ public abstract class TwoPointMask extends BaseMask implements Mask {
             float Ox = noseF.x, Oy = noseF.y;
             float Ax = earF.x, Ay = earF.y;
 
-            forwardPoint.solve(Ox, Oy, Ax, Ay, R);
+//            forwardPoint.solve(Ox, Oy, Ax, Ay, R);
 
             nearBmTmp = Bitmap.createScaledBitmap(nearBm, (int) (earW), (int) (earH), false);
-            transformMat(nearBmMt, nearBmTmp.getWidth() / 2f, nearBmTmp.getHeight() / 2f, forwardPoint.x * scaleX - earW / 2,
-                    forwardPoint.y * scaleY - earH / 2, rotation, translation);
+//            transformMat(nearBmMt, nearBmTmp.getWidth() / 2f, nearBmTmp.getHeight() / 2f, forwardPoint.x * scaleX - earW / 2,
+//                    forwardPoint.y * scaleY - earH / 2, rotation, translation);
+            transformMat(nearBmMt, nearBmTmp.getWidth() / 2f, nearBmTmp.getHeight() / 2f, earF.x * scaleX - nearBmTmp.getWidth() / 2f,
+                    earF.y * scaleY - nearBmTmp.getHeight() / 2f, rotation, translation);
 
             float nratio = anchorBm.getHeight() * 1.0f / anchorBm.getWidth();
             float nwidth = Math.abs(anchorPart().scale * faceRect.width()) * scaleX;

@@ -32,9 +32,11 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PointF;
+import android.util.Log;
 
 import com.nhancv.facemask.pose.Rotation;
 import com.nhancv.facemask.pose.Translation;
+import com.nhancv.facemask.tracking.KalmanFilter;
 import com.nhancv.facemask.util.SolvePNP;
 
 import zeusees.tracking.Face;
@@ -44,6 +46,10 @@ public abstract class FixedPointMask extends BaseMask implements Mask {
     private Bitmap pointBm;
     private Bitmap pointBmTmp;
     private Matrix pointBmMt;
+
+    private PointF lastNoseF = new PointF();
+    private KalmanFilter kmNoseX = new KalmanFilter(1,1, 100f);
+    private KalmanFilter kmNoseY = new KalmanFilter(1,1, 100f);
 
     protected abstract AnchorPart anchorPart();
 
@@ -62,6 +68,7 @@ public abstract class FixedPointMask extends BaseMask implements Mask {
             //Buffer coors
             int anchorPointId = anchorPart().anchorPointId;
             PointF noseF = new PointF(point2Ds[anchorPointId].x, point2Ds[anchorPointId].y);
+            denoise(kmNoseX, kmNoseY, lastNoseF, noseF);
 
             Rotation rotation = new Rotation(solvePNP.getRx(), solvePNP.getRy(), solvePNP.getRz());
             Translation translation = new Translation(0, 0, solvePNP.getTz());

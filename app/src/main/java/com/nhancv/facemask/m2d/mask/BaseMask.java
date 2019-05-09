@@ -34,13 +34,13 @@ import android.graphics.Rect;
 
 import com.nhancv.facemask.pose.Rotation;
 import com.nhancv.facemask.pose.Translation;
+import com.nhancv.facemask.tracking.KalmanFilter;
 import com.nhancv.facemask.util.SolvePNP;
 
 import zeusees.tracking.Face;
 
 public abstract class BaseMask implements Mask {
 
-    private static final float NOISE_TH = 2f;
     protected Rect faceRect;
     protected PointF[] point2Ds;
     protected Face faceBuffer;
@@ -56,20 +56,7 @@ public abstract class BaseMask implements Mask {
 
     @Override
     public void update(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix, SolvePNP solvePNP) {
-        boolean isNoise = false;
-        if (faceBuffer != null) {
-            for (int i = 0; i < 106; i++) {
-                boolean tmp = checkNoise(face.landmarks[i * 2], faceBuffer.landmarks[i * 2]);
-                if (tmp) {
-                    isNoise = true;
-                    break;
-                }
-            }
-        }
-
-        if (faceBuffer == null || checkNoise(face.top, faceBuffer.top) || isNoise) {
-            faceBuffer = face;
-        }
+        faceBuffer = face;
         faceRect.set(previewHeight - faceBuffer.left, faceBuffer.top, previewHeight - faceBuffer.right, faceBuffer.bottom);
 
         for (int i = 0; i < 106; i++) {
@@ -83,10 +70,6 @@ public abstract class BaseMask implements Mask {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private boolean checkNoise(float first, float second) {
-        return Math.abs(first - second) > NOISE_TH;
     }
 
     protected void transformMat(Matrix inputMt, float centerX, float centerY, float x, float y, Rotation rotation, Translation translation) {
@@ -105,5 +88,33 @@ public abstract class BaseMask implements Mask {
         camera.restore();
 
         inputMt.postTranslate(x, y);
+    }
+
+    protected void denoise(KalmanFilter kalmanFilterX, KalmanFilter kalmanFilterY, PointF lastPoint, PointF pointF) {
+        // Denoise x
+        float currentEstX = kalmanFilterX.updateEstimate(pointF.x);
+        lastPoint.x = pointF.x;
+        float noiseX = Math.abs(lastPoint.x - currentEstX);
+        if (noiseX > 1) {
+            kalmanFilterX.setMeasurementError(currentEstX);
+            kalmanFilterX.setEstimateError(currentEstX);
+            kalmanFilterX.setProcessNoise(noiseX * 20 + 0.1f);
+        }
+        if (Math.abs(currentEstX - pointF.x) < 3) {
+            pointF.x = currentEstX;
+        }
+
+        // Denoise y
+        float currentEstY = kalmanFilterY.updateEstimate(pointF.y);
+        lastPoint.y = pointF.y;
+        float noiseY = Math.abs(lastPoint.y - currentEstY);
+        if (noiseY > 1) {
+            kalmanFilterY.setMeasurementError(currentEstY);
+            kalmanFilterY.setEstimateError(currentEstY);
+            kalmanFilterY.setProcessNoise(noiseY * 20 + 0.1f);
+        }
+        if (Math.abs(currentEstY - pointF.y) < 3) {
+            pointF.y = currentEstY;
+        }
     }
 }
