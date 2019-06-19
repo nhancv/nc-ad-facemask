@@ -32,12 +32,11 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PointF;
-import android.util.Log;
 
 import com.nhancv.facemask.pose.Rotation;
 import com.nhancv.facemask.pose.Translation;
-import com.nhancv.facemask.tracking.KalmanFilter;
-import com.nhancv.facemask.util.SolvePNP;
+import com.nhancv.facemask.tracking.NKalmanFilter;
+import com.nhancv.facemask.pose.SolvePNP;
 
 import zeusees.tracking.Face;
 
@@ -48,8 +47,8 @@ public abstract class FixedPointMask extends BaseMask implements Mask {
     private Matrix pointBmMt;
 
     private PointF lastNoseF = new PointF();
-    private KalmanFilter kmNoseX = new KalmanFilter(1,1, 100f);
-    private KalmanFilter kmNoseY = new KalmanFilter(1,1, 100f);
+    private NKalmanFilter kmNoseX = new NKalmanFilter(1,1, 100f);
+    private NKalmanFilter kmNoseY = new NKalmanFilter(1,1, 100f);
 
     protected abstract AnchorPart anchorPart();
 

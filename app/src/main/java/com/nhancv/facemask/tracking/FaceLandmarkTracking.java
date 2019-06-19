@@ -32,7 +32,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     /**
      * Static
      */
-    private static final String TAG = "FaceLandmarkTracking";
+    private static final String TAG = FaceLandmarkTracking.class.getSimpleName();
     private static final int FRAME_DATA_READY_MSG = 0x01;
     private static final int RENDER_OVERLAP_MSG = 0x02;
     private static final int RENDER_PREVIEW_MSG = 0x03;
@@ -75,6 +75,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     private FaceTracking multiTrack106;
     private boolean initTrack106;
     private Context context;
+    private PointState pointState;
 
     public void initialize(
             final Context context,
@@ -87,6 +88,8 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
         this.overlapFaceView = overlapFaceView;
         this.surfacePreview = surfacePreview;
         this.faceLandmarkListener = faceLandmarkListener;
+
+        pointState = new PointState();
 
         renderFps = new StableFps(20);
         overlayFps = new StableFps(25);
@@ -276,6 +279,17 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     private void frameOverlapRenderProcess() {
         if (multiTrack106 != null) {
             Face face = multiTrack106.getTrackingInfo();
+            if (face == null) {
+                pointState.stabilize(false, null);
+            } else {
+                float[] landMarkPoints = new float[face.landmarks.length];
+                for (int i = 0; i < face.landmarks.length; i++) {
+                    landMarkPoints[i] = face.landmarks[i];
+                }
+                pointState.stabilize(true, landMarkPoints);
+            }
+
+
             if (faceLandmarkListener != null) {
                 faceLandmarkListener.landmarkUpdate(face, previewWidth, previewHeight, transformMatrix);
             }

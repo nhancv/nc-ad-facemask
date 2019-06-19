@@ -35,9 +35,9 @@ import android.graphics.PointF;
 
 import com.nhancv.facemask.pose.Rotation;
 import com.nhancv.facemask.pose.Translation;
-import com.nhancv.facemask.tracking.KalmanFilter;
+import com.nhancv.facemask.tracking.NKalmanFilter;
 import com.nhancv.facemask.util.ND01ForwardPoint;
-import com.nhancv.facemask.util.SolvePNP;
+import com.nhancv.facemask.pose.SolvePNP;
 
 import zeusees.tracking.Face;
 
@@ -64,11 +64,11 @@ public abstract class TwoPointMask extends BaseMask implements Mask {
     }
 
     private PointF lastNoseF = new PointF();
-    private KalmanFilter kmNoseX = new KalmanFilter(1,1, 100f);
-    private KalmanFilter kmNoseY = new KalmanFilter(1,1, 100f);
+    private NKalmanFilter kmNoseX = new NKalmanFilter(1,1, 100f);
+    private NKalmanFilter kmNoseY = new NKalmanFilter(1,1, 100f);
     private PointF lastEarF = new PointF();
-    private KalmanFilter kmEarX = new KalmanFilter(1,1, 100f);
-    private KalmanFilter kmEarY = new KalmanFilter(1,1, 100f);
+    private NKalmanFilter kmEarX = new NKalmanFilter(1,1, 100f);
+    private NKalmanFilter kmEarY = new NKalmanFilter(1,1, 100f);
     @Override
     public void update(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix, SolvePNP solvePNP) {
         if (face != null && !anchorBm.isRecycled() && !nearBm.isRecycled()) {

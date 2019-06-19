@@ -24,23 +24,20 @@
  * @author Nhan Cao <nhan.cao@beesightsoft.com>
  */
 
-package com.nhancv.facemask.m2d.mask;
+package com.nhancv.facemask.tracking;
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Matrix;
+public class PointState {
+    static {
+        System.loadLibrary("native-lib");
+    }
 
-import com.nhancv.facemask.pose.SolvePNP;
+    public PointState() {
+        init();
 
-import zeusees.tracking.Face;
+    }
 
-public interface Mask {
+    public native void init();
 
-    void init(Context context);
+    public native void stabilize(boolean hasFace, float[] landMarkPoints);
 
-    void update(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix, SolvePNP solvePNP);
-
-    void draw(Canvas canvas);
-
-    void release();
 }

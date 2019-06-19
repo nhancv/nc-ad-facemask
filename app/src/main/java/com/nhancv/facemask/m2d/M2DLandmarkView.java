@@ -10,7 +10,7 @@ import android.view.View;
 
 import com.nhancv.facemask.fps.StableFps;
 import com.nhancv.facemask.m2d.mask.Mask;
-import com.nhancv.facemask.util.SolvePNP;
+import com.nhancv.facemask.pose.SolvePNP;
 
 import zeusees.tracking.Face;
 

@@ -34,8 +34,8 @@ import android.graphics.Rect;
 
 import com.nhancv.facemask.pose.Rotation;
 import com.nhancv.facemask.pose.Translation;
-import com.nhancv.facemask.tracking.KalmanFilter;
-import com.nhancv.facemask.util.SolvePNP;
+import com.nhancv.facemask.tracking.NKalmanFilter;
+import com.nhancv.facemask.pose.SolvePNP;
 
 import zeusees.tracking.Face;
 
@@ -90,7 +90,7 @@ public abstract class BaseMask implements Mask {
         inputMt.postTranslate(x, y);
     }
 
-    protected void denoise(KalmanFilter kalmanFilterX, KalmanFilter kalmanFilterY, PointF lastPoint, PointF pointF) {
+    protected void denoise(NKalmanFilter kalmanFilterX, NKalmanFilter kalmanFilterY, PointF lastPoint, PointF pointF) {
         // Denoise x
         float currentEstX = kalmanFilterX.updateEstimate(pointF.x);
         lastPoint.x = pointF.x;

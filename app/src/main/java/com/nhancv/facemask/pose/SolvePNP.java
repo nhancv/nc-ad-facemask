@@ -24,11 +24,9 @@
  * @author Nhan Cao <nhan.cao@beesightsoft.com>
  */
 
-package com.nhancv.facemask.util;
+package com.nhancv.facemask.pose;
 
 import android.graphics.PointF;
-
-import com.nhancv.facemask.pose.RealTimeRotation;
 
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;

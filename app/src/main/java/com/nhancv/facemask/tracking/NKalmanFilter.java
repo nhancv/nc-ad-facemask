@@ -79,7 +79,7 @@ package com.nhancv.facemask.tracking;
  *
  * Ref: https://malcolmmielle.wordpress.com/2015/04/29/kalman-filter/
  */
-public class KalmanFilter {
+public class NKalmanFilter {
     float _err_measure;
     float _err_estimate;
     float _q;
@@ -89,13 +89,13 @@ public class KalmanFilter {
 
 
     /**
-     * KalmanFilter constructor
+     * NKalmanFilter constructor
      *
      * @param mea_e Measurement Uncertainty - How much do we expect to our measurement vary. Ex: 1
      * @param est_e Estimation Uncertainty - Can be initialized with the same value as e_mea since the kalman filter will adjust its value. Ex 1
      * @param q Process Variance - usually a small number between 0.001 and 1 - how fast your measurement moves. Recommended 0.01
      */
-    public KalmanFilter(float mea_e, float est_e, float q) {
+    public NKalmanFilter(float mea_e, float est_e, float q) {
         _err_measure = mea_e;
         _err_estimate = est_e;
         _q = q;
