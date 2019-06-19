@@ -2,6 +2,8 @@ package com.nhancv.facemask;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -9,6 +11,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
 import com.nhancv.facemask.util.STUtils;
+
+import org.wysaid.myUtils.ImageUtil;
+import org.wysaid.nativePort.CGENativeLibrary;
 
 import static com.nhancv.facemask.util.STUtils.isExternalStorageReadable;
 import static com.nhancv.facemask.util.STUtils.isExternalStorageWritable;

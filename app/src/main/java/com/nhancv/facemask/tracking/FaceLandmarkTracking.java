@@ -2,6 +2,7 @@ package com.nhancv.facemask.tracking;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -19,8 +20,11 @@ import android.os.Message;
 import android.util.Log;
 import android.view.SurfaceView;
 
+import com.nhancv.facemask.R;
 import com.nhancv.facemask.fps.StableFps;
 import com.nhancv.facemask.util.STUtils;
+
+import org.wysaid.nativePort.CGENativeLibrary;
 
 import java.util.Locale;
 
@@ -158,6 +162,12 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
         if (surfacePreview != null && surfacePreview.getHolder().getSurface().isValid()) {
             // Draw bm preview
             Bitmap bm = STUtils.NV21ToRGBABitmap(previewRenderBuffer, previewWidth, previewHeight, context);
+            // TODO: 2019-06-19 Filter with OpenGLES
+            //https://github.com/nhancv/ad-gpuimage-plus/blob/master/cgeDemo/src/main/java/org/wysaid/cgeDemo/MainActivity.java
+//            String ruleString = "@dynamic wave 0.8 @style edge 1 2 @curve RGB(0, 255)(255, 0) @beautify bilateral 100 3.5 2";
+//            Bitmap bm2 = CGENativeLibrary.filterImage_MultipleEffects(bm, ruleString, 1.0f);
+
+
             Matrix matrix = new Matrix();
             matrix.postRotate(-90);
             matrix.postTranslate(0, bm.getWidth());
@@ -279,15 +289,16 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     private void frameOverlapRenderProcess() {
         if (multiTrack106 != null) {
             Face face = multiTrack106.getTrackingInfo();
-            if (face == null) {
-                pointState.stabilize(false, null);
-            } else {
-                float[] landMarkPoints = new float[face.landmarks.length];
-                for (int i = 0; i < face.landmarks.length; i++) {
-                    landMarkPoints[i] = face.landmarks[i];
-                }
-                pointState.stabilize(true, landMarkPoints);
-            }
+            // TODO: 2019-06-19 Stabilize
+//            if (face == null) {
+//                pointState.stabilize(false, null);
+//            } else {
+//                float[] landMarkPoints = new float[face.landmarks.length];
+//                for (int i = 0; i < face.landmarks.length; i++) {
+//                    landMarkPoints[i] = face.landmarks[i];
+//                }
+//                pointState.stabilize(true, landMarkPoints);
+//            }
 
 
             if (faceLandmarkListener != null) {
