@@ -47,8 +47,8 @@ public abstract class FixedPointMask extends BaseMask implements Mask {
     private Matrix pointBmMt;
 
     private PointF lastNoseF = new PointF();
-    private NKalmanFilter kmNoseX = new NKalmanFilter(1,1, 100f);
-    private NKalmanFilter kmNoseY = new NKalmanFilter(1,1, 100f);
+    private NKalmanFilter kmNoseX = new NKalmanFilter(1,1, 1000f);
+    private NKalmanFilter kmNoseY = new NKalmanFilter(1,1, 1000f);
 
     protected abstract AnchorPart anchorPart();
 

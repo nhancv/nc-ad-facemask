@@ -191,7 +191,7 @@ public class SolvePNP {
     }
 
     public float getRx() {
-        return rx - 180;
+        return rx + 180;
     }
 
     public float getRy() {

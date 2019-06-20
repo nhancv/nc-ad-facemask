@@ -26,6 +26,7 @@
 
 package com.nhancv.facemask.tracking;
 
+
 public class PointState {
     static {
         System.loadLibrary("native-lib");
@@ -37,7 +38,5 @@ public class PointState {
     }
 
     public native void init();
-
-    public native void stabilize(boolean hasFace, float[] landMarkPoints);
 
 }

@@ -2,7 +2,6 @@ package com.nhancv.facemask.tracking;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -20,16 +19,14 @@ import android.os.Message;
 import android.util.Log;
 import android.view.SurfaceView;
 
-import com.nhancv.facemask.R;
 import com.nhancv.facemask.fps.StableFps;
-import com.nhancv.facemask.util.STUtils;
 
-import org.wysaid.nativePort.CGENativeLibrary;
-
+import java.util.Arrays;
 import java.util.Locale;
 
 import zeusees.tracking.Face;
 import zeusees.tracking.FaceTracking;
+import zeusees.tracking.STUtils;
 
 public class FaceLandmarkTracking implements OnImageAvailableListener {
 
@@ -40,7 +37,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     private static final int FRAME_DATA_READY_MSG = 0x01;
     private static final int RENDER_OVERLAP_MSG = 0x02;
     private static final int RENDER_PREVIEW_MSG = 0x03;
-    private static final boolean SHOW_LANDMARK = false;
+    private static final boolean SHOW_LANDMARK = true;
     /**
      * Thread
      */
@@ -79,7 +76,6 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     private FaceTracking multiTrack106;
     private boolean initTrack106;
     private Context context;
-    private PointState pointState;
 
     public void initialize(
             final Context context,
@@ -92,8 +88,6 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
         this.overlapFaceView = overlapFaceView;
         this.surfacePreview = surfacePreview;
         this.faceLandmarkListener = faceLandmarkListener;
-
-        pointState = new PointState();
 
         renderFps = new StableFps(20);
         overlayFps = new StableFps(25);
@@ -166,7 +160,6 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
             //https://github.com/nhancv/ad-gpuimage-plus/blob/master/cgeDemo/src/main/java/org/wysaid/cgeDemo/MainActivity.java
 //            String ruleString = "@dynamic wave 0.8 @style edge 1 2 @curve RGB(0, 255)(255, 0) @beautify bilateral 100 3.5 2";
 //            Bitmap bm2 = CGENativeLibrary.filterImage_MultipleEffects(bm, ruleString, 1.0f);
-
 
             Matrix matrix = new Matrix();
             matrix.postRotate(-90);
@@ -289,17 +282,6 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     private void frameOverlapRenderProcess() {
         if (multiTrack106 != null) {
             Face face = multiTrack106.getTrackingInfo();
-            // TODO: 2019-06-19 Stabilize
-//            if (face == null) {
-//                pointState.stabilize(false, null);
-//            } else {
-//                float[] landMarkPoints = new float[face.landmarks.length];
-//                for (int i = 0; i < face.landmarks.length; i++) {
-//                    landMarkPoints[i] = face.landmarks[i];
-//                }
-//                pointState.stabilize(true, landMarkPoints);
-//            }
-
 
             if (faceLandmarkListener != null) {
                 faceLandmarkListener.landmarkUpdate(face, previewWidth, previewHeight, transformMatrix);
@@ -321,8 +303,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
                     return;
                 }
                 Canvas canvas = overlapFaceView.getHolder().lockCanvas();
-                if (canvas == null)
-                    return;
+                if (canvas == null) return;
                 canvas.drawColor(0, PorterDuff.Mode.CLEAR);
                 canvas.setMatrix(transformMatrix);
 
@@ -337,7 +318,6 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
                         visibles[i] = 1.0f;
                         point2Ds[i].x = previewHeight - point2Ds[i].x;
                     }
-
                     STUtils.drawFaceRect(canvas, rect, previewHeight, previewWidth, true);
                     STUtils.drawPoints(canvas, landmarkPaint, point2Ds, visibles, previewHeight, previewWidth, true);
                 }
