@@ -67,7 +67,7 @@ public class BitmapConversion {
     }
     public Mat convertBitmap2Mat(Bitmap bmp) {
         Mat rgbaMat = new Mat(bmp.getHeight(),bmp.getWidth(),CvType.CV_8UC4); //empty mat
-//        Bitmap bmp32 = bmp.copy(Bitmap.Config.ARGB_8888,true);
+//        Bitmap bmp32 = bmp.copy(Bitmap.Constant.ARGB_8888,true);
         Utils.bitmapToMat(bmp,rgbaMat);
         //From a 4 channel image, convert to 3 channel image
         Mat rgbMat = new Mat(bmp.getHeight(),bmp.getWidth(),CvType.CV_8UC3);
@@ -76,7 +76,7 @@ public class BitmapConversion {
     }
     public Mat convertBitmap2GrayMat(Bitmap bmp){
         Mat rgbaMat = new Mat(bmp.getHeight(),bmp.getWidth(),CvType.CV_8UC4); //empty mat
-//        Bitmap bmp32 = bmp.copy(Bitmap.Config.ARGB_8888,true);
+//        Bitmap bmp32 = bmp.copy(Bitmap.Constant.ARGB_8888,true);
         Utils.bitmapToMat(bmp,rgbaMat);
         //From a 4 channel image, convert to  gray scale img
         Mat grayMat = new Mat(bmp.getHeight(),bmp.getWidth(),CvType.CV_8UC1);

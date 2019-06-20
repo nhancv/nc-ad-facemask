@@ -1,6 +1,7 @@
 package com.nhancv.facemask.m2d;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -33,6 +34,7 @@ public class M2DLandmarkView extends View {
     private StableFps stableFps;
     private SolvePNP solvePNP = new SolvePNP();
     private Mask mask;
+    private Bitmap previewBm;
 
     public M2DLandmarkView(Context context) {
         this(context, null, 0, 0);
@@ -70,7 +72,9 @@ public class M2DLandmarkView extends View {
         this.mask = mask;
     }
 
-    public void setVisionDetRetList(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
+    public void setVisionDetRetList(Bitmap previewBm, Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
+        this.previewBm = previewBm;
+
         this.previewWidth = previewWidth;
         this.previewHeight = previewHeight;
         this.scaleMatrix = scaleMatrix;
@@ -128,8 +132,9 @@ public class M2DLandmarkView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-//        canvas.setMatrix(scaleMatrix);
-
+        if (previewBm != null && !previewBm.isRecycled()) {
+            canvas.drawBitmap(previewBm, 0, 0, null);
+        }
         // Draw 2dMask
         if (mask != null) mask.draw(canvas);
 

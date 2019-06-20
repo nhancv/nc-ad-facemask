@@ -1,5 +1,6 @@
 package com.nhancv.facemask.m2d;
 
+import android.graphics.Bitmap;
 import android.graphics.Matrix;
 
 import com.nhancv.facemask.tracking.FaceLandmarkListener;
@@ -15,9 +16,9 @@ public class M2DPosController implements FaceLandmarkListener {
     }
 
     @Override
-    public void landmarkUpdate(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
+    public void landmarkUpdate(Bitmap previewBm, Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
         //1280x720
         //640x480
-        landmarkView.setVisionDetRetList(face, previewWidth, previewHeight, scaleMatrix);
+        landmarkView.setVisionDetRetList(previewBm, face, previewWidth, previewHeight, scaleMatrix);
     }
 }

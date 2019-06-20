@@ -20,6 +20,9 @@ import android.util.Log;
 import android.view.SurfaceView;
 
 import com.nhancv.facemask.fps.StableFps;
+import com.nhancv.facemask.util.Constant;
+
+import org.wysaid.nativePort.CGENativeLibrary;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -37,7 +40,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     private static final int FRAME_DATA_READY_MSG = 0x01;
     private static final int RENDER_OVERLAP_MSG = 0x02;
     private static final int RENDER_PREVIEW_MSG = 0x03;
-    private static final boolean SHOW_LANDMARK = true;
+    private static final boolean SHOW_LANDMARK = false;
     /**
      * Thread
      */
@@ -153,13 +156,11 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     private void framePreviewRenderProcess() {
         System.arraycopy(nv21Data, 0, previewRenderBuffer, 0, nv21Data.length);
 
+        if(true) return ;
+
         if (surfacePreview != null && surfacePreview.getHolder().getSurface().isValid()) {
             // Draw bm preview
             Bitmap bm = STUtils.NV21ToRGBABitmap(previewRenderBuffer, previewWidth, previewHeight, context);
-            // TODO: 2019-06-19 Filter with OpenGLES
-            //https://github.com/nhancv/ad-gpuimage-plus/blob/master/cgeDemo/src/main/java/org/wysaid/cgeDemo/MainActivity.java
-//            String ruleString = "@dynamic wave 0.8 @style edge 1 2 @curve RGB(0, 255)(255, 0) @beautify bilateral 100 3.5 2";
-//            Bitmap bm2 = CGENativeLibrary.filterImage_MultipleEffects(bm, ruleString, 1.0f);
 
             Matrix matrix = new Matrix();
             matrix.postRotate(-90);
@@ -283,8 +284,18 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
         if (multiTrack106 != null) {
             Face face = multiTrack106.getTrackingInfo();
 
+            Bitmap previewBmTmp = STUtils.NV21ToRGBABitmap(previewRenderBuffer, previewWidth, previewHeight, context);
+            Matrix matrix = new Matrix(transformMatrix);
+            matrix.postRotate(-90);
+            matrix.postTranslate(0, previewBmTmp.getWidth());
+            matrix.postScale(-1, 1);
+            matrix.postTranslate(previewBmTmp.getHeight(), 0);
+            Bitmap previewBm = Bitmap.createBitmap(previewBmTmp, 0, 0, previewBmTmp.getWidth(), previewBmTmp.getHeight(), matrix, false);
+            // TODO: 2019-06-19 Filter with OpenGLES
+            Bitmap bmFiltered = CGENativeLibrary.filterImage_MultipleEffects(previewBm, Constant.EFFECT_ACTIVE, 1.0f);
+
             if (faceLandmarkListener != null) {
-                faceLandmarkListener.landmarkUpdate(face, previewWidth, previewHeight, transformMatrix);
+                faceLandmarkListener.landmarkUpdate(bmFiltered, face, previewWidth, previewHeight, transformMatrix);
             }
 
             if (SHOW_LANDMARK) {
@@ -303,6 +314,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
                     return;
                 }
                 Canvas canvas = overlapFaceView.getHolder().lockCanvas();
+
                 if (canvas == null) return;
                 canvas.drawColor(0, PorterDuff.Mode.CLEAR);
                 canvas.setMatrix(transformMatrix);

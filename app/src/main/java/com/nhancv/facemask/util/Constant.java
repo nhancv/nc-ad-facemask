@@ -26,8 +26,10 @@
 
 package com.nhancv.facemask.util;
 
-public class Config {
-    public static final String EFFECT_CONFIGS[] = {
+public class Constant {
+
+    //https://github.com/nhancv/ad-gpuimage-plus/blob/master/cgeDemo/src/main/java/org/wysaid/cgeDemo/MainActivity.java
+    public static final String[] EFFECT_CONFIGS = {
             "",
             "@curve RGB(0,255)(255,0) @style cm mapping0.jpg 80 80 8 3", // ASCII art
             "@beautify face 1 480 640", //Beautify
@@ -137,4 +139,7 @@ public class Config {
             "@adjust saturation 0 @adjust level 0 0.83921 0.8772",
             "@adjust hsl 0.02 -0.31 -0.17 @curve R(0, 28)(23, 45)(117, 148)(135, 162)G(0, 8)(131, 152)(255, 255)B(0, 17)(58, 80)(132, 131)(127, 131)(255, 225)"
     };
+
+    public static String EFFECT_ACTIVE = EFFECT_CONFIGS[0];
+
 }

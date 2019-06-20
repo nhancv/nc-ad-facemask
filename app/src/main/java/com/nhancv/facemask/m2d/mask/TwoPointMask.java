@@ -33,20 +33,23 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 
+import com.nhancv.facemask.R;
+import com.nhancv.facemask.m2d.BigMask;
 import com.nhancv.facemask.pose.Rotation;
+import com.nhancv.facemask.pose.SolvePNP;
 import com.nhancv.facemask.pose.Translation;
 import com.nhancv.facemask.tracking.NKalmanFilter;
 import com.nhancv.facemask.util.ND01ForwardPoint;
-import com.nhancv.facemask.pose.SolvePNP;
 
 import zeusees.tracking.Face;
 
 public abstract class TwoPointMask extends BaseMask implements Mask {
     private static final String TAG = TwoPointMask.class.getSimpleName();
-    private Bitmap anchorBm, nearBm;
-    private Bitmap anchorBmTmp, nearBmTmp;
-    private Matrix anchorBmMt, nearBmMt;
+    private Bitmap anchorBm, nearBm, leftBm, rightBm, necklaceBm, heartBm;
+    private Bitmap anchorBmTmp, nearBmTmp, leftBmTmp, rightBmTmp, necklaceBmTmp, heartBmTmp;
+    private Matrix anchorBmMt, nearBmMt, leftBmMt, rightBmMt, necklaceBmMt, heartBmMt;
     private ND01ForwardPoint forwardPoint = new ND01ForwardPoint();
+    private BigMask bigMask;
 
     protected abstract AnchorPart anchorPart();
 
@@ -55,27 +58,45 @@ public abstract class TwoPointMask extends BaseMask implements Mask {
     @Override
     public void init(Context context) {
         super.init(context);
+        bigMask = new BigMask(
+                BitmapFactory.decodeResource(context.getResources(), R.drawable.mask));
+
         anchorBm = BitmapFactory.decodeResource(context.getResources(), anchorPart().bmResId);
         nearBm = BitmapFactory.decodeResource(context.getResources(), nearPart().bmResId);
 
         nearBmMt = new Matrix();
+        leftBmMt = new Matrix();
+        rightBmMt = new Matrix();
+        necklaceBmMt = new Matrix();
+        heartBmMt = new Matrix();
+
         anchorBmMt = new Matrix();
         forwardPoint = new ND01ForwardPoint();
     }
 
     private PointF lastNoseF = new PointF();
-    private NKalmanFilter kmNoseX = new NKalmanFilter(1,1, 100f);
-    private NKalmanFilter kmNoseY = new NKalmanFilter(1,1, 100f);
+    private NKalmanFilter kmNoseX = new NKalmanFilter(1, 1, 50f);
+    private NKalmanFilter kmNoseY = new NKalmanFilter(1, 1, 50f);
     private PointF lastEarF = new PointF();
-    private NKalmanFilter kmEarX = new NKalmanFilter(1,1, 100f);
-    private NKalmanFilter kmEarY = new NKalmanFilter(1,1, 100f);
+    private NKalmanFilter kmEarX = new NKalmanFilter(1, 1, 50f);
+    private NKalmanFilter kmEarY = new NKalmanFilter(1, 1, 50f);
+
     @Override
     public void update(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix, SolvePNP solvePNP) {
         if (face != null && !anchorBm.isRecycled() && !nearBm.isRecycled()) {
+
+            anchorBm = bigMask.nose();
+            nearBm = bigMask.heart();
+            leftBm = bigMask.leftEar();
+            rightBm = bigMask.rightEar();
+            necklaceBm = bigMask.necklace();
+            heartBm = bigMask.heart();
+
             super.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
             //Buffer coors
             int anchorPointId = anchorPart().anchorPointId;
-            int nearAnchorPointId = nearPart().anchorPointId;
+//            int nearAnchorPointId = nearPart().anchorPointId;
+            int nearAnchorPointId = 50;
             PointF noseF = new PointF(point2Ds[anchorPointId].x, point2Ds[anchorPointId].y);
             PointF earF = new PointF(point2Ds[nearAnchorPointId].x, point2Ds[nearAnchorPointId].y);
             denoise(kmNoseX, kmNoseY, lastNoseF, noseF);
@@ -105,6 +126,19 @@ public abstract class TwoPointMask extends BaseMask implements Mask {
             transformMat(nearBmMt, nearBmTmp.getWidth() / 2f, nearBmTmp.getHeight() / 2f, earF.x * scaleX - nearBmTmp.getWidth() / 2f,
                     earF.y * scaleY - nearBmTmp.getHeight() / 2f, rotation, translation);
 
+            PointF leftEarF = new PointF(point2Ds[19].x, point2Ds[19].y);
+            PointF rightEarF = new PointF(point2Ds[74].x, point2Ds[74].y);
+            float ratioEar = leftBm.getHeight() * 1.0f / leftBm.getWidth();
+            float earsW = Math.abs(1f * faceRect.width()) * scaleX;
+            float earsH = earsW * ratioEar;
+            leftBmTmp = Bitmap.createScaledBitmap(leftBm, (int) (earsW), (int) (earsH), false);
+            transformMat(leftBmMt, leftBmTmp.getWidth() / 2f, leftBmTmp.getHeight() / 2f, leftEarF.x * scaleX - leftBmTmp.getWidth() / 2f,
+                    leftEarF.y * scaleY - leftBmTmp.getHeight() / 2f, rotation, translation);
+
+            rightBmTmp = Bitmap.createScaledBitmap(rightBm, (int) (earsW), (int) (earsH), false);
+            transformMat(rightBmMt, rightBmTmp.getWidth() / 2f, rightBmTmp.getHeight() / 2f, rightEarF.x * scaleX - rightBmTmp.getWidth() / 2f,
+                    rightEarF.y * scaleY - rightBmTmp.getHeight() / 2f, rotation, translation);
+
             float nratio = anchorBm.getHeight() * 1.0f / anchorBm.getWidth();
             float nwidth = Math.abs(anchorPart().scale * faceRect.width()) * scaleX;
             float nheight = nwidth * nratio;
@@ -112,7 +146,7 @@ public abstract class TwoPointMask extends BaseMask implements Mask {
             transformMat(anchorBmMt, anchorBmTmp.getWidth() / 2f, anchorBmTmp.getHeight() / 2f, noseF.x * scaleX - anchorBmTmp.getWidth() / 2f,
                     noseF.y * scaleY - anchorBmTmp.getHeight() / 2f, rotation, translation);
         } else {
-            nearBmTmp = anchorBmTmp = null;
+            rightBmTmp = leftBmTmp = nearBmTmp = anchorBmTmp = null;
         }
     }
 
@@ -120,6 +154,8 @@ public abstract class TwoPointMask extends BaseMask implements Mask {
     public void draw(Canvas canvas) {
         if (nearBmTmp != null && !nearBmTmp.isRecycled()) canvas.drawBitmap(nearBmTmp, nearBmMt, null);
         if (anchorBmTmp != null && !anchorBmTmp.isRecycled()) canvas.drawBitmap(anchorBmTmp, anchorBmMt, null);
+        if (leftBmTmp != null && !leftBmTmp.isRecycled()) canvas.drawBitmap(leftBmTmp, leftBmMt, null);
+        if (rightBmTmp != null && !rightBmTmp.isRecycled()) canvas.drawBitmap(rightBmTmp, rightBmMt, null);
     }
 
     @Override

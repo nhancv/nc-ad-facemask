@@ -7,6 +7,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.PixelFormat;
@@ -50,6 +51,7 @@ import com.nhancv.facemask.m2d.mask.imp.NerdMask;
 import com.nhancv.facemask.pose.RealTimeRotation;
 import com.nhancv.facemask.tracking.FaceLandmarkListener;
 import com.nhancv.facemask.tracking.FaceLandmarkTracking;
+import com.nhancv.facemask.util.Constant;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -127,8 +129,8 @@ public class CameraFragment extends Fragment
     private SurfaceView surfacePreview;
     private SurfaceView overlapFaceView;
     private M2DLandmarkView landmarkView;
-    private boolean permissionReady;
     private RealTimeRotation realTimeRotation;
+    private boolean permissionReady;
 
     private int activeMaskIndex = -1;
     private List<Mask> maskList = new ArrayList<Mask>() {{
@@ -137,6 +139,9 @@ public class CameraFragment extends Fragment
         add(new HamsterMask());
         add(new NerdMask());
     }};
+
+    private int effectIndex;
+
     /**
      * Listener / Callback
      */
@@ -192,6 +197,11 @@ public class CameraFragment extends Fragment
         view.findViewById(R.id.iv_dog).setOnClickListener(v -> changeMask(1));
         view.findViewById(R.id.iv_hamster).setOnClickListener(v -> changeMask(2));
         view.findViewById(R.id.iv_nerd).setOnClickListener(v -> changeMask(3));
+        view.findViewById(R.id.bt_change_filter).setOnClickListener(v -> {
+            effectIndex ++;
+            effectIndex = effectIndex % Constant.EFFECT_CONFIGS.length;
+            Constant.EFFECT_ACTIVE = Constant.EFFECT_CONFIGS[effectIndex];
+        });
         changeMask(0);
 
         surfacePreview = view.findViewById(R.id.surfacePreview);
@@ -588,8 +598,8 @@ public class CameraFragment extends Fragment
     }
 
     @Override
-    public void landmarkUpdate(final Face face, final int previewWidth, final int previewHeight, final Matrix scaleMatrix) {
-        m2DPosController.landmarkUpdate(face, previewWidth, previewHeight, scaleMatrix);
+    public void landmarkUpdate(final Bitmap previewBm, final Face face, final int previewWidth, final int previewHeight, final Matrix scaleMatrix) {
+        m2DPosController.landmarkUpdate(previewBm, face, previewWidth, previewHeight, scaleMatrix);
     }
 
     /**
