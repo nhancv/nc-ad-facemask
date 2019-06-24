@@ -5,7 +5,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.PixelFormat;
@@ -37,9 +36,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.nhancv.facemask.m2d.M2dPreview;
-import com.nhancv.facemask.m2d.M2dController;
 import com.nhancv.facemask.pose.RealTimeRotation;
-import com.nhancv.facemask.tracking.FaceLandmarkListener;
 import com.nhancv.facemask.tracking.FaceLandmarkTracking;
 import com.nhancv.facemask.util.Constant;
 
@@ -52,11 +49,9 @@ import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import zeusees.tracking.Face;
-
 
 public class CameraFragment extends Fragment
-        implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback, FaceLandmarkListener {
+        implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
 
     /**
      * Static
@@ -84,7 +79,6 @@ public class CameraFragment extends Fragment
      * Global vars
      */
     private String cameraId = "1";
-    private M2dController m2dController;
     private Matrix transformMatrix = new Matrix();
 
     /**
@@ -118,7 +112,6 @@ public class CameraFragment extends Fragment
     private M2dPreview m2dPreview;
     private RealTimeRotation realTimeRotation;
     private boolean permissionReady;
-
     private int effectIndex;
 
     /**
@@ -199,7 +192,6 @@ public class CameraFragment extends Fragment
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        m2dController = new M2dController(m2dPreview);
     }
 
     @Override
@@ -486,7 +478,7 @@ public class CameraFragment extends Fragment
         realTimeRotation.setUpWorldPoints();
         realTimeRotation.setUpCamMatrix(new Point((int) (READER_WIDTH / 2f), (int) (READER_HEIGHT / 2f)));
         m2dPreview.initPNP();
-        onGetPreviewListener.initialize(getContext(), transformMatrix, landmarkPointsView, this);
+        onGetPreviewListener.initialize(getContext(), transformMatrix, m2dPreview, landmarkPointsView);
     }
 
     // Shows a {@link Toast} on the UI thread.
@@ -545,11 +537,6 @@ public class CameraFragment extends Fragment
             Log.e(TAG, "Couldn't find any suitable preview size");
             return choices[0];
         }
-    }
-
-    @Override
-    public void landmarkUpdate(final Bitmap previewBm, final Face face, final int previewWidth, final int previewHeight, final Matrix scaleMatrix) {
-        m2dController.landmarkUpdate(previewBm, face, previewWidth, previewHeight, scaleMatrix);
     }
 
     /**

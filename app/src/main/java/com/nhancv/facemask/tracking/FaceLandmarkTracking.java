@@ -20,6 +20,7 @@ import android.util.Log;
 import android.view.SurfaceView;
 
 import com.nhancv.facemask.fps.StableFps;
+import com.nhancv.facemask.m2d.M2dPreview;
 import com.nhancv.facemask.util.Constant;
 
 import org.wysaid.nativePort.CGENativeLibrary;
@@ -53,7 +54,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
      */
     private Matrix transformMatrix;
     private SurfaceView landmarkPointsView;
-    private FaceLandmarkListener faceLandmarkListener;
+    private M2dPreview m2dPreview;
 
     /**
      * Global vars
@@ -63,7 +64,6 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     private Paint redPaint;
     private StableFps previewFps;
     private long lastTime;
-
 
     private Paint landmarkPaint;
     private byte[] nv21Data;
@@ -76,12 +76,12 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     public void initialize(
             final Context context,
             final Matrix transformMatrix,
-            final SurfaceView landmarkPointsView,
-            final FaceLandmarkListener faceLandmarkListener) {
+            final M2dPreview m2dPreview,
+            final SurfaceView landmarkPointsView) {
         this.context = context;
         this.transformMatrix = transformMatrix;
+        this.m2dPreview = m2dPreview;
         this.landmarkPointsView = landmarkPointsView;
-        this.faceLandmarkListener = faceLandmarkListener;
 
         previewFps = new StableFps(30);
 
@@ -229,50 +229,54 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
             // TODO: 2019-06-19 Filter with OpenGLES
             Bitmap bmFiltered = CGENativeLibrary.filterImage_MultipleEffects(previewBm, Constant.EFFECT_ACTIVE, 1.0f);
 
-            if (faceLandmarkListener != null) {
-                faceLandmarkListener.landmarkUpdate(bmFiltered, face, previewWidth, previewHeight, transformMatrix);
-            }
+            // Show preview
+            m2dPreview.setVisionDetRetList(bmFiltered, face, previewWidth, previewHeight, transformMatrix);
 
-            if (SHOW_LANDMARK) {
-                final String log;
-                long endTime = System.currentTimeMillis();
-                if (lastTime == 0 || endTime == lastTime) {
-                    lastTime = System.currentTimeMillis();
-                    log = "--";
-                } else {
-                    log = String.format(Locale.getDefault(), "Fps: %d", 1000 / (endTime - lastTime));
-                    lastTime = endTime;
-                }
-
-                // Draw landmarks to SurfaceView
-                if (!landmarkPointsView.getHolder().getSurface().isValid()) {
-                    return;
-                }
-                Canvas canvas = landmarkPointsView.getHolder().lockCanvas();
-                if (canvas != null) {
-                    canvas.drawColor(0, PorterDuff.Mode.CLEAR);
-                    canvas.setMatrix(transformMatrix);
-
-                    if (face != null) {
-                        Rect rect = new Rect(previewHeight - face.left, face.top, previewHeight - face.right, face.bottom);
-                        PointF[] point2Ds = new PointF[106];
-                        for (int i = 0; i < 106; i++) {
-                            point2Ds[i] = new PointF(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
-                        }
-                        float[] visibles = new float[106];
-                        for (int i = 0; i < point2Ds.length; i++) {
-                            visibles[i] = 1.0f;
-                            point2Ds[i].x = previewHeight - point2Ds[i].x;
-                        }
-                        STUtils.drawFaceRect(canvas, rect, previewHeight, previewWidth, true);
-                        STUtils.drawPoints(canvas, landmarkPaint, point2Ds, visibles, previewHeight, previewWidth, true);
-                    }
-                    canvas.drawText(log, 10, 30, redPaint);
-                    landmarkPointsView.getHolder().unlockCanvasAndPost(canvas);
-                }
-            }
+            // Show landmark for debug
+            showDebugLandmarkPoints(face);
         }
 
+    }
+
+    private void showDebugLandmarkPoints(Face face) {
+        if (SHOW_LANDMARK) {
+            final String log;
+            long endTime = System.currentTimeMillis();
+            if (lastTime == 0 || endTime == lastTime) {
+                lastTime = System.currentTimeMillis();
+                log = "--";
+            } else {
+                log = String.format(Locale.getDefault(), "Fps: %d", 1000 / (endTime - lastTime));
+                lastTime = endTime;
+            }
+
+            // Draw landmarks to SurfaceView
+            if (!landmarkPointsView.getHolder().getSurface().isValid()) {
+                return;
+            }
+            Canvas canvas = landmarkPointsView.getHolder().lockCanvas();
+            if (canvas != null) {
+                canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+                canvas.setMatrix(transformMatrix);
+
+                if (face != null) {
+                    Rect rect = new Rect(previewHeight - face.left, face.top, previewHeight - face.right, face.bottom);
+                    PointF[] point2Ds = new PointF[106];
+                    for (int i = 0; i < 106; i++) {
+                        point2Ds[i] = new PointF(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
+                    }
+                    float[] visibles = new float[106];
+                    for (int i = 0; i < point2Ds.length; i++) {
+                        visibles[i] = 1.0f;
+                        point2Ds[i].x = previewHeight - point2Ds[i].x;
+                    }
+                    STUtils.drawFaceRect(canvas, rect, previewHeight, previewWidth, true);
+                    STUtils.drawPoints(canvas, landmarkPaint, point2Ds, visibles, previewHeight, previewWidth, true);
+                }
+                canvas.drawText(log, 10, 30, redPaint);
+                landmarkPointsView.getHolder().unlockCanvasAndPost(canvas);
+            }
+        }
     }
 
 }

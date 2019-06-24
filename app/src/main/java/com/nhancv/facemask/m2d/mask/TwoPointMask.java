@@ -39,7 +39,6 @@ import com.nhancv.facemask.pose.Rotation;
 import com.nhancv.facemask.pose.SolvePNP;
 import com.nhancv.facemask.pose.Translation;
 import com.nhancv.facemask.tracking.NKalmanFilter;
-import com.nhancv.facemask.util.ND01ForwardPoint;
 
 import zeusees.tracking.Face;
 
@@ -48,7 +47,6 @@ public abstract class TwoPointMask extends BaseMask implements Mask {
     private Bitmap anchorBm, nearBm, leftBm, rightBm, necklaceBm, heartBm;
     private Bitmap anchorBmTmp, nearBmTmp, leftBmTmp, rightBmTmp, necklaceBmTmp, heartBmTmp;
     private Matrix anchorBmMt, nearBmMt, leftBmMt, rightBmMt, necklaceBmMt, heartBmMt;
-    private ND01ForwardPoint forwardPoint = new ND01ForwardPoint();
     private BigMask bigMask;
 
     protected abstract AnchorPart anchorPart();
@@ -71,7 +69,6 @@ public abstract class TwoPointMask extends BaseMask implements Mask {
         heartBmMt = new Matrix();
 
         anchorBmMt = new Matrix();
-        forwardPoint = new ND01ForwardPoint();
     }
 
     private PointF lastNoseF = new PointF();
@@ -114,15 +111,7 @@ public abstract class TwoPointMask extends BaseMask implements Mask {
             float earW = Math.abs(nearPart().scale * faceRect.width()) * scaleX;
             float earH = earW * ratio;
 
-            float R = nearPart().distanceRate * (float) Math.sqrt((noseF.x - earF.x) * (noseF.x - earF.x) + (noseF.y - earF.y) * (noseF.y - earF.y));
-            float Ox = noseF.x, Oy = noseF.y;
-            float Ax = earF.x, Ay = earF.y;
-
-//            forwardPoint.solve(Ox, Oy, Ax, Ay, R);
-
             nearBmTmp = Bitmap.createScaledBitmap(nearBm, (int) (earW), (int) (earH), false);
-//            transformMat(nearBmMt, nearBmTmp.getWidth() / 2f, nearBmTmp.getHeight() / 2f, forwardPoint.x * scaleX - earW / 2,
-//                    forwardPoint.y * scaleY - earH / 2, rotation, translation);
             transformMat(nearBmMt, nearBmTmp.getWidth() / 2f, nearBmTmp.getHeight() / 2f, earF.x * scaleX - nearBmTmp.getWidth() / 2f,
                     earF.y * scaleY - nearBmTmp.getHeight() / 2f, rotation, translation);
 
