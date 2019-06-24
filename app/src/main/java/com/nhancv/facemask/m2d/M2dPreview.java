@@ -52,7 +52,7 @@ public class M2dPreview extends View {
         //start thread
         stableFps = new StableFps(20);
 
-        //init mask
+        //init rabbit_mask
         mask = new RabbitMask();
         mask.init(getContext());
     }

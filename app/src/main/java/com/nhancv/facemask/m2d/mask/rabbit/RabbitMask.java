@@ -54,7 +54,7 @@ public class RabbitMask extends BaseMask implements Mask {
     public void init(Context context) {
         super.init(context);
         rabbitSprites = new RabbitSprites(
-                BitmapFactory.decodeResource(context.getResources(), R.drawable.mask));
+                BitmapFactory.decodeResource(context.getResources(), R.drawable.rabbit_mask));
 
         updateSprite();
 
@@ -65,7 +65,7 @@ public class RabbitMask extends BaseMask implements Mask {
     }
 
     /**
-     * Update sprite mask for animation
+     * Update sprite rabbit_mask for animation
      */
     private void updateSprite() {
         noseBm = rabbitSprites.nose();
