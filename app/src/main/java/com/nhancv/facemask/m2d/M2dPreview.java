@@ -3,15 +3,13 @@ package com.nhancv.facemask.m2d;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
 
 import com.nhancv.facemask.fps.StableFps;
 import com.nhancv.facemask.m2d.mask.Mask;
-import com.nhancv.facemask.m2d.mask.imp.CatMask;
+import com.nhancv.facemask.m2d.mask.rabbit.RabbitMask;
 import com.nhancv.facemask.pose.SolvePNP;
 
 import zeusees.tracking.Face;
@@ -25,7 +23,6 @@ public class M2dPreview extends View {
     private int ratioHeight = 0;
     private float offsetX = 0;
     private float offsetY = 0;
-    private Paint faceLandmarkPaint;
 
     private int previewWidth;
     private int previewHeight;
@@ -52,16 +49,11 @@ public class M2dPreview extends View {
     public M2dPreview(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
 
-        faceLandmarkPaint = new Paint();
-        faceLandmarkPaint.setColor(Color.GREEN);
-        faceLandmarkPaint.setStrokeWidth(1);
-        faceLandmarkPaint.setStyle(Paint.Style.FILL);
-
         //start thread
         stableFps = new StableFps(20);
 
         //init mask
-        mask = new CatMask();
+        mask = new RabbitMask();
         mask.init(getContext());
     }
 
@@ -140,7 +132,6 @@ public class M2dPreview extends View {
         if (mask != null) mask.draw(canvas);
 
     }
-
 
     private float getX(float x) {
         return x / previewWidth * ratioWidth + offsetX;

@@ -26,13 +26,13 @@
 
 package com.nhancv.facemask.m2d.mask;
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Matrix;
+        import android.content.Context;
+        import android.graphics.Canvas;
+        import android.graphics.Matrix;
 
-import com.nhancv.facemask.pose.SolvePNP;
+        import com.nhancv.facemask.pose.SolvePNP;
 
-import zeusees.tracking.Face;
+        import zeusees.tracking.Face;
 
 public interface Mask {
 

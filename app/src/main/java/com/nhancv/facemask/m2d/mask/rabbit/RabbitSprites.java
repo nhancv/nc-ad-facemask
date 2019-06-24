@@ -24,14 +24,14 @@
  * @author Nhan Cao <nhan.cao@beesightsoft.com>
  */
 
-package com.nhancv.facemask.m2d;
+package com.nhancv.facemask.m2d.mask.rabbit;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 
-public class BigMask {
-    private static final String TAG = BigMask.class.getSimpleName();
+public class RabbitSprites {
+    private static final String TAG = RabbitSprites.class.getSimpleName();
     private static final int SKIP = 2;
     private Bitmap bitmap;
     private int width = 256;
@@ -56,7 +56,7 @@ public class BigMask {
     };
 
 
-    public BigMask(Bitmap bitmap) {
+    public RabbitSprites(Bitmap bitmap) {
         this.bitmap = bitmap; // size 2048x2048, sprite size 256x256
     }
 
