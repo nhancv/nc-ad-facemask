@@ -2,8 +2,6 @@ package com.nhancv.facemask;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -24,12 +22,9 @@ import android.media.ImageReader;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -43,10 +38,10 @@ import android.widget.Toast;
 
 import com.nhancv.facemask.m2d.M2DLandmarkView;
 import com.nhancv.facemask.m2d.M2DPosController;
+import com.nhancv.facemask.m2d.mask.Mask;
 import com.nhancv.facemask.m2d.mask.imp.CatMask;
 import com.nhancv.facemask.m2d.mask.imp.DogMask;
 import com.nhancv.facemask.m2d.mask.imp.HamsterMask;
-import com.nhancv.facemask.m2d.mask.Mask;
 import com.nhancv.facemask.m2d.mask.imp.NerdMask;
 import com.nhancv.facemask.pose.RealTimeRotation;
 import com.nhancv.facemask.tracking.FaceLandmarkListener;
@@ -54,10 +49,11 @@ import com.nhancv.facemask.tracking.FaceLandmarkTracking;
 import com.nhancv.facemask.util.Constant;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -71,6 +67,7 @@ public class CameraFragment extends Fragment
      * Static
      */
     private static final String TAG = CameraFragment.class.getSimpleName();
+
     public static final Point SCREEN_SIZE = new Point();
     public static final int MAX_PREVIEW_WIDTH = 640;//1920
     public static final int MAX_PREVIEW_HEIGHT = 480;//1080
@@ -87,8 +84,6 @@ public class CameraFragment extends Fragment
 
     private HandlerThread imagePreviewThread;
     private Handler imagePreviewHandler;
-
-    private Handler uiHandler;
 
     /**
      * Global vars
@@ -120,8 +115,6 @@ public class CameraFragment extends Fragment
 
     // Whether the current camera device supports Flash or not.
     private boolean flashSupported;
-    // Size of camera preview
-    private Size previewSize;
 
     /**
      * UI component
@@ -198,7 +191,7 @@ public class CameraFragment extends Fragment
         view.findViewById(R.id.iv_hamster).setOnClickListener(v -> changeMask(2));
         view.findViewById(R.id.iv_nerd).setOnClickListener(v -> changeMask(3));
         view.findViewById(R.id.bt_change_filter).setOnClickListener(v -> {
-            effectIndex ++;
+            effectIndex++;
             effectIndex = effectIndex % Constant.EFFECT_CONFIGS.length;
             Constant.EFFECT_ACTIVE = Constant.EFFECT_CONFIGS[effectIndex];
         });
@@ -211,16 +204,15 @@ public class CameraFragment extends Fragment
         overlapFaceView.setZOrderOnTop(true);
         overlapFaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
-        Display display = getActivity().getWindowManager().getDefaultDisplay();
+        Display display = Objects.requireNonNull(getActivity()).getWindowManager().getDefaultDisplay();
         display.getSize(SCREEN_SIZE);
         int screenWidth = SCREEN_SIZE.x;
         int screenHeight = SCREEN_SIZE.y;
-        Log.e("Width", "" + screenWidth);
-        Log.e("height", "" + screenHeight);
+        Log.d(TAG, String.format(Locale.getDefault(), "onCreateView: w %d x h %d", screenWidth, screenHeight));
         //Sony: 1080x1776
 
-        SURFACE_WIDTH = screenWidth * READER_WIDTH / READER_HEIGHT;
         SURFACE_HEIGHT = screenWidth;
+        SURFACE_WIDTH = SURFACE_HEIGHT * READER_WIDTH / READER_HEIGHT;
         transformMatrix.setScale(SURFACE_HEIGHT / (float) READER_HEIGHT, SURFACE_WIDTH / (float) READER_WIDTH);
 
         return view;
@@ -249,14 +241,24 @@ public class CameraFragment extends Fragment
     public void onResume() {
         super.onResume();
         if (permissionReady) {
-            init();
+            startBackgroundThread();
+            openCamera(SURFACE_WIDTH, SURFACE_HEIGHT);
         }
     }
 
-    public void init() {
-        if (!permissionReady) permissionReady = true;
-        startBackgroundThread();
-        openCamera(SURFACE_WIDTH, SURFACE_HEIGHT);
+    /**
+     * This function show toast notify require permission and finish activity
+     */
+    private void exitByPermissionNotReady() {
+        showToast("Need permission");
+        Objects.requireNonNull(getActivity()).finish();
+    }
+
+    /**
+     * This function is called from Camera Activity after granted permission
+     */
+    public void updatePermissionReady() {
+        permissionReady = true;
     }
 
     @Override
@@ -280,14 +282,6 @@ public class CameraFragment extends Fragment
 
     }
 
-    private void requestCameraPermission() {
-        if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
-            new ConfirmationDialog().show(getChildFragmentManager(), "Confirm");
-        } else {
-            requestPermissions(new String[]{Manifest.permission.CAMERA}, 1);
-        }
-    }
-
     /**
      * Sets up member variables related to camera.
      *
@@ -296,6 +290,7 @@ public class CameraFragment extends Fragment
      */
     private void setUpCameraOutputs(int width, int height) {
         Activity activity = getActivity();
+        assert activity != null;
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
         try {
             for (int i = 0; i < manager.getCameraIdList().length; i++) {
@@ -360,7 +355,8 @@ public class CameraFragment extends Fragment
                     // bus' bandwidth limitation, resulting in gorgeous previews but the storage of
                     // garbage capture data.
                     Size aspectRatio = new Size(MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGHT);
-                    previewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
+                    // Size of camera preview
+                    Size previewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
                             rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth,
                             maxPreviewHeight, aspectRatio);
 
@@ -389,19 +385,17 @@ public class CameraFragment extends Fragment
 
     // Opens the camera specified by cameraId
     private void openCamera(int width, int height) {
-        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
-            requestCameraPermission();
-            return;
-        }
         closeCamera();
 
         setUpCameraOutputs(width, height);
-        Activity activity = getActivity();
-        CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
+        CameraManager manager = (CameraManager) Objects.requireNonNull(getActivity()).getSystemService(Context.CAMERA_SERVICE);
         try {
             if (!cameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
+            }
+            if (ActivityCompat.checkSelfPermission(Objects.requireNonNull(getActivity()), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                exitByPermissionNotReady();
+                return;
             }
             manager.openCamera(cameraId, stateCallback, cameraSessionHandler);
         } catch (CameraAccessException e) {
@@ -443,9 +437,6 @@ public class CameraFragment extends Fragment
         imagePreviewThread = new HandlerThread("PreProcessingImageThread");
         imagePreviewThread.start();
         imagePreviewHandler = new Handler(imagePreviewThread.getLooper());
-
-        uiHandler = new Handler(Looper.getMainLooper());
-
     }
 
     // Stops a background thread and its Handler
@@ -467,8 +458,6 @@ public class CameraFragment extends Fragment
             imagePreviewThread = null;
             imagePreviewHandler = null;
 
-            uiHandler = null;
-
             realTimeRotation.releaseMatrix();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -479,8 +468,7 @@ public class CameraFragment extends Fragment
     private void createCameraPreviewSession() {
         try {
             // We set up a CaptureRequest.Builder with the output Surface.
-            previewRequestBuilder
-                    = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            previewRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
 
             // Create the reader for the preview frames.
             previewReader = ImageReader.newInstance(READER_WIDTH, READER_HEIGHT, ImageFormat.YUV_420_888, 2);
@@ -489,7 +477,7 @@ public class CameraFragment extends Fragment
             cameraOpenCloseLock.acquire();
             // Here, we create a CameraCaptureSession for camera preview.
             if (previewReader != null) {
-                cameraDevice.createCaptureSession(Arrays.asList(previewReader.getSurface()),
+                cameraDevice.createCaptureSession(Collections.singletonList(previewReader.getSurface()),
                         new CameraCaptureSession.StateCallback() {
 
                             @Override
@@ -519,7 +507,6 @@ public class CameraFragment extends Fragment
                                     @NonNull CameraCaptureSession cameraCaptureSession) {
                                 showToast("Failed");
                                 release();
-                                init();
                             }
                         }, null
                 );
@@ -614,34 +601,6 @@ public class CameraFragment extends Fragment
                     (long) rhs.getWidth() * rhs.getHeight());
         }
 
-    }
-
-    /**
-     * Shows OK/Cancel confirmation dialog about camera permission.
-     */
-    public static class ConfirmationDialog extends DialogFragment {
-
-        @NonNull
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            final Fragment parent = getParentFragment();
-            return new AlertDialog.Builder(getActivity())
-                    .setMessage(R.string.request_permission)
-                    .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                        assert parent != null;
-                        parent.requestPermissions(new String[]{Manifest.permission.CAMERA},
-                                1);
-                    })
-                    .setNegativeButton(android.R.string.cancel,
-                            (dialog, which) -> {
-                                assert parent != null;
-                                Activity activity = parent.getActivity();
-                                if (activity != null) {
-                                    activity.finish();
-                                }
-                            })
-                    .create();
-        }
     }
 
 }

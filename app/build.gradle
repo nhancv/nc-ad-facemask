@@ -80,7 +80,7 @@ dependencies {
 
     implementation project(':opencv')
     implementation 'de.hdodenhof:circleimageview:3.0.0'
-    //Pure graphics lib without ffmpeg. (arch armv7a for branch 'min')
-    implementation 'org.wysaid:gpuimage-plus:2.6.1-min-armv7a' //Recommended
+    implementation 'pub.devrel:easypermissions:2.0.1'
+    implementation 'org.wysaid:gpuimage-plus:2.6.1'
 
 }
