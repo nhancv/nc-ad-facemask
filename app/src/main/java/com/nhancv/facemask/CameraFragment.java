@@ -36,13 +36,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.nhancv.facemask.m2d.M2DLandmarkView;
-import com.nhancv.facemask.m2d.M2DPosController;
-import com.nhancv.facemask.m2d.mask.Mask;
-import com.nhancv.facemask.m2d.mask.imp.CatMask;
-import com.nhancv.facemask.m2d.mask.imp.DogMask;
-import com.nhancv.facemask.m2d.mask.imp.HamsterMask;
-import com.nhancv.facemask.m2d.mask.imp.NerdMask;
+import com.nhancv.facemask.m2d.M2dPreview;
+import com.nhancv.facemask.m2d.M2dController;
 import com.nhancv.facemask.pose.RealTimeRotation;
 import com.nhancv.facemask.tracking.FaceLandmarkListener;
 import com.nhancv.facemask.tracking.FaceLandmarkTracking;
@@ -89,7 +84,7 @@ public class CameraFragment extends Fragment
      * Global vars
      */
     private String cameraId = "1";
-    private M2DPosController m2DPosController;
+    private M2dController m2dController;
     private Matrix transformMatrix = new Matrix();
 
     /**
@@ -119,19 +114,10 @@ public class CameraFragment extends Fragment
     /**
      * UI component
      */
-    private SurfaceView surfacePreview;
-    private SurfaceView overlapFaceView;
-    private M2DLandmarkView landmarkView;
+    private SurfaceView landmarkPointsView;
+    private M2dPreview m2dPreview;
     private RealTimeRotation realTimeRotation;
     private boolean permissionReady;
-
-    private int activeMaskIndex = -1;
-    private List<Mask> maskList = new ArrayList<Mask>() {{
-        add(new CatMask());
-        add(new DogMask());
-        add(new HamsterMask());
-        add(new NerdMask());
-    }};
 
     private int effectIndex;
 
@@ -184,25 +170,17 @@ public class CameraFragment extends Fragment
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_camera, container, false);
 
-        landmarkView = view.findViewById(R.id.fragment_camera_2dlandmarkview);
-
-        view.findViewById(R.id.iv_cat).setOnClickListener(v -> changeMask(0));
-        view.findViewById(R.id.iv_dog).setOnClickListener(v -> changeMask(1));
-        view.findViewById(R.id.iv_hamster).setOnClickListener(v -> changeMask(2));
-        view.findViewById(R.id.iv_nerd).setOnClickListener(v -> changeMask(3));
         view.findViewById(R.id.bt_change_filter).setOnClickListener(v -> {
             effectIndex++;
             effectIndex = effectIndex % Constant.EFFECT_CONFIGS.length;
             Constant.EFFECT_ACTIVE = Constant.EFFECT_CONFIGS[effectIndex];
         });
-        changeMask(0);
 
-        surfacePreview = view.findViewById(R.id.surfacePreview);
-        surfacePreview.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+        m2dPreview = view.findViewById(R.id.fragment_camera_2dpreview);
 
-        overlapFaceView = view.findViewById(R.id.surfaceOverlap);
-        overlapFaceView.setZOrderOnTop(true);
-        overlapFaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+        landmarkPointsView = view.findViewById(R.id.surface_landmark_points);
+        landmarkPointsView.setZOrderOnTop(true);
+        landmarkPointsView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
         Display display = Objects.requireNonNull(getActivity()).getWindowManager().getDefaultDisplay();
         display.getSize(SCREEN_SIZE);
@@ -218,23 +196,10 @@ public class CameraFragment extends Fragment
         return view;
     }
 
-    private void changeMask(int maskIndex) {
-        if (activeMaskIndex != maskIndex) {
-
-            Mask mask = maskList.get(maskIndex);
-            mask.init(getContext());
-            landmarkView.setMask(mask);
-
-            if (activeMaskIndex > -1) maskList.get(activeMaskIndex).release();
-            activeMaskIndex = maskIndex;
-
-        }
-    }
-
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        m2DPosController = new M2DPosController(landmarkView);
+        m2dController = new M2dController(m2dPreview);
     }
 
     @Override
@@ -265,7 +230,7 @@ public class CameraFragment extends Fragment
     public void onPause() {
         if (permissionReady) {
             release();
-            landmarkView.releasePNP();
+            m2dPreview.releasePNP();
         }
         super.onPause();
     }
@@ -279,7 +244,6 @@ public class CameraFragment extends Fragment
     public void onClick(final View view) {
         view.setEnabled(false);
         view.postDelayed(() -> view.setEnabled(true), 500);
-
     }
 
     /**
@@ -304,7 +268,6 @@ public class CameraFragment extends Fragment
                     if (map == null) {
                         continue;
                     }
-
 
                     // Find out if we need to swap dimension to get the preview size relative to sensor
                     // coordinate.
@@ -364,10 +327,10 @@ public class CameraFragment extends Fragment
                     // We fit the aspect ratio of TextureView to the size of preview we picked.
                     int orientation = getResources().getConfiguration().orientation;
                     if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                        landmarkView.setAspectRatio(
+                        m2dPreview.setAspectRatio(
                                 previewSize.getWidth(), previewSize.getHeight());
                     } else {
-                        landmarkView.setAspectRatio(
+                        m2dPreview.setAspectRatio(
                                 previewSize.getHeight(), previewSize.getWidth());
                     }
 
@@ -522,8 +485,8 @@ public class CameraFragment extends Fragment
         realTimeRotation = RealTimeRotation.getInstance();
         realTimeRotation.setUpWorldPoints();
         realTimeRotation.setUpCamMatrix(new Point((int) (READER_WIDTH / 2f), (int) (READER_HEIGHT / 2f)));
-        landmarkView.initPNP();
-        onGetPreviewListener.initialize(getContext(), transformMatrix, overlapFaceView, surfacePreview, this);
+        m2dPreview.initPNP();
+        onGetPreviewListener.initialize(getContext(), transformMatrix, landmarkPointsView, this);
     }
 
     // Shows a {@link Toast} on the UI thread.
@@ -586,7 +549,7 @@ public class CameraFragment extends Fragment
 
     @Override
     public void landmarkUpdate(final Bitmap previewBm, final Face face, final int previewWidth, final int previewHeight, final Matrix scaleMatrix) {
-        m2DPosController.landmarkUpdate(previewBm, face, previewWidth, previewHeight, scaleMatrix);
+        m2dController.landmarkUpdate(previewBm, face, previewWidth, previewHeight, scaleMatrix);
     }
 
     /**

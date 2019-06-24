@@ -7,19 +7,14 @@
     >
 
     <SurfaceView
-        android:id="@+id/surfacePreview"
+        android:id="@+id/surface_landmark_points"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="visible"
         />
 
-    <SurfaceView
-        android:id="@+id/surfaceOverlap"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
-
-    <com.nhancv.facemask.m2d.M2DLandmarkView
-        android:id="@+id/fragment_camera_2dlandmarkview"
+    <com.nhancv.facemask.m2d.M2dPreview
+        android:id="@+id/fragment_camera_2dpreview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="visible"
@@ -29,7 +24,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_marginBottom="135dp"
+        android:layout_marginBottom="50dp"
         android:baselineAligned="false"
         android:gravity="center"
         android:orientation="horizontal"
@@ -40,94 +35,5 @@
             android:layout_height="60dp"
             android:text="Filter"
             />
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="50dp"
-        android:baselineAligned="false"
-        android:gravity="center"
-        android:orientation="horizontal"
-        >
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            >
-
-            <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/iv_cat"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:foreground="@drawable/clickable"
-                android:src="@drawable/cat"
-                app:civ_border_color="#FF000000"
-                app:civ_border_width="2dp"
-                app:civ_circle_background_color="@android:color/white"
-                />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            >
-
-            <de.hdodenhof.circleimageview.CircleImageView
-                xmlns:app="http://schemas.android.com/apk/res-auto"
-                android:id="@+id/iv_dog"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:foreground="@drawable/clickable"
-                android:src="@drawable/dog"
-                app:civ_border_color="#FF000000"
-                app:civ_border_width="2dp"
-                app:civ_circle_background_color="@android:color/white"
-                />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            >
-
-            <de.hdodenhof.circleimageview.CircleImageView
-                xmlns:app="http://schemas.android.com/apk/res-auto"
-                android:id="@+id/iv_hamster"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:foreground="@drawable/clickable"
-                android:src="@drawable/hamster"
-                app:civ_border_color="#FF000000"
-                app:civ_border_width="2dp"
-                app:civ_circle_background_color="@android:color/white"
-                />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            >
-
-            <de.hdodenhof.circleimageview.CircleImageView
-                xmlns:app="http://schemas.android.com/apk/res-auto"
-                android:id="@+id/iv_nerd"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:foreground="@drawable/clickable"
-                android:src="@drawable/nerd"
-                app:civ_border_color="#FF000000"
-                app:civ_border_width="2dp"
-                app:civ_circle_background_color="@android:color/white"
-                />
-        </LinearLayout>
     </LinearLayout>
 </RelativeLayout>

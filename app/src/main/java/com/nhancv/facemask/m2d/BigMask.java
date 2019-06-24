@@ -32,7 +32,7 @@ import android.graphics.Matrix;
 
 public class BigMask {
     private static final String TAG = BigMask.class.getSimpleName();
-    private static final int SKIP = 3;
+    private static final int SKIP = 2;
     private Bitmap bitmap;
     private int width = 256;
     private int height = 256;

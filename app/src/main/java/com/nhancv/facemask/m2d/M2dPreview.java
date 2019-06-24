@@ -11,14 +11,15 @@ import android.view.View;
 
 import com.nhancv.facemask.fps.StableFps;
 import com.nhancv.facemask.m2d.mask.Mask;
+import com.nhancv.facemask.m2d.mask.imp.CatMask;
 import com.nhancv.facemask.pose.SolvePNP;
 
 import zeusees.tracking.Face;
 
 
-public class M2DLandmarkView extends View {
+public class M2dPreview extends View {
 
-    private static final String TAG = M2DLandmarkView.class.getSimpleName();
+    private static final String TAG = M2dPreview.class.getSimpleName();
 
     private int ratioWidth = 0;
     private int ratioHeight = 0;
@@ -36,19 +37,19 @@ public class M2DLandmarkView extends View {
     private Mask mask;
     private Bitmap previewBm;
 
-    public M2DLandmarkView(Context context) {
+    public M2dPreview(Context context) {
         this(context, null, 0, 0);
     }
 
-    public M2DLandmarkView(Context context, AttributeSet attrs) {
+    public M2dPreview(Context context, AttributeSet attrs) {
         this(context, attrs, 0, 0);
     }
 
-    public M2DLandmarkView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public M2dPreview(Context context, AttributeSet attrs, int defStyleAttr) {
         this(context, attrs, defStyleAttr, 0);
     }
 
-    public M2DLandmarkView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public M2dPreview(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
 
         faceLandmarkPaint = new Paint();
@@ -58,6 +59,10 @@ public class M2DLandmarkView extends View {
 
         //start thread
         stableFps = new StableFps(20);
+
+        //init mask
+        mask = new CatMask();
+        mask.init(getContext());
     }
 
     public void initPNP() {
@@ -66,10 +71,6 @@ public class M2DLandmarkView extends View {
 
     public void releasePNP() {
         solvePNP.releaseMat();
-    }
-
-    public void setMask(Mask mask) {
-        this.mask = mask;
     }
 
     public void setVisionDetRetList(Bitmap previewBm, Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {

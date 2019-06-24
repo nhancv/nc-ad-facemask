@@ -24,7 +24,6 @@ import com.nhancv.facemask.util.Constant;
 
 import org.wysaid.nativePort.CGENativeLibrary;
 
-import java.util.Arrays;
 import java.util.Locale;
 
 import zeusees.tracking.Face;
@@ -38,17 +37,13 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
      */
     private static final String TAG = FaceLandmarkTracking.class.getSimpleName();
     private static final int FRAME_DATA_READY_MSG = 0x01;
-    private static final int RENDER_OVERLAP_MSG = 0x02;
-    private static final int RENDER_PREVIEW_MSG = 0x03;
+    private static final int PREVIEW_RENDER_MSG = 0x02;
     private static final boolean SHOW_LANDMARK = false;
     /**
      * Thread
      */
     private HandlerThread trackingThread;
     private Handler trackingHandler;
-
-    private HandlerThread uiRenderThread;
-    private Handler uiRenderHandler;
 
     private HandlerThread previewRenderThread;
     private Handler previewRenderHandler;
@@ -57,8 +52,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
      * Inject
      */
     private Matrix transformMatrix;
-    private SurfaceView surfacePreview;
-    private SurfaceView overlapFaceView;
+    private SurfaceView landmarkPointsView;
     private FaceLandmarkListener faceLandmarkListener;
 
     /**
@@ -67,8 +61,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     private int previewWidth; //320
     private int previewHeight; //240
     private Paint redPaint;
-    private StableFps renderFps;
-    private StableFps overlayFps;
+    private StableFps previewFps;
     private long lastTime;
 
 
@@ -83,17 +76,14 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     public void initialize(
             final Context context,
             final Matrix transformMatrix,
-            final SurfaceView overlapFaceView,
-            final SurfaceView surfacePreview,
+            final SurfaceView landmarkPointsView,
             final FaceLandmarkListener faceLandmarkListener) {
         this.context = context;
         this.transformMatrix = transformMatrix;
-        this.overlapFaceView = overlapFaceView;
-        this.surfacePreview = surfacePreview;
+        this.landmarkPointsView = landmarkPointsView;
         this.faceLandmarkListener = faceLandmarkListener;
 
-        renderFps = new StableFps(20);
-        overlayFps = new StableFps(25);
+        previewFps = new StableFps(30);
 
         redPaint = new Paint();
         redPaint.setColor(Color.RED);
@@ -107,29 +97,17 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
 
         if (multiTrack106 == null) {
             multiTrack106 = new FaceTracking(
-                    Environment.getExternalStorageDirectory().getPath() +
-                            "/ZeuseesFaceTracking/models");
+                    Environment.getExternalStorageDirectory().getPath() + "/ZeuseesFaceTracking/models");
         }
 
         // Init threads
-        uiRenderThread = new HandlerThread("UIRenderThread");
-        uiRenderThread.start();
-        uiRenderHandler = new Handler(uiRenderThread.getLooper()) {
-            @Override
-            public void handleMessage(Message msg) {
-                if (msg.what == RENDER_OVERLAP_MSG) {
-                    frameOverlapRenderProcess();
-                }
-            }
-        };
-
         previewRenderThread = new HandlerThread("PreviewRenderThread");
         previewRenderThread.start();
         previewRenderHandler = new Handler(previewRenderThread.getLooper()) {
             @Override
             public void handleMessage(Message msg) {
-                if (msg.what == RENDER_PREVIEW_MSG) {
-                    framePreviewRenderProcess();
+                if (msg.what == PREVIEW_RENDER_MSG) {
+                    previewRenderProcess();
                 }
             }
         };
@@ -153,38 +131,9 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
 
     }
 
-    private void framePreviewRenderProcess() {
-        System.arraycopy(nv21Data, 0, previewRenderBuffer, 0, nv21Data.length);
-
-        if(true) return ;
-
-        if (surfacePreview != null && surfacePreview.getHolder().getSurface().isValid()) {
-            // Draw bm preview
-            Bitmap bm = STUtils.NV21ToRGBABitmap(previewRenderBuffer, previewWidth, previewHeight, context);
-
-            Matrix matrix = new Matrix();
-            matrix.postRotate(-90);
-            matrix.postTranslate(0, bm.getWidth());
-            matrix.postScale(-1, 1);
-            matrix.postTranslate(bm.getHeight(), 0);
-
-            Canvas canvas = surfacePreview.getHolder().lockCanvas();
-            if (canvas != null) {
-                canvas.drawColor(0, PorterDuff.Mode.CLEAR);
-                canvas.setMatrix(transformMatrix);
-                canvas.drawBitmap(bm, matrix, null);
-                surfacePreview.getHolder().unlockCanvasAndPost(canvas);
-            }
-        }
-    }
-
     public void deInitialize() {
-        if (renderFps != null) {
-            renderFps.stop();
-        }
-
-        if (overlayFps != null) {
-            overlayFps.stop();
+        if (previewFps != null) {
+            previewFps.stop();
         }
 
         initTrack106 = false;
@@ -193,13 +142,6 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
         }
 
         try {
-            if (uiRenderThread != null) {
-                uiRenderThread.quitSafely();
-                uiRenderThread.join();
-            }
-            uiRenderThread = null;
-            uiRenderHandler = null;
-
             if (previewRenderThread != null) {
                 previewRenderThread.quitSafely();
                 previewRenderThread.join();
@@ -225,19 +167,11 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
 
         if (!preImageProcess(reader)) return;
         // Fps for render to ui thread
-        if (!renderFps.isStarted()) {
-            renderFps.start(fps -> {
+        if (!previewFps.isStarted()) {
+            previewFps.start(fps -> {
                 if (previewRenderHandler != null) {
-                    previewRenderHandler.removeMessages(RENDER_PREVIEW_MSG);
-                    previewRenderHandler.sendEmptyMessage(RENDER_PREVIEW_MSG);
-                }
-            });
-        }
-        if (!overlayFps.isStarted()) {
-            overlayFps.start(fps -> {
-                if (uiRenderHandler != null) {
-                    uiRenderHandler.removeMessages(RENDER_OVERLAP_MSG);
-                    uiRenderHandler.sendEmptyMessage(RENDER_OVERLAP_MSG);
+                    previewRenderHandler.removeMessages(PREVIEW_RENDER_MSG);
+                    previewRenderHandler.sendEmptyMessage(PREVIEW_RENDER_MSG);
                 }
             });
         }
@@ -264,6 +198,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
 
             byte[] data = STUtils.convertYUV420ToNV21(image);
             System.arraycopy(data, 0, nv21Data, 0, data.length);
+
             image.close();
 
             if (trackingHandler != null) {
@@ -280,10 +215,10 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
         return true;
     }
 
-    private void frameOverlapRenderProcess() {
+    private void previewRenderProcess() {
         if (multiTrack106 != null) {
+            System.arraycopy(nv21Data, 0, previewRenderBuffer, 0, nv21Data.length);
             Face face = multiTrack106.getTrackingInfo();
-
             Bitmap previewBmTmp = STUtils.NV21ToRGBABitmap(previewRenderBuffer, previewWidth, previewHeight, context);
             Matrix matrix = new Matrix(transformMatrix);
             matrix.postRotate(-90);
@@ -310,31 +245,31 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
                 }
 
                 // Draw landmarks to SurfaceView
-                if (!overlapFaceView.getHolder().getSurface().isValid()) {
+                if (!landmarkPointsView.getHolder().getSurface().isValid()) {
                     return;
                 }
-                Canvas canvas = overlapFaceView.getHolder().lockCanvas();
+                Canvas canvas = landmarkPointsView.getHolder().lockCanvas();
+                if (canvas != null) {
+                    canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+                    canvas.setMatrix(transformMatrix);
 
-                if (canvas == null) return;
-                canvas.drawColor(0, PorterDuff.Mode.CLEAR);
-                canvas.setMatrix(transformMatrix);
-
-                if (face != null) {
-                    Rect rect = new Rect(previewHeight - face.left, face.top, previewHeight - face.right, face.bottom);
-                    PointF[] point2Ds = new PointF[106];
-                    for (int i = 0; i < 106; i++) {
-                        point2Ds[i] = new PointF(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
+                    if (face != null) {
+                        Rect rect = new Rect(previewHeight - face.left, face.top, previewHeight - face.right, face.bottom);
+                        PointF[] point2Ds = new PointF[106];
+                        for (int i = 0; i < 106; i++) {
+                            point2Ds[i] = new PointF(face.landmarks[i * 2], face.landmarks[i * 2 + 1]);
+                        }
+                        float[] visibles = new float[106];
+                        for (int i = 0; i < point2Ds.length; i++) {
+                            visibles[i] = 1.0f;
+                            point2Ds[i].x = previewHeight - point2Ds[i].x;
+                        }
+                        STUtils.drawFaceRect(canvas, rect, previewHeight, previewWidth, true);
+                        STUtils.drawPoints(canvas, landmarkPaint, point2Ds, visibles, previewHeight, previewWidth, true);
                     }
-                    float[] visibles = new float[106];
-                    for (int i = 0; i < point2Ds.length; i++) {
-                        visibles[i] = 1.0f;
-                        point2Ds[i].x = previewHeight - point2Ds[i].x;
-                    }
-                    STUtils.drawFaceRect(canvas, rect, previewHeight, previewWidth, true);
-                    STUtils.drawPoints(canvas, landmarkPaint, point2Ds, visibles, previewHeight, previewWidth, true);
+                    canvas.drawText(log, 10, 30, redPaint);
+                    landmarkPointsView.getHolder().unlockCanvasAndPost(canvas);
                 }
-                canvas.drawText(log, 10, 30, redPaint);
-                overlapFaceView.getHolder().unlockCanvasAndPost(canvas);
             }
         }
 

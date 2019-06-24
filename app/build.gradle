@@ -79,7 +79,6 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
     implementation project(':opencv')
-    implementation 'de.hdodenhof:circleimageview:3.0.0'
     implementation 'pub.devrel:easypermissions:2.0.1'
     implementation 'org.wysaid:gpuimage-plus:2.6.1'
 
