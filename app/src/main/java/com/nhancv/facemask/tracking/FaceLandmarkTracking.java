@@ -23,7 +23,9 @@ import com.nhancv.facemask.fps.StableFps;
 import com.nhancv.facemask.m2d.M2dPreview;
 import com.nhancv.facemask.util.Constant;
 
+import org.wysaid.nativePort.CGEDeformFilterWrapper;
 import org.wysaid.nativePort.CGENativeLibrary;
+import org.wysaid.view.ImageGLSurfaceView;
 
 import java.util.Locale;
 
@@ -55,7 +57,8 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     private Matrix transformMatrix;
     private SurfaceView landmarkPointsView;
     private M2dPreview m2dPreview;
-
+    private ImageGLSurfaceView openGlPreview;
+    private CGEDeformFilterWrapper mDeformWrapper;
     /**
      * Global vars
      */
@@ -76,10 +79,14 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     public void initialize(
             final Context context,
             final Matrix transformMatrix,
+            final ImageGLSurfaceView openGlPreview,
+            final CGEDeformFilterWrapper mDeformWrapper,
             final M2dPreview m2dPreview,
             final SurfaceView landmarkPointsView) {
         this.context = context;
         this.transformMatrix = transformMatrix;
+        this.openGlPreview = openGlPreview;
+        this.mDeformWrapper = mDeformWrapper;
         this.m2dPreview = m2dPreview;
         this.landmarkPointsView = landmarkPointsView;
 
@@ -228,9 +235,18 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
             Bitmap previewBm = Bitmap.createBitmap(previewBmTmp, 0, 0, previewBmTmp.getWidth(), previewBmTmp.getHeight(), matrix, false);
             // TODO: 2019-06-19 Filter with OpenGLES
             Bitmap bmFiltered = CGENativeLibrary.filterImage_MultipleEffects(previewBm, Constant.EFFECT_ACTIVE, 1.0f);
-
             // Show preview
             m2dPreview.setVisionDetRetList(bmFiltered, face, previewWidth, previewHeight, transformMatrix);
+
+            // Initialize a new Canvas instance
+            Canvas openGLCanvas = new Canvas(bmFiltered);
+            m2dPreview.getMask().draw(openGLCanvas);
+
+            openGlPreview.setImageBitmap(bmFiltered);
+            openGlPreview.flush(true, () -> {
+                if (mDeformWrapper == null) return;
+                mDeformWrapper.bloatDeform(0, 0, previewBmTmp.getWidth(), previewBmTmp.getHeight(), 200, 0.5f);
+            });
 
             // Show landmark for debug
             showDebugLandmarkPoints(face);

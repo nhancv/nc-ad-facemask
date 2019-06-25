@@ -65,6 +65,10 @@ public class M2dPreview extends View {
         solvePNP.releaseMat();
     }
 
+    public Mask getMask() {
+        return mask;
+    }
+
     public void setVisionDetRetList(Bitmap previewBm, Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
         this.previewBm = previewBm;
 

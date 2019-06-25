@@ -5,9 +5,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
-import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -39,6 +40,11 @@ import com.nhancv.facemask.m2d.M2dPreview;
 import com.nhancv.facemask.pose.RealTimeRotation;
 import com.nhancv.facemask.tracking.FaceLandmarkTracking;
 import com.nhancv.facemask.util.Constant;
+
+import org.wysaid.nativePort.CGEDeformFilterWrapper;
+import org.wysaid.nativePort.CGEImageHandler;
+import org.wysaid.texUtils.TextureRenderer;
+import org.wysaid.view.ImageGLSurfaceView;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -108,6 +114,11 @@ public class CameraFragment extends Fragment
     /**
      * UI component
      */
+    private ImageGLSurfaceView openGlPreview;
+    private CGEDeformFilterWrapper mDeformWrapper;
+    private float mTouchRadius = 200.0f;
+    private float mTouchIntensity = 0.5f;
+
     private SurfaceView landmarkPointsView;
     private M2dPreview m2dPreview;
     private RealTimeRotation realTimeRotation;
@@ -169,11 +180,63 @@ public class CameraFragment extends Fragment
             Constant.EFFECT_ACTIVE = Constant.EFFECT_CONFIGS[effectIndex];
         });
 
-        m2dPreview = view.findViewById(R.id.fragment_camera_2dpreview);
+        final Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.test_effect);
+        openGlPreview = view.findViewById(R.id.fragment_camera_opengl_preview);
+        openGlPreview.setSurfaceCreatedCallback(() -> {
+            openGlPreview.setImageBitmap(bitmap);
+            openGlPreview.queueEvent(() -> {
+                int w = bitmap.getWidth(), h = bitmap.getHeight();
+                float scaling = Math.min(1280.0f / w, 1280.0f / h);
+                if (scaling < 1.0f) {
+                    w *= scaling;
+                    h *= scaling;
+                }
+                mDeformWrapper = CGEDeformFilterWrapper.create(w, h, 10.0f);
+                mDeformWrapper.setUndoSteps(200); // set max undo steps to 200.
+                if (mDeformWrapper != null) {
+                    CGEImageHandler handler = openGlPreview.getImageHandler();
+                    handler.setFilterWithAddres(mDeformWrapper.getNativeAddress());
+                    handler.processFilters();
+                }
+            });
+        });
+        openGlPreview.postDelayed(() -> {
+            openGlPreview.queueEvent(() -> {
+                // Test effect
+                TextureRenderer.Viewport viewport = openGlPreview.getRenderViewport();
+                final float dw = viewport.width;
+                final float dh = viewport.height;
 
+                if (mDeformWrapper != null) {
+                    mDeformWrapper.pushDeformStep();
+
+                    openGlPreview.flush(true, () -> {
+                        if (mDeformWrapper == null) return;
+//                        mDeformWrapper.forwardDeform(dw / 4 - 5, dh / 2 - 5, dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
+//                        mDeformWrapper.forwardDeform(dw / 4 - 5, dh / 2 - 15, dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
+//                        mDeformWrapper.forwardDeform(dw / 4 - 5, dh / 2 - 25, dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
+
+                        mDeformWrapper.bloatDeform(dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
+                        mDeformWrapper.bloatDeform(dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
+                        mDeformWrapper.bloatDeform(dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
+
+                        mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
+                        mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
+                        mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
+                        mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
+                        mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
+                        mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
+                        mDeformWrapper.pushDeformStep();
+                    });
+                }
+            });
+        }, 2000);
+        openGlPreview.setDisplayMode(ImageGLSurfaceView.DisplayMode.DISPLAY_ASPECT_FIT);
+
+        m2dPreview = view.findViewById(R.id.fragment_camera_2dpreview);
         landmarkPointsView = view.findViewById(R.id.surface_landmark_points);
-        landmarkPointsView.setZOrderOnTop(true);
-        landmarkPointsView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+//        landmarkPointsView.setZOrderOnTop(true);
+//        landmarkPointsView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
         Display display = Objects.requireNonNull(getActivity()).getWindowManager().getDefaultDisplay();
         display.getSize(SCREEN_SIZE);
@@ -197,6 +260,7 @@ public class CameraFragment extends Fragment
     @Override
     public void onResume() {
         super.onResume();
+        openGlPreview.onResume();
         if (permissionReady) {
             startBackgroundThread();
             openCamera(SURFACE_WIDTH, SURFACE_HEIGHT);
@@ -225,6 +289,13 @@ public class CameraFragment extends Fragment
             m2dPreview.releasePNP();
         }
         super.onPause();
+
+        if (mDeformWrapper != null) {
+            mDeformWrapper.release(false);
+            mDeformWrapper = null;
+        }
+        openGlPreview.release();
+        openGlPreview.onPause();
     }
 
     private void release() {
@@ -478,7 +549,7 @@ public class CameraFragment extends Fragment
         realTimeRotation.setUpWorldPoints();
         realTimeRotation.setUpCamMatrix(new Point((int) (READER_WIDTH / 2f), (int) (READER_HEIGHT / 2f)));
         m2dPreview.initPNP();
-        onGetPreviewListener.initialize(getContext(), transformMatrix, m2dPreview, landmarkPointsView);
+        onGetPreviewListener.initialize(getContext(), transformMatrix, openGlPreview, mDeformWrapper,  m2dPreview, landmarkPointsView);
     }
 
     // Shows a {@link Toast} on the UI thread.
