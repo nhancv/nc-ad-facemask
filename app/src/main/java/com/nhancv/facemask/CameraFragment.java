@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -235,8 +236,8 @@ public class CameraFragment extends Fragment
 
         m2dPreview = view.findViewById(R.id.fragment_camera_2dpreview);
         landmarkPointsView = view.findViewById(R.id.surface_landmark_points);
-//        landmarkPointsView.setZOrderOnTop(true);
-//        landmarkPointsView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+        landmarkPointsView.setZOrderOnTop(true);
+        landmarkPointsView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
         Display display = Objects.requireNonNull(getActivity()).getWindowManager().getDefaultDisplay();
         display.getSize(SCREEN_SIZE);

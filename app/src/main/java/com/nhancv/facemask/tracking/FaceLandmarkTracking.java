@@ -236,11 +236,11 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
             // TODO: 2019-06-19 Filter with OpenGLES
             Bitmap bmFiltered = CGENativeLibrary.filterImage_MultipleEffects(previewBm, Constant.EFFECT_ACTIVE, 1.0f);
             // Show preview
-            m2dPreview.setVisionDetRetList(bmFiltered, face, previewWidth, previewHeight, transformMatrix);
+            m2dPreview.maskUpdateLocation(bmFiltered, face, previewWidth, previewHeight, transformMatrix);
 
             // Initialize a new Canvas instance
             Canvas openGLCanvas = new Canvas(bmFiltered);
-            m2dPreview.getMask().draw(openGLCanvas);
+//            m2dPreview.getMask().draw(openGLCanvas);
 
             openGlPreview.setImageBitmap(bmFiltered);
             openGlPreview.flush(true, () -> {

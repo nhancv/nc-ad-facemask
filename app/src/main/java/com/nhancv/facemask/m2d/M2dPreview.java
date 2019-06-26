@@ -7,10 +7,7 @@ import android.graphics.Matrix;
 import android.util.AttributeSet;
 import android.view.View;
 
-import com.nhancv.facemask.fps.StableFps;
-import com.nhancv.facemask.m2d.mask.Mask;
-import com.nhancv.facemask.m2d.mask.rabbit.RabbitMask;
-import com.nhancv.facemask.pose.SolvePNP;
+import com.nhancv.facemask.m2d.mask.MaskUpdater;
 
 import zeusees.tracking.Face;
 
@@ -28,10 +25,8 @@ public class M2dPreview extends View {
     private int previewHeight;
     private int currentWidth;
     private int currentHeight;
-    private Matrix scaleMatrix;
-    private StableFps stableFps;
-    private SolvePNP solvePNP = new SolvePNP();
-    private Mask mask;
+
+    private MaskUpdater maskUpdater;
     private Bitmap previewBm;
 
     public M2dPreview(Context context) {
@@ -49,45 +44,29 @@ public class M2dPreview extends View {
     public M2dPreview(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
 
-        //start thread
-        stableFps = new StableFps(20);
-
-        //init rabbit_mask
-        mask = new RabbitMask();
-        mask.init(getContext());
+        maskUpdater = new MaskUpdater(context);
     }
 
     public void initPNP() {
-        solvePNP.initialize();
+        maskUpdater.initPNP();
     }
 
     public void releasePNP() {
-        solvePNP.releaseMat();
+        maskUpdater.releasePNP();
     }
 
-    public Mask getMask() {
-        return mask;
-    }
-
-    public void setVisionDetRetList(Bitmap previewBm, Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
+    public void maskUpdateLocation(Bitmap previewBm, Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
         this.previewBm = previewBm;
-
         this.previewWidth = previewWidth;
         this.previewHeight = previewHeight;
-        this.scaleMatrix = scaleMatrix;
-        try {
-            solvePNP.initialize();
-            if (mask != null) mask.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
-            postInvalidate();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
+        this.maskUpdater.maskUpdateLocation(face, previewWidth, previewHeight, scaleMatrix);
+        postInvalidate();
     }
 
     @Override
     protected void onDetachedFromWindow() {
-        stableFps.stop();
-        solvePNP.releaseMat();
+        this.maskUpdater.onStop();
         super.onDetachedFromWindow();
     }
 
@@ -133,8 +112,7 @@ public class M2dPreview extends View {
             canvas.drawBitmap(previewBm, 0, 0, null);
         }
         // Draw 2dMask
-        if (mask != null) mask.draw(canvas);
-
+        this.maskUpdater.onDraw(canvas);
     }
 
     private float getX(float x) {
