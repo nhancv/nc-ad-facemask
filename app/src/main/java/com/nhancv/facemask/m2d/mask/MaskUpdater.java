@@ -48,30 +48,18 @@ public class MaskUpdater {
     public MaskUpdater(Context context) {
         //start thread
         stableFps = new StableFps(20);
-        solvePNP = new SolvePNP();
+        solvePNP = SolvePNP.getInstance();
         //init rabbit_mask
         mask = new RabbitMask();
         mask.init(context);
     }
 
-    // Call after Creating a new CameraCaptureSession for camera preview.
-    public void initPNP() {
-        solvePNP.initialize();
-    }
-
     // Call on onDetachedFromWindow
     public void onStop() {
         stableFps.stop();
-        solvePNP.releaseMat();
-    }
-
-    // Call in Main Fragment onPause()
-    public void releasePNP() {
-        solvePNP.releaseMat();
     }
 
     public void maskUpdateLocation(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
-        this.solvePNP.initialize();
         if (mask != null) mask.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
     }
 

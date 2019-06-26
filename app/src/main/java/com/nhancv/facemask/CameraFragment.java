@@ -38,7 +38,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.nhancv.facemask.m2d.M2dPreview;
-import com.nhancv.facemask.pose.RealTimeRotation;
+import com.nhancv.facemask.pose.SolvePNP;
 import com.nhancv.facemask.tracking.FaceLandmarkTracking;
 import com.nhancv.facemask.util.Constant;
 
@@ -122,7 +122,6 @@ public class CameraFragment extends Fragment
 
     private SurfaceView landmarkPointsView;
     private M2dPreview m2dPreview;
-    private RealTimeRotation realTimeRotation;
     private boolean permissionReady;
     private int effectIndex;
 
@@ -249,6 +248,7 @@ public class CameraFragment extends Fragment
         SURFACE_HEIGHT = screenWidth;
         SURFACE_WIDTH = SURFACE_HEIGHT * READER_WIDTH / READER_HEIGHT;
         transformMatrix.setScale(SURFACE_HEIGHT / (float) READER_HEIGHT, SURFACE_WIDTH / (float) READER_WIDTH);
+        SolvePNP.getInstance().initialize(new Point((int) (READER_WIDTH / 2f), (int) (READER_HEIGHT / 2f)));
 
         return view;
     }
@@ -287,7 +287,6 @@ public class CameraFragment extends Fragment
     public void onPause() {
         if (permissionReady) {
             release();
-            m2dPreview.releasePNP();
         }
         super.onPause();
 
@@ -485,7 +484,7 @@ public class CameraFragment extends Fragment
             imagePreviewThread = null;
             imagePreviewHandler = null;
 
-            realTimeRotation.releaseMatrix();
+//            realTimeRotation.releaseMatrix();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -545,12 +544,8 @@ public class CameraFragment extends Fragment
         } finally {
             cameraOpenCloseLock.release();
         }
-        //setup one time variables for solving pnp
-        realTimeRotation = RealTimeRotation.getInstance();
-        realTimeRotation.setUpWorldPoints();
-        realTimeRotation.setUpCamMatrix(new Point((int) (READER_WIDTH / 2f), (int) (READER_HEIGHT / 2f)));
-        m2dPreview.initPNP();
-        onGetPreviewListener.initialize(getContext(), transformMatrix, openGlPreview, mDeformWrapper,  m2dPreview, landmarkPointsView);
+        // Initialize Preview listener
+        onGetPreviewListener.initialize(getContext(), transformMatrix, openGlPreview, mDeformWrapper, m2dPreview, landmarkPointsView);
     }
 
     // Shows a {@link Toast} on the UI thread.

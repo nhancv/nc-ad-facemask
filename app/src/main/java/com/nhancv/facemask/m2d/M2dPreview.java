@@ -47,14 +47,6 @@ public class M2dPreview extends View {
         maskUpdater = new MaskUpdater(context);
     }
 
-    public void initPNP() {
-        maskUpdater.initPNP();
-    }
-
-    public void releasePNP() {
-        maskUpdater.releasePNP();
-    }
-
     public void maskUpdateLocation(Bitmap previewBm, Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
         this.previewBm = previewBm;
         this.previewWidth = previewWidth;

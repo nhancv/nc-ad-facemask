@@ -26,14 +26,17 @@
 
 package com.nhancv.facemask.pose;
 
+import android.graphics.Point;
 import android.graphics.PointF;
 
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.MatOfPoint3f;
+import org.opencv.core.Point3;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,19 +50,28 @@ public class SolvePNP {
     private float rx, ry, rz;
     private float tx, ty, tz;
     private PointF[] point2Ds;
-    private MatOfPoint3f objPointMat;
     private Mat camMatrix;
+    private MatOfPoint3f objPointMat;
     private MatOfDouble distCoeffs;
     private Mat rotationVector;
     private Mat translationVector;
-    private RealTimeRotation realTimeRotation = RealTimeRotation.getInstance();
+
+    private float focalLength = 543.45f;
     private boolean initialized = false;
 
-    public SolvePNP() {
+    private SolvePNP() {
 
     }
 
-    public void initialize() {
+    public static SolvePNP getInstance() {
+        return SolvePNP.LazyHolder.INSTANCE;
+    }
+
+    private static class LazyHolder {
+        private static final SolvePNP INSTANCE = new SolvePNP();
+    }
+
+    public void initialize(Point centerPoint) {
         if (!initialized) {
             initialized = true;
             point2Ds = new PointF[106];
@@ -67,9 +79,45 @@ public class SolvePNP {
                 point2Ds[i] = new PointF(0, 0);
             }
             setUpDistCoeff();
-            camMatrix = realTimeRotation.getCamMatrix();
-            objPointMat = realTimeRotation.getObjPointsMat();
+            setUpCamMatrix(centerPoint);
+            setUpWorldPoints();
         }
+    }
+
+    private void setUpDistCoeff() {
+        Mat coeffMat = new Mat();
+        Mat.zeros(4, 1, CV_64FC1).copyTo(coeffMat);
+        distCoeffs = new MatOfDouble(coeffMat);
+    }
+
+    private void setUpCamMatrix(Point centerPoint) {
+        float[] camArray = new float[]{focalLength, 0, centerPoint.x, 0, focalLength, centerPoint.y, 0, 0, 1};
+        camMatrix = new Mat(3, 3, CvType.CV_32F);
+        camMatrix.put(0, 0, camArray);
+    }
+
+    private void setUpWorldPoints() {
+        objPointMat = new MatOfPoint3f();
+        List<Point3> objPoints = new ArrayList<>();
+        objPoints.add(new Point3(36.8301, 78.3185, 52.0345));//nose tip 1879
+        objPoints.add(new Point3(46.391205, 121.975700, 36.571663));//v897 -> 44 lm
+        objPoints.add(new Point3(26.833687, 121.975700, 36.849419));//v1873 -> 60 lm
+        objPoints.add(new Point3(36.6623, 68.8159, 40.2229));//nose tip -> 46 lm
+        objPoints.add(new Point3(36.599148, 109.525101, 35.774132));//v2224 -> 21 lm
+        objPoints.add(new Point3(36.547054, 9.838245, 32.105911));//chin 1398 -> 0 lm
+        objPoints.add(new Point3(-14.982872, 108.473167, 10.518028));//left eye left corner
+        objPoints.add(new Point3(18.656631, 106.811218, 18.971336));//left eye right corner
+        objPoints.add(new Point3(54.057266, 106.811218, 18.4685822));//right eye left corner
+        objPoints.add(new Point3(87.579941, 109.308273, 8.945969));//right eye right corner
+        objPoints.add(new Point3(11.319393, 53.651268, 33.162163));//left mouth corner
+        objPoints.add(new Point3(61.794533, 53.651268, 32.445320));//right mouth corner
+        objPoints.add(new Point3(-47.058544, 129.762482, -65.171806));// -> 11 lm
+        objPoints.add(new Point3(115.961105, 129.078583, -56.371410));// -> 13 lm
+        objPoints.add(new Point3(-40.034130, 74.127586, -55.912411));// -> 7 lm
+        objPoints.add(new Point3(78.678078, 26.228161, 6.232826));// -> 100 lm
+        objPoints.add(new Point3(-6.301723, 26.228161, 7.439697));// -> 57 lm
+        objPoints.add(new Point3(110.495117, 74.127586, -58.050194));// -> 16 lm
+        objPointMat.fromList(objPoints);
     }
 
     public void setUpLandmarks(PointF[] landmarks) {
@@ -77,31 +125,6 @@ public class SolvePNP {
         for (int i = 0; i < landmarks.length; i++) {
             this.point2Ds[i] = landmarks[i];
         }
-    }
-
-    public void releaseMat() {
-        initialized = false;
-//        if (camMatrix != null) {
-//            camMatrix.release();
-//        }
-//        if (objPointMat != null) {
-//            objPointMat.release();
-//        }
-//        if (rotationVector != null) {
-//            rotationVector.release();
-//        }
-//        if (translationVector != null) {
-//            translationVector.release();
-//        }
-//        if (distCoeffs != null) {
-//            distCoeffs.release();
-//        }
-    }
-
-    private void setUpDistCoeff() {
-        Mat coeffMat = new Mat();
-        Mat.zeros(4, 1, CV_64FC1).copyTo(coeffMat);
-        distCoeffs = new MatOfDouble(coeffMat);
     }
 
     private Mat setUpRotM() {
@@ -117,8 +140,6 @@ public class SolvePNP {
         objPoints.add(new org.opencv.core.Point(point2Ds[44].x, point2Ds[44].y)); //nose tip
         objPoints.add(new org.opencv.core.Point(point2Ds[60].x, point2Ds[60].y)); //nose tip
         objPoints.add(new org.opencv.core.Point(point2Ds[46].x, point2Ds[46].y)); //nose
-//        objPoints.add(new org.opencv.core.Point(point2Ds[93].x, point2Ds[93].y)); //nose
-//        objPoints.add(new org.opencv.core.Point(point2Ds[31].x, point2Ds[31].y)); //nose
         objPoints.add(new org.opencv.core.Point(point2Ds[21].x, point2Ds[21].y)); //v2224 -> 21 lm
         objPoints.add(new org.opencv.core.Point(point2Ds[0].x, point2Ds[0].y)); //chin
         objPoints.add(new org.opencv.core.Point(point2Ds[94].x, point2Ds[94].y)); //left eye left corner
@@ -133,8 +154,6 @@ public class SolvePNP {
         objPoints.add(new org.opencv.core.Point(point2Ds[100].x, point2Ds[100].y));//top right chin
         objPoints.add(new org.opencv.core.Point(point2Ds[57].x, point2Ds[57].y));//top left chin
         objPoints.add(new org.opencv.core.Point(point2Ds[16].x, point2Ds[16].y));//top right chin
-
-
         imagePoints.fromList(objPoints);
         return imagePoints;
     }
@@ -148,6 +167,8 @@ public class SolvePNP {
     }
 
     public void solvePNP() {
+        if (!initialized) throw new AssertionError("Object need to initialize as first.");
+
         MatOfPoint2f imagePoints = this.getValidPoints();
         this.rotationVector = new Mat();
         this.translationVector = new Mat();
@@ -166,10 +187,6 @@ public class SolvePNP {
         rx = (float) eav.get(0, 0)[0];
         ry = (float) eav.get(1, 0)[0];
         rz = (float) eav.get(2, 0)[0];
-
-        // Limit ry
-//        if (ry > 30) ry = 30;
-//        else if (ry < -30) ry = -30;
 
         rotM.release();
         projMatrix.release();
