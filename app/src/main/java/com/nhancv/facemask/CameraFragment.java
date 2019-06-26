@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
@@ -37,7 +36,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.nhancv.facemask.m2d.M2dPreview;
 import com.nhancv.facemask.pose.SolvePNP;
 import com.nhancv.facemask.tracking.FaceLandmarkTracking;
 import com.nhancv.facemask.util.Constant;
@@ -121,7 +119,6 @@ public class CameraFragment extends Fragment
     private float mTouchIntensity = 0.5f;
 
     private SurfaceView landmarkPointsView;
-    private M2dPreview m2dPreview;
     private boolean permissionReady;
     private int effectIndex;
 
@@ -233,7 +230,6 @@ public class CameraFragment extends Fragment
         }, 2000);
         openGlPreview.setDisplayMode(ImageGLSurfaceView.DisplayMode.DISPLAY_ASPECT_FIT);
 
-        m2dPreview = view.findViewById(R.id.fragment_camera_2dpreview);
         landmarkPointsView = view.findViewById(R.id.surface_landmark_points);
         landmarkPointsView.setZOrderOnTop(true);
         landmarkPointsView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
@@ -387,16 +383,6 @@ public class CameraFragment extends Fragment
                             maxPreviewHeight, aspectRatio);
 
                     Log.e(TAG, "setUpCameraOutputs previewSize: " + previewSize);
-                    // We fit the aspect ratio of TextureView to the size of preview we picked.
-                    int orientation = getResources().getConfiguration().orientation;
-                    if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                        m2dPreview.setAspectRatio(
-                                previewSize.getWidth(), previewSize.getHeight());
-                    } else {
-                        m2dPreview.setAspectRatio(
-                                previewSize.getHeight(), previewSize.getWidth());
-                    }
-
                     // Check if the flash is supported.
                     Boolean available = characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
                     flashSupported = available == null ? false : available;
@@ -544,7 +530,7 @@ public class CameraFragment extends Fragment
             cameraOpenCloseLock.release();
         }
         // Initialize Preview listener
-        onGetPreviewListener.initialize(getContext(), transformMatrix, openGlPreview, mDeformWrapper, m2dPreview, landmarkPointsView);
+        onGetPreviewListener.initialize(getContext(), transformMatrix, openGlPreview, mDeformWrapper, landmarkPointsView);
     }
 
     // Shows a {@link Toast} on the UI thread.

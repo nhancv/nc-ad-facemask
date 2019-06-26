@@ -20,7 +20,6 @@ import android.util.Log;
 import android.view.SurfaceView;
 
 import com.nhancv.facemask.fps.StableFps;
-import com.nhancv.facemask.m2d.M2dPreview;
 import com.nhancv.facemask.util.Constant;
 
 import org.wysaid.nativePort.CGEDeformFilterWrapper;
@@ -56,7 +55,6 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
      */
     private Matrix transformMatrix;
     private SurfaceView landmarkPointsView;
-    private M2dPreview m2dPreview;
     private ImageGLSurfaceView openGlPreview;
     private CGEDeformFilterWrapper mDeformWrapper;
     /**
@@ -81,13 +79,11 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
             final Matrix transformMatrix,
             final ImageGLSurfaceView openGlPreview,
             final CGEDeformFilterWrapper mDeformWrapper,
-            final M2dPreview m2dPreview,
             final SurfaceView landmarkPointsView) {
         this.context = context;
         this.transformMatrix = transformMatrix;
         this.openGlPreview = openGlPreview;
         this.mDeformWrapper = mDeformWrapper;
-        this.m2dPreview = m2dPreview;
         this.landmarkPointsView = landmarkPointsView;
 
         previewFps = new StableFps(30);
@@ -236,7 +232,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
             // TODO: 2019-06-19 Filter with OpenGLES
             Bitmap bmFiltered = CGENativeLibrary.filterImage_MultipleEffects(previewBm, Constant.EFFECT_ACTIVE, 1.0f);
             // Show preview
-            m2dPreview.maskUpdateLocation(bmFiltered, face, previewWidth, previewHeight, transformMatrix);
+//            m2dPreview.maskUpdateLocation(bmFiltered, face, previewWidth, previewHeight, transformMatrix);
 
             // Initialize a new Canvas instance
             Canvas openGLCanvas = new Canvas(bmFiltered);
