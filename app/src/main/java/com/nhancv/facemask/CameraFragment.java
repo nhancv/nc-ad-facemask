@@ -36,6 +36,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.nhancv.facemask.m2d.OpenGLPreview;
 import com.nhancv.facemask.pose.SolvePNP;
 import com.nhancv.facemask.tracking.FaceLandmarkTracking;
 import com.nhancv.facemask.util.Constant;
@@ -113,12 +114,11 @@ public class CameraFragment extends Fragment
     /**
      * UI component
      */
-    private ImageGLSurfaceView openGlPreview;
+    private OpenGLPreview openGlPreview;
     private CGEDeformFilterWrapper mDeformWrapper;
     private float mTouchRadius = 200.0f;
     private float mTouchIntensity = 0.5f;
 
-    private SurfaceView landmarkPointsView;
     private boolean permissionReady;
     private int effectIndex;
 
@@ -180,6 +180,7 @@ public class CameraFragment extends Fragment
         final Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.test_effect);
         openGlPreview = view.findViewById(R.id.fragment_camera_opengl_preview);
         openGlPreview.setSurfaceCreatedCallback(() -> {
+            openGlPreview.setDisplayMode(ImageGLSurfaceView.DisplayMode.DISPLAY_ASPECT_FIT);
             openGlPreview.setImageBitmap(bitmap);
             openGlPreview.queueEvent(() -> {
                 int w = bitmap.getWidth(), h = bitmap.getHeight();
@@ -229,10 +230,6 @@ public class CameraFragment extends Fragment
             });
         }, 2000);
         openGlPreview.setDisplayMode(ImageGLSurfaceView.DisplayMode.DISPLAY_ASPECT_FIT);
-
-        landmarkPointsView = view.findViewById(R.id.surface_landmark_points);
-        landmarkPointsView.setZOrderOnTop(true);
-        landmarkPointsView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
         Display display = Objects.requireNonNull(getActivity()).getWindowManager().getDefaultDisplay();
         display.getSize(SCREEN_SIZE);
@@ -530,7 +527,7 @@ public class CameraFragment extends Fragment
             cameraOpenCloseLock.release();
         }
         // Initialize Preview listener
-        onGetPreviewListener.initialize(getContext(), transformMatrix, openGlPreview, mDeformWrapper, landmarkPointsView);
+        onGetPreviewListener.initialize(getContext(), transformMatrix, openGlPreview, mDeformWrapper);
     }
 
     // Shows a {@link Toast} on the UI thread.
