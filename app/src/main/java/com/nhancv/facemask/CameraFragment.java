@@ -8,7 +8,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
-import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -31,7 +30,6 @@ import android.util.SparseIntArray;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Surface;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
@@ -169,6 +167,19 @@ public class CameraFragment extends Fragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        // Get display size
+        Display display = Objects.requireNonNull(getActivity()).getWindowManager().getDefaultDisplay();
+        display.getSize(SCREEN_SIZE);
+        int screenWidth = SCREEN_SIZE.x;
+        int screenHeight = SCREEN_SIZE.y;
+        Log.d(TAG, String.format(Locale.getDefault(), "onCreateView: w %d x h %d", screenWidth, screenHeight));
+        //Sony: 1080x1776
+        SURFACE_HEIGHT = screenWidth;
+        SURFACE_WIDTH = SURFACE_HEIGHT * READER_WIDTH / READER_HEIGHT;
+        transformMatrix.setScale(SURFACE_HEIGHT / (float) READER_HEIGHT, SURFACE_WIDTH / (float) READER_WIDTH);
+        SolvePNP.getInstance().initialize(new Point((int) (READER_WIDTH / 2f), (int) (READER_HEIGHT / 2f)));
+
+        // Setup view
         View view = inflater.inflate(R.layout.fragment_camera, container, false);
 
         view.findViewById(R.id.bt_change_filter).setOnClickListener(v -> {
@@ -177,19 +188,11 @@ public class CameraFragment extends Fragment
             Constant.EFFECT_ACTIVE = Constant.EFFECT_CONFIGS[effectIndex];
         });
 
-        final Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.test_effect);
         openGlPreview = view.findViewById(R.id.fragment_camera_opengl_preview);
         openGlPreview.setSurfaceCreatedCallback(() -> {
             openGlPreview.setDisplayMode(ImageGLSurfaceView.DisplayMode.DISPLAY_ASPECT_FIT);
-            openGlPreview.setImageBitmap(bitmap);
             openGlPreview.queueEvent(() -> {
-                int w = bitmap.getWidth(), h = bitmap.getHeight();
-                float scaling = Math.min(1280.0f / w, 1280.0f / h);
-                if (scaling < 1.0f) {
-                    w *= scaling;
-                    h *= scaling;
-                }
-                mDeformWrapper = CGEDeformFilterWrapper.create(w, h, 10.0f);
+                mDeformWrapper = CGEDeformFilterWrapper.create(screenWidth, screenHeight, 10.0f);
                 mDeformWrapper.setUndoSteps(200); // set max undo steps to 200.
                 if (mDeformWrapper != null) {
                     CGEImageHandler handler = openGlPreview.getImageHandler();
@@ -210,9 +213,6 @@ public class CameraFragment extends Fragment
 
                     openGlPreview.flush(true, () -> {
                         if (mDeformWrapper == null) return;
-//                        mDeformWrapper.forwardDeform(dw / 4 - 5, dh / 2 - 5, dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
-//                        mDeformWrapper.forwardDeform(dw / 4 - 5, dh / 2 - 15, dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
-//                        mDeformWrapper.forwardDeform(dw / 4 - 5, dh / 2 - 25, dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
 
                         mDeformWrapper.bloatDeform(dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
                         mDeformWrapper.bloatDeform(dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
@@ -220,29 +220,14 @@ public class CameraFragment extends Fragment
 
                         mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
                         mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
-                        mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
-                        mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
-                        mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
-                        mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
+
                         mDeformWrapper.pushDeformStep();
                     });
                 }
             });
         }, 2000);
-        openGlPreview.setDisplayMode(ImageGLSurfaceView.DisplayMode.DISPLAY_ASPECT_FIT);
-
-        Display display = Objects.requireNonNull(getActivity()).getWindowManager().getDefaultDisplay();
-        display.getSize(SCREEN_SIZE);
-        int screenWidth = SCREEN_SIZE.x;
-        int screenHeight = SCREEN_SIZE.y;
-        Log.d(TAG, String.format(Locale.getDefault(), "onCreateView: w %d x h %d", screenWidth, screenHeight));
-        //Sony: 1080x1776
-
-        SURFACE_HEIGHT = screenWidth;
-        SURFACE_WIDTH = SURFACE_HEIGHT * READER_WIDTH / READER_HEIGHT;
-        transformMatrix.setScale(SURFACE_HEIGHT / (float) READER_HEIGHT, SURFACE_WIDTH / (float) READER_WIDTH);
-        SolvePNP.getInstance().initialize(new Point((int) (READER_WIDTH / 2f), (int) (READER_HEIGHT / 2f)));
-
+//        openGlPreview.setDisplayMode(ImageGLSurfaceView.DisplayMode.DISPLAY_ASPECT_FIT);
+        openGlPreview.setDisplayMode(ImageGLSurfaceView.DisplayMode.DISPLAY_ASPECT_FILL);
         return view;
     }
 

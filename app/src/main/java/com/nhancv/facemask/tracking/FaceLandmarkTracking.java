@@ -266,7 +266,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
             openGlPreview.setImageBitmap(bmFiltered);
             openGlPreview.flush(true, () -> {
                 if (mDeformWrapper == null) return;
-                mDeformWrapper.bloatDeform(0, 0, previewBmTmp.getWidth(), previewBmTmp.getHeight(), 200, 0.5f);
+//                mDeformWrapper.bloatDeform(0, 0, previewBmTmp.getWidth(), previewBmTmp.getHeight(), 200, 0.5f);
             });
 
         }
