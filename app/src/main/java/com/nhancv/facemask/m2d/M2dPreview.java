@@ -58,7 +58,7 @@ public class M2dPreview extends View {
 
     @Override
     protected void onDetachedFromWindow() {
-        this.maskUpdater.onStop();
+        this.maskUpdater.stopUpdatingFps();
         super.onDetachedFromWindow();
     }
 

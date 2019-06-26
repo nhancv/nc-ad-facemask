@@ -55,7 +55,7 @@ public class MaskUpdater {
     }
 
     // Call on onDetachedFromWindow
-    public void onStop() {
+    public void stopUpdatingFps() {
         stableFps.stop();
     }
 

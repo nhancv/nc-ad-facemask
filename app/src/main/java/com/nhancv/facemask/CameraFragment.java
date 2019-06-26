@@ -484,7 +484,6 @@ public class CameraFragment extends Fragment
             imagePreviewThread = null;
             imagePreviewHandler = null;
 
-//            realTimeRotation.releaseMatrix();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
