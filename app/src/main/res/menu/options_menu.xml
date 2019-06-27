@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ MIT License
+  ~
+  ~ Copyright (c) 2019 BeeSight Soft
+  ~
+  ~ Permission is hereby granted, free of charge, to any person obtaining a copy
+  ~ of this software and associated documentation files (the "Software"), to deal
+  ~ in the Software without restriction, including without limitation the rights
+  ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  ~ copies of the Software, and to permit persons to whom the Software is
+  ~ furnished to do so, subject to the following conditions:
+  ~
+  ~ The above copyright notice and this permission notice shall be included in all
+  ~ copies or substantial portions of the Software.
+  ~
+  ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  ~ SOFTWARE.
+  ~
+  ~ @author Nhan Cao <nhan.cao@beesightsoft.com>
+  -->
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/none"
+          android:title="@string/none"
+          android:showAsAction="never" />
+    <item android:id="@+id/autofix"
+          android:title="@string/autofix"
+          android:showAsAction="never" />
+    <item android:id="@+id/bw"
+          android:title="@string/bw"
+          android:showAsAction="never" />
+    <item android:id="@+id/brightness"
+          android:title="@string/brightness"
+          android:showAsAction="never" />
+    <item android:id="@+id/contrast"
+          android:title="@string/contrast"
+          android:showAsAction="never" />
+    <item android:id="@+id/crossprocess"
+          android:title="@string/crossprocess"
+          android:showAsAction="never" />
+    <item android:id="@+id/documentary"
+          android:title="@string/documentary"
+          android:showAsAction="never" />
+    <item android:id="@+id/duotone"
+          android:title="@string/duotone"
+          android:showAsAction="never" />
+    <item android:id="@+id/filllight"
+          android:title="@string/filllight"
+          android:showAsAction="never" />
+    <item android:id="@+id/fisheye"
+          android:title="@string/fisheye"
+          android:showAsAction="never" />
+    <item android:id="@+id/flipvert"
+          android:title="@string/flipvert"
+          android:showAsAction="never" />
+    <item android:id="@+id/fliphor"
+          android:title="@string/fliphor"
+          android:showAsAction="never" />
+    <item android:id="@+id/grain"
+          android:title="@string/grain"
+          android:showAsAction="never" />
+    <item android:id="@+id/grayscale"
+          android:title="@string/grayscale"
+          android:showAsAction="never" />
+    <item android:id="@+id/lomoish"
+          android:title="@string/lomoish"
+          android:showAsAction="never" />
+    <item android:id="@+id/negative"
+          android:title="@string/negative"
+          android:showAsAction="never" />
+    <item android:id="@+id/posterize"
+          android:title="@string/posterize"
+          android:showAsAction="never" />
+    <item android:id="@+id/rotate"
+          android:title="@string/rotate"
+          android:showAsAction="never" />
+    <item android:id="@+id/saturate"
+          android:title="@string/saturate"
+          android:showAsAction="never" />
+    <item android:id="@+id/sepia"
+          android:title="@string/sepia"
+          android:showAsAction="never" />
+    <item android:id="@+id/sharpen"
+          android:title="@string/sharpen"
+          android:showAsAction="never" />
+    <item android:id="@+id/temperature"
+          android:title="@string/temperature"
+          android:showAsAction="never" />
+    <item android:id="@+id/tint"
+          android:title="@string/tint"
+          android:showAsAction="never" />
+    <item android:id="@+id/vignette"
+          android:title="@string/vignette"
+          android:showAsAction="never" />
+</menu>

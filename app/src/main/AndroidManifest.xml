@@ -33,11 +33,22 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning"
+        android:hardwareAccelerated="true"
         >
+        <!--<activity-->
+            <!--android:name=".CameraActivity"-->
+            <!--android:screenOrientation="portrait"-->
+            <!--android:theme="@style/FullscreenTheme"-->
+            <!--&gt;-->
+            <!--<intent-filter>-->
+                <!--<action android:name="android.intent.action.MAIN" />-->
+                <!--<category android:name="android.intent.category.LAUNCHER" />-->
+            <!--</intent-filter>-->
+        <!--</activity>-->
         <activity
-            android:name=".CameraActivity"
+            android:name=".HelloEffects"
             android:screenOrientation="portrait"
-            android:theme="@style/FullscreenTheme"
+            android:theme="@style/Widget.AppCompat.ActionBar"
             >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -188,34 +188,33 @@ public class CameraFragment extends Fragment
 
         openGlPreview = view.findViewById(R.id.fragment_camera_opengl_preview);
         openGlPreview.setSurfaceCreatedCallback(() -> {
-//            openGlPreview.setDisplayMode(ImageGLSurfaceView.DisplayMode.DISPLAY_ASPECT_FIT);
             openGlPreview.queueEvent(() -> {
                 mDeformWrapper = CGEDeformFilterWrapper.create(screenWidth, screenHeight, 10.0f);
-                mDeformWrapper.setUndoSteps(200); // set max undo steps to 200.
-                if (mDeformWrapper != null) {
-                    CGEImageHandler handler = openGlPreview.getImageHandler();
-                    handler.setFilterWithAddres(mDeformWrapper.getNativeAddress());
-                    handler.processFilters();
-                }
+//                mDeformWrapper.setUndoSteps(200); // set max undo steps to 200.
+//                if (mDeformWrapper != null) {
+//                    CGEImageHandler handler = openGlPreview.getImageHandler();
+//                    handler.setFilterWithAddres(mDeformWrapper.getNativeAddress());
+//                    handler.processFilters();
+//                }
             });
         });
-        openGlPreview.postDelayed(() -> {
-            // Test effect
-            TextureRenderer.Viewport viewport = openGlPreview.getRenderViewport();
-            final float dw = viewport.width;
-            final float dh = viewport.height;
-            if (mDeformWrapper != null) {
-                openGlPreview.flush(true, () -> {
-                    if (mDeformWrapper == null) return;
-                    mDeformWrapper.bloatDeform(dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
-                    mDeformWrapper.bloatDeform(dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
-                    mDeformWrapper.bloatDeform(dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
-
-                    mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
-                    mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
-                });
-            }
-        }, 2000);
+//        openGlPreview.postDelayed(() -> {
+//            // Test effect
+//            TextureRenderer.Viewport viewport = openGlPreview.getRenderViewport();
+//            final float dw = viewport.width;
+//            final float dh = viewport.height;
+//            if (mDeformWrapper != null) {
+//                openGlPreview.flush(true, () -> {
+//                    if (mDeformWrapper == null) return;
+//                    mDeformWrapper.bloatDeform(dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
+//                    mDeformWrapper.bloatDeform(dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
+//                    mDeformWrapper.bloatDeform(dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
+//
+////                    mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
+////                    mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
+//                });
+//            }
+//        }, 2000);
         openGlPreview.setDisplayMode(ImageGLSurfaceView.DisplayMode.DISPLAY_ASPECT_FILL);
         return view;
     }
