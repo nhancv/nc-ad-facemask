@@ -475,8 +475,7 @@ namespace CGE
 	void CGELiquifyFilter::bloatMeshWithPoint(Vec2f pnt, float w, float h, float radius, float intensity)
 	{
 
-//        restoreMesh();
-        undo();
+        restoreMesh();
 		m_doingRestore = false;
 
 		CGE_LOG_CODE(

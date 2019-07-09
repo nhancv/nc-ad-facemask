@@ -31,6 +31,7 @@ import android.graphics.Camera;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.util.Log;
 
 import com.nhancv.facemask.pose.Rotation;
 import com.nhancv.facemask.pose.Translation;
@@ -40,10 +41,12 @@ import com.nhancv.facemask.pose.SolvePNP;
 import zeusees.tracking.Face;
 
 public abstract class BaseMask implements Mask {
-
+    private static final String TAG = BaseMask.class.getSimpleName();
     protected Rect faceRect;
     protected PointF[] point2Ds;
     protected Face faceBuffer;
+
+    public boolean isMouthOpened;
 
     @Override
     public void init(Context context) {
@@ -61,8 +64,10 @@ public abstract class BaseMask implements Mask {
 
         for (int i = 0; i < 106; i++) {
             point2Ds[i].set(faceBuffer.landmarks[i * 2], faceBuffer.landmarks[i * 2 + 1]);
-
         }
+
+        detectMouthOpened();
+
         //Solve PNP
         solvePNP.setUpLandmarks(point2Ds);
         try {
@@ -117,4 +122,12 @@ public abstract class BaseMask implements Mask {
             pointF.y = currentEstY;
         }
     }
+
+    protected void detectMouthOpened() {
+        PointF upperLip = point2Ds[36];
+        PointF lowerLip = point2Ds[103];
+        isMouthOpened = (lowerLip.y - upperLip.y) > 4;
+    }
+
+
 }

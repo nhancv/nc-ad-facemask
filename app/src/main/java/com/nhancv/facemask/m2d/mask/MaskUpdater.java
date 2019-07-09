@@ -31,6 +31,7 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 
 import com.nhancv.facemask.fps.StableFps;
+import com.nhancv.facemask.m2d.mask.dog.DogMask;
 import com.nhancv.facemask.m2d.mask.rabbit.RabbitMask;
 import com.nhancv.facemask.pose.SolvePNP;
 
@@ -50,7 +51,8 @@ public class MaskUpdater {
         stableFps = new StableFps(20);
         solvePNP = SolvePNP.getInstance();
         //init rabbit_mask
-        mask = new RabbitMask();
+//        mask = new RabbitMask();
+        mask = new DogMask();
         mask.init(context);
     }
 
