@@ -1,0 +1,45 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 28
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 28
+        versionCode 1
+        versionName "2.4.6"
+        externalNativeBuild {
+            cmake {
+                cppFlags "-frtti -std=gnu++11 -DANDROID_NDK -DDEBUG -D_CGE_ONLY_FILTERS_ -D_CGE_STATIC_ASSERT_ -DCGE_TEXTURE_PREMULTIPLIED=1 -DCGE_LOG_TAG=\\\"libCGE\\\" " +
+                        "-I${project.buildDir}/../src/main/cpp/include " +
+                        "-I${project.buildDir}/../src/main/cpp/include/filters " +
+                        "-I${project.buildDir}/../src/main/cpp/interface " +
+                        "-I${project.buildDir}/../src/main/cpp/source "
+                arguments "-DANDROID_TOOLCHAIN=clang", "-DANDROID_STL=c++_static"
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    ////////////////////////////////////////
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+        }
+    }
+//    sourceSets.main {
+//        jniLibs.srcDir 'src/main/libs' //set libs as .so's location instead of jni
+//        jni.srcDirs = [] //disable automatic ndk-build call with auto-generated Android.mk file
+//    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+}

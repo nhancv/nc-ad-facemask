@@ -80,6 +80,8 @@ dependencies {
 
     implementation project(':opencv')
     implementation 'pub.devrel:easypermissions:2.0.1'
-    implementation 'org.wysaid:gpuimage-plus:2.6.1'
+//    implementation 'org.wysaid:gpuimage-plus:2.6.1'
+    implementation project(':library')
+
 
 }
