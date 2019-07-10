@@ -43,22 +43,15 @@ public class MaskUpdater {
     private static final String TAG = MaskUpdater.class.getSimpleName();
 
     private Mask mask;
-    private StableFps stableFps;
     private SolvePNP solvePNP;
 
     public MaskUpdater(Context context) {
         //start thread
-        stableFps = new StableFps(20);
         solvePNP = SolvePNP.getInstance();
         //init rabbit_mask
 //        mask = new RabbitMask();
         mask = new DogMask();
         mask.init(context);
-    }
-
-    // Call on onDetachedFromWindow
-    public void stopUpdatingFps() {
-        stableFps.stop();
     }
 
     public void maskUpdateLocation(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {

@@ -406,6 +406,6 @@ public class ImageGLSurfaceView extends GLSurfaceView implements Renderer {
         mRenderViewport.x = (mViewWidth - w) / 2;
         mRenderViewport.y = (mViewHeight - h) / 2;
 
-        Log.i(LOG_TAG, String.format("View port: %d, %d, %d, %d", mRenderViewport.x, mRenderViewport.y, mRenderViewport.width, mRenderViewport.height));
+//        Log.i(LOG_TAG, String.format("View port: %d, %d, %d, %d", mRenderViewport.x, mRenderViewport.y, mRenderViewport.width, mRenderViewport.height));
     }
 }

@@ -352,7 +352,7 @@ public class CameraFragment extends Fragment
                             rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth,
                             maxPreviewHeight, aspectRatio);
 
-                    Log.e(TAG, "setUpCameraOutputs previewSize: " + previewSize);
+                    Log.d(TAG, "setUpCameraOutputs previewSize: " + previewSize);
                     // Check if the flash is supported.
                     Boolean available = characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
                     flashSupported = available == null ? false : available;

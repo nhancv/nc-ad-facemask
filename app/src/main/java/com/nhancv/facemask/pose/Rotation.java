@@ -30,9 +30,9 @@ package com.nhancv.facemask.pose;
 Define the rotation value along x-y-z axis
  */
 public class Rotation {
-    float x = 0;
-    float y = 0;
-    float z = 0;
+    public float x = 0;
+    public float y = 0;
+    public float z = 0;
 
     public Rotation(float x, float y, float z) {
         this.x = x;

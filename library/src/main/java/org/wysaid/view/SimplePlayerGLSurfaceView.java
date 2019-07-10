@@ -455,7 +455,7 @@ public class SimplePlayerGLSurfaceView extends GLSurfaceView implements GLSurfac
         mRenderViewport.height = h;
         mRenderViewport.x = (mViewWidth - mRenderViewport.width) / 2;
         mRenderViewport.y = (mViewHeight - mRenderViewport.height) / 2;
-        Log.i(LOG_TAG, String.format("View port: %d, %d, %d, %d", mRenderViewport.x, mRenderViewport.y, mRenderViewport.width, mRenderViewport.height));
+//        Log.i(LOG_TAG, String.format("View port: %d, %d, %d, %d", mRenderViewport.x, mRenderViewport.y, mRenderViewport.width, mRenderViewport.height));
     }
 
     private void _useUri() {

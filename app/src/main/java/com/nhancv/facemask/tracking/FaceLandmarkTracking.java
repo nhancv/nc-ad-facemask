@@ -17,6 +17,7 @@ import android.os.HandlerThread;
 import android.os.Message;
 import android.util.Log;
 
+import com.nhancv.facemask.fps.NSemaphore;
 import com.nhancv.facemask.fps.StableFps;
 import com.nhancv.facemask.m2d.OpenGLPreview;
 import com.nhancv.facemask.util.Constant;
@@ -25,6 +26,7 @@ import org.wysaid.nativePort.CGEDeformFilterWrapper;
 import org.wysaid.nativePort.CGENativeLibrary;
 
 import java.util.Locale;
+import java.util.concurrent.Semaphore;
 
 import zeusees.tracking.Face;
 import zeusees.tracking.FaceTracking;
@@ -81,7 +83,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
         this.openGlPreview = openGlPreview;
         this.mDeformWrapper = mDeformWrapper;
 
-        previewFps = new StableFps(30);
+        previewFps = new StableFps(10);
 
         redPaint = new Paint();
         redPaint.setColor(Color.RED);
@@ -105,7 +107,9 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
             @Override
             public void handleMessage(Message msg) {
                 if (msg.what == PREVIEW_RENDER_MSG) {
+                    long start = System.currentTimeMillis();
                     previewRenderProcess();
+                    Log.e(TAG, Thread.currentThread().getId() + " previewRenderHandler: " + (System.currentTimeMillis() - start) + "ms");
                 }
             }
         };
@@ -116,6 +120,8 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
             @Override
             public void handleMessage(Message msg) {
                 if (msg.what == FRAME_DATA_READY_MSG && multiTrack106 != null) {
+                    trackingSemaphore.acquire();
+                    long start = System.currentTimeMillis();
                     System.arraycopy(nv21Data, 0, trackingFrameBuffer, 0, nv21Data.length);
                     if (!initTrack106) {
                         multiTrack106.faceTrackingInit(trackingFrameBuffer, previewHeight, previewWidth);
@@ -123,6 +129,8 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
                     } else {
                         multiTrack106.faceTrackingUpdate(trackingFrameBuffer, previewHeight, previewWidth);
                     }
+                    trackingSemaphore.release();
+                    Log.e(TAG, Thread.currentThread().getId() + " trackingHandler: " + (System.currentTimeMillis() - start) + "ms");
                 }
             }
         };
@@ -160,9 +168,16 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
 
     }
 
+    private NSemaphore trackingSemaphore = new NSemaphore();
+
     @Override
     public void onImageAvailable(final ImageReader reader) {
-        if (!preImageProcess(reader)) return;
+        if(!trackingSemaphore.available()) return;
+        long start = System.currentTimeMillis();
+        if (!preImageProcess(reader)) {
+            return;
+        }
+        Log.e(TAG, Thread.currentThread().getId() + " onImageAvailable: " + (System.currentTimeMillis() - start) + "ms");
         // Fps for render to ui thread
         if (!previewFps.isStarted()) {
             previewFps.start(fps -> {
@@ -224,27 +239,27 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
             matrix.postTranslate(previewBmTmp.getHeight(), 0);
             Bitmap previewBm = Bitmap.createBitmap(previewBmTmp, 0, 0, previewBmTmp.getWidth(), previewBmTmp.getHeight(), matrix, false);
             // TODO: 2019-06-19 Filter with OpenGLES
-            Bitmap bmFiltered = CGENativeLibrary.filterImage_MultipleEffects(previewBm, Constant.EFFECT_ACTIVE, 1.0f);
+//            Bitmap bmFiltered = CGENativeLibrary.filterImage_MultipleEffects(previewBm, Constant.EFFECT_ACTIVE, 1.0f);
             // Show preview
             openGlPreview.maskUpdateLocation(face, previewWidth, previewHeight, transformMatrix);
 
             // Initialize a new Canvas instance
-            Canvas openGLCanvas = new Canvas(bmFiltered);
+            Canvas openGLCanvas = new Canvas(previewBm);
             openGlPreview.renderMaskToCanvas(openGLCanvas);
-
-            final String log;
-            long endTime = System.currentTimeMillis();
-            if (lastTime == 0 || endTime == lastTime) {
-                lastTime = System.currentTimeMillis();
-                log = "--";
-            } else {
-                log = String.format(Locale.getDefault(), "Fps: %d", 1000 / (endTime - lastTime));
-                lastTime = endTime;
-            }
 
             // Show landmark for debug
             // Draw landmarks to SurfaceView
             if (SHOW_LANDMARK) {
+                final String log;
+                long endTime = System.currentTimeMillis();
+                if (lastTime == 0 || endTime == lastTime) {
+                    lastTime = System.currentTimeMillis();
+                    log = "--";
+                } else {
+                    log = String.format(Locale.getDefault(), "Fps: %d", 1000 / (endTime - lastTime));
+                    lastTime = endTime;
+                }
+
                 openGLCanvas.setMatrix(transformMatrix);
                 if (face != null) {
                     Rect rect = new Rect(previewHeight - face.left, face.top, previewHeight - face.right, face.bottom);
@@ -263,7 +278,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
                 openGLCanvas.drawText(log, 10, 30, redPaint);
             }
 
-            openGlPreview.setImageBitmap(bmFiltered);
+            openGlPreview.setImageBitmap(previewBm);
 //            openGlPreview.flush(true, () -> {
 //                if (mDeformWrapper == null) return;
 //                mDeformWrapper.pushDeformStep();

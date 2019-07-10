@@ -24,47 +24,21 @@
  * @author Nhan Cao <nhan.cao@beesightsoft.com>
  */
 
-package com.nhancv.facemask.m2d;
+package com.nhancv.facemask.fps;
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Matrix;
-import android.util.AttributeSet;
+public class NSemaphore {
+    private volatile int semaphore = 0;
 
-import com.nhancv.facemask.m2d.mask.MaskUpdater;
-
-import org.wysaid.view.ImageGLSurfaceView;
-
-import zeusees.tracking.Face;
-
-
-public class OpenGLPreview extends ImageGLSurfaceView {
-
-    private static final String TAG = OpenGLPreview.class.getSimpleName();
-
-    private MaskUpdater maskUpdater;
-
-    public OpenGLPreview(Context context) {
-        this(context, null);
+    public synchronized boolean available() {
+        return semaphore == 0;
     }
 
-    public OpenGLPreview(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        maskUpdater = new MaskUpdater(context);
+    public synchronized void acquire() {
+        ++semaphore;
     }
 
-    public void maskUpdateLocation(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
-        this.maskUpdater.maskUpdateLocation(face, previewWidth, previewHeight, scaleMatrix);
-    }
-
-    public void renderMaskToCanvas(Canvas canvas) {
-        // Draw 2dMask
-        this.maskUpdater.onDraw(canvas);
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
+    public synchronized void release() {
+        --semaphore;
     }
 
 }

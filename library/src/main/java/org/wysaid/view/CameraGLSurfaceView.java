@@ -325,6 +325,6 @@ public class CameraGLSurfaceView extends GLSurfaceView implements GLSurfaceView.
         mDrawViewport.height = h;
         mDrawViewport.x = (mViewWidth - mDrawViewport.width) / 2;
         mDrawViewport.y = (mViewHeight - mDrawViewport.height) / 2;
-        Log.i(LOG_TAG, String.format("View port: %d, %d, %d, %d", mDrawViewport.x, mDrawViewport.y, mDrawViewport.width, mDrawViewport.height));
+//        Log.i(LOG_TAG, String.format("View port: %d, %d, %d, %d", mDrawViewport.x, mDrawViewport.y, mDrawViewport.width, mDrawViewport.height));
     }
 }

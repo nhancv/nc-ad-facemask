@@ -32,6 +32,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PointF;
+import android.util.Log;
 
 import com.nhancv.facemask.R;
 import com.nhancv.facemask.m2d.mask.BaseMask;
@@ -90,14 +91,13 @@ public class DogMask extends BaseMask implements Mask {
             super.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
             //Buffer coors
             int nosePointId = 46;
-            int bonePointId = 0;
+            int bonePointId = 32;
             PointF noseF = new PointF(point2Ds[nosePointId].x, point2Ds[nosePointId].y);
             PointF boneF = new PointF(point2Ds[bonePointId].x, point2Ds[bonePointId].y);
             denoise(kmNoseX, kmNoseY, lastNoseF, noseF);
 
             Rotation rotation = new Rotation(solvePNP.getRx(), solvePNP.getRy(), solvePNP.getRz());
             Translation translation = new Translation(0, 0, solvePNP.getTz());
-
             float[] scalePts = new float[9];
             scaleMatrix.getValues(scalePts);
             float scaleX = scalePts[0]; // x value
@@ -122,19 +122,26 @@ public class DogMask extends BaseMask implements Mask {
                 boneBmTmp = null;
             }
 
-
-            PointF leftEarF = new PointF(point2Ds[19].x, point2Ds[19].y);
-            PointF rightEarF = new PointF(point2Ds[74].x, point2Ds[74].y);
+            PointF leftEarF = new PointF(point2Ds[11].x, point2Ds[11].y);
+            PointF rightEarF = new PointF(point2Ds[13].x, point2Ds[13].y);
             float earRatio = leftBm.getHeight() * 1.0f / leftBm.getWidth();
             float earW = Math.abs(1f * faceRect.width()) * scaleX;
             float earH = earW * earRatio;
-            leftBmTmp = Bitmap.createScaledBitmap(leftBm, (int) (earW), (int) (earH), false);
-            transformMat(leftBmMt, leftBmTmp.getWidth() / 2f, leftBmTmp.getHeight() / 2f, leftEarF.x * scaleX - leftBmTmp.getWidth() / 2f,
-                    leftEarF.y * scaleY - leftBmTmp.getHeight() / 2f, rotation, translation);
+            if (rotation.y > -10) {
+                leftBmTmp = Bitmap.createScaledBitmap(leftBm, (int) (earW), (int) (earH), false);
+                transformMat(leftBmMt, leftBmTmp.getWidth() / 2f, leftBmTmp.getHeight() / 2f, leftEarF.x * scaleX - leftBmTmp.getWidth() / 2f,
+                        leftEarF.y * scaleY - leftBmTmp.getHeight() / 2f, rotation, translation);
+            } else {
+                leftBmTmp = null;
+            }
 
-            rightBmTmp = Bitmap.createScaledBitmap(rightBm, (int) (earW), (int) (earH), false);
-            transformMat(rightBmMt, rightBmTmp.getWidth() / 2f, rightBmTmp.getHeight() / 2f, rightEarF.x * scaleX - rightBmTmp.getWidth() / 2f,
-                    rightEarF.y * scaleY - rightBmTmp.getHeight() / 2f, rotation, translation);
+            if (rotation.y < 10) {
+                rightBmTmp = Bitmap.createScaledBitmap(rightBm, (int) (earW), (int) (earH), false);
+                transformMat(rightBmMt, rightBmTmp.getWidth() / 2f, rightBmTmp.getHeight() / 2f, rightEarF.x * scaleX - rightBmTmp.getWidth() / 2f,
+                        rightEarF.y * scaleY - rightBmTmp.getHeight() / 2f, rotation, translation);
+            } else {
+                rightBmTmp = null;
+            }
 
             float noseRatio = noseBm.getHeight() * 1.0f / noseBm.getWidth();
             float noseW = Math.abs(1f * faceRect.width()) * scaleX;

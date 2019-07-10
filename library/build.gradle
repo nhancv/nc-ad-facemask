@@ -10,7 +10,8 @@ android {
         versionName "2.4.6"
         externalNativeBuild {
             cmake {
-                cppFlags "-frtti -std=gnu++11 -DANDROID_NDK -DDEBUG -D_CGE_ONLY_FILTERS_ -D_CGE_STATIC_ASSERT_ -DCGE_TEXTURE_PREMULTIPLIED=1 -DCGE_LOG_TAG=\\\"libCGE\\\" " +
+//                cppFlags "-frtti -std=gnu++11 -DANDROID_NDK -DDEBUG -D_CGE_ONLY_FILTERS_ -D_CGE_STATIC_ASSERT_ -DCGE_TEXTURE_PREMULTIPLIED=1 -DCGE_LOG_TAG=\\\"libCGE\\\" " +
+                cppFlags "-frtti -std=gnu++11 -DANDROID_NDK -D_CGE_ONLY_FILTERS_ -D_CGE_STATIC_ASSERT_ -DCGE_TEXTURE_PREMULTIPLIED=1 -DCGE_LOG_TAG=\\\"libCGE\\\" " +
                         "-I${project.buildDir}/../src/main/cpp/include " +
                         "-I${project.buildDir}/../src/main/cpp/include/filters " +
                         "-I${project.buildDir}/../src/main/cpp/interface " +
