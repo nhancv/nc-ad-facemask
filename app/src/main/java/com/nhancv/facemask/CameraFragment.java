@@ -33,6 +33,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.nhancv.facemask.m2d.OpenGLPreview;
+import com.nhancv.facemask.m2d.mask.MaskUpdater;
 import com.nhancv.facemask.pose.SolvePNP;
 import com.nhancv.facemask.tracking.FaceLandmarkTracking;
 import com.nhancv.facemask.util.Constant;
@@ -184,6 +185,9 @@ public class CameraFragment extends Fragment
             effectIndex++;
             effectIndex = effectIndex % Constant.EFFECT_CONFIGS.length;
             Constant.EFFECT_ACTIVE = Constant.EFFECT_CONFIGS[effectIndex];
+
+            MaskUpdater.MASK_ACTIVE = (MaskUpdater.MASK_ACTIVE + 1) % 2;
+
         });
 
         openGlPreview = view.findViewById(R.id.fragment_camera_opengl_preview);

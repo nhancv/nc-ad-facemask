@@ -42,10 +42,14 @@ public class MaskUpdater {
 
     private static final String TAG = MaskUpdater.class.getSimpleName();
 
+    public static int MASK_ACTIVE = 1;
+    private Context context;
     private Mask mask;
     private SolvePNP solvePNP;
+    private int currentMaskIndex = MASK_ACTIVE;
 
     public MaskUpdater(Context context) {
+        this.context = context;
         //start thread
         solvePNP = SolvePNP.getInstance();
         //init rabbit_mask
@@ -55,6 +59,16 @@ public class MaskUpdater {
     }
 
     public void maskUpdateLocation(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
+        if (MASK_ACTIVE != currentMaskIndex) {
+            currentMaskIndex = MASK_ACTIVE;
+            mask = null;
+            if (currentMaskIndex == 0) {
+                mask = new RabbitMask();
+            } else if (currentMaskIndex == 1) {
+                mask = new DogMask();
+            }
+            if (mask != null) mask.init(context);
+        }
         if (mask != null) mask.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
     }
 

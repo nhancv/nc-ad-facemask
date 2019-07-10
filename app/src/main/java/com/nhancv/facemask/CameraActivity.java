@@ -3,7 +3,6 @@ package com.nhancv.facemask;
 import android.Manifest;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -15,9 +14,6 @@ import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.AppSettingsDialog;
 import pub.devrel.easypermissions.EasyPermissions;
 import zeusees.tracking.STUtils;
-
-import static zeusees.tracking.STUtils.isExternalStorageReadable;
-import static zeusees.tracking.STUtils.isExternalStorageWritable;
 
 
 public class CameraActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks {
