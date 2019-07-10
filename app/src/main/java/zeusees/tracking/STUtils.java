@@ -84,7 +84,6 @@ public class STUtils {
     public static Bitmap NV21ToRGBABitmap(byte[] nv21, int width, int height, Context context) {
         TimingLogger timings = new TimingLogger("STUtils timing", "NV21ToRGBABitmap");
         Rect rect = new Rect(0, 0, width, height);
-
         try {
             Class.forName("android.renderscript.Element$DataKind").getField("PIXEL_YUV");
             Class.forName("android.renderscript.ScriptIntrinsicYuvToRGB");

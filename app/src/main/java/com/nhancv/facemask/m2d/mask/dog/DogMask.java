@@ -72,6 +72,7 @@ public class DogMask extends BaseMask implements Mask {
      * Update sprite rabbit_mask for animation
      */
     private void updateSprite() {
+        release();
         noseBm = dogSprites.nose();
         leftBm = dogSprites.leftEar();
         rightBm = dogSprites.rightEar();
@@ -164,14 +165,38 @@ public class DogMask extends BaseMask implements Mask {
 
     @Override
     public void release() {
-        if (noseBm != null) noseBm.recycle();
-        if (boneBm != null) boneBm.recycle();
-        if (noseBmTmp != null) noseBmTmp.recycle();
-        if (boneBmTmp != null) boneBmTmp.recycle();
-        if (leftBm != null) leftBm.recycle();
-        if (rightBm != null) rightBm.recycle();
-        if (leftBmTmp != null) leftBmTmp.recycle();
-        if (rightBmTmp != null) rightBmTmp.recycle();
+        if (noseBm != null) {
+            noseBm.recycle();
+            noseBm = null;
+        }
+        if (boneBm != null) {
+            boneBm.recycle();
+            boneBm = null;
+        }
+        if (noseBmTmp != null) {
+            noseBmTmp.recycle();
+            noseBmTmp = null;
+        }
+        if (boneBmTmp != null) {
+            boneBmTmp.recycle();
+            boneBmTmp = null;
+        }
+        if (leftBm != null) {
+            leftBm.recycle();
+            leftBm = null;
+        }
+        if (rightBm != null) {
+            rightBm.recycle();
+            rightBm = null;
+        }
+        if (leftBmTmp != null) {
+            leftBmTmp.recycle();
+            leftBmTmp = null;
+        }
+        if (rightBmTmp != null) {
+            rightBmTmp.recycle();
+            rightBmTmp = null;
+        }
     }
 
 }

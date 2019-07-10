@@ -172,7 +172,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
 
     @Override
     public void onImageAvailable(final ImageReader reader) {
-        if(!trackingSemaphore.available()) return;
+        if (!trackingSemaphore.available()) return;
         long start = System.currentTimeMillis();
         if (!preImageProcess(reader)) {
             return;
@@ -181,7 +181,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
         // Fps for render to ui thread
         if (!previewFps.isStarted()) {
             previewFps.start(fps -> {
-                if (previewRenderHandler != null) {
+                if (previewRenderHandler != null && previewSemaphore.available()) {
                     previewRenderHandler.removeMessages(PREVIEW_RENDER_MSG);
                     previewRenderHandler.sendEmptyMessage(PREVIEW_RENDER_MSG);
                 }
@@ -227,7 +227,11 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
         return true;
     }
 
-    private void previewRenderProcess() {
+    private Bitmap previewBm;
+    private NSemaphore previewSemaphore = new NSemaphore();
+
+    private synchronized void previewRenderProcess() {
+        previewSemaphore.acquire();
         if (multiTrack106 != null) {
             System.arraycopy(nv21Data, 0, previewRenderBuffer, 0, nv21Data.length);
             Face face = multiTrack106.getTrackingInfo();
@@ -237,7 +241,11 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
             matrix.postTranslate(0, previewBmTmp.getWidth());
             matrix.postScale(-1, 1);
             matrix.postTranslate(previewBmTmp.getHeight(), 0);
-            Bitmap previewBm = Bitmap.createBitmap(previewBmTmp, 0, 0, previewBmTmp.getWidth(), previewBmTmp.getHeight(), matrix, false);
+            if(previewBm!= null && !previewBm.isRecycled()) {
+                previewBm.recycle();
+                previewBm = null;
+            }
+            previewBm = Bitmap.createBitmap(previewBmTmp, 0, 0, previewBmTmp.getWidth(), previewBmTmp.getHeight(), matrix, false);
             // TODO: 2019-06-19 Filter with OpenGLES
 //            Bitmap bmFiltered = CGENativeLibrary.filterImage_MultipleEffects(previewBm, Constant.EFFECT_ACTIVE, 1.0f);
             // Show preview
@@ -277,15 +285,8 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
                 }
                 openGLCanvas.drawText(log, 10, 30, redPaint);
             }
-
             openGlPreview.setImageBitmap(previewBm);
-//            openGlPreview.flush(true, () -> {
-//                if (mDeformWrapper == null) return;
-//                mDeformWrapper.pushDeformStep();
-////                mDeformWrapper.bloatDeform(0, 0, previewBmTmp.getWidth(), previewBmTmp.getHeight(), 200, 0.5f);
-//            });
-
         }
+        previewSemaphore.release();
     }
-
 }
