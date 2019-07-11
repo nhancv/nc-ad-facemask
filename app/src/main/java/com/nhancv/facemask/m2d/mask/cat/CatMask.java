@@ -45,6 +45,7 @@ import zeusees.tracking.Face;
 
 public class CatMask extends BaseMask implements Mask {
     private static final String TAG = CatMask.class.getSimpleName();
+    private Bitmap mask;
     private CatSprites catSprites;
     private volatile Bitmap noseBm, decoreSkinBm, leftBm, rightBm;
     private volatile Bitmap noseBmTmp, decoreSkinBmTmp, leftBmTmp, rightBmTmp;
@@ -56,8 +57,10 @@ public class CatMask extends BaseMask implements Mask {
     @Override
     public void init(Context context) {
         super.init(context);
-        catSprites = new CatSprites(
-                BitmapFactory.decodeResource(context.getResources(), R.drawable.cat_mask));
+        if(mask == null) {
+            mask = BitmapFactory.decodeResource(context.getResources(), R.drawable.cat_mask);
+        }
+        catSprites = new CatSprites(mask);
 
         updateSprite();
 

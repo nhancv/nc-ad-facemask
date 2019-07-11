@@ -59,8 +59,9 @@ public class HamsterSprites {
 
 
     public HamsterSprites(Bitmap bitmap) {
-        this.bitmap = Bitmap.createScaledBitmap(bitmap, SPRITE_SIZE * maskIndexs[0].length, SPRITE_SIZE * maskIndexs.length, true);
-        bitmap.recycle();
+        if (this.bitmap == null) {
+            this.bitmap = Bitmap.createScaledBitmap(bitmap, SPRITE_SIZE * maskIndexs[0].length, SPRITE_SIZE * maskIndexs.length, true);
+        }
     }
 
     private Bitmap getSprite(int r, int c, Matrix m) {

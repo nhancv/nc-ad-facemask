@@ -46,6 +46,7 @@ import zeusees.tracking.Face;
 
 public class DogMask extends BaseMask implements Mask {
     private static final String TAG = DogMask.class.getSimpleName();
+    private Bitmap mask;
     private DogSprites dogSprites;
     private volatile Bitmap noseBm, boneBm, leftBm, rightBm;
     private volatile Bitmap noseBmTmp, boneBmTmp, leftBmTmp, rightBmTmp;
@@ -57,8 +58,10 @@ public class DogMask extends BaseMask implements Mask {
     @Override
     public void init(Context context) {
         super.init(context);
-        dogSprites = new DogSprites(
-                BitmapFactory.decodeResource(context.getResources(), R.drawable.dog_mask));
+        if(mask == null) {
+            mask = BitmapFactory.decodeResource(context.getResources(), R.drawable.dog_mask);
+        }
+        dogSprites = new DogSprites(mask);
 
         updateSprite();
 
@@ -145,7 +148,7 @@ public class DogMask extends BaseMask implements Mask {
             }
 
             float noseRatio = noseBm.getHeight() * 1.0f / noseBm.getWidth();
-            float noseW = Math.abs(1f * faceRect.width()) * scaleX;
+            float noseW = Math.abs(1.2f * faceRect.width()) * scaleX;
             float noseH = noseW * noseRatio;
             noseBmTmp = Bitmap.createScaledBitmap(noseBm, (int) (noseW), (int) (noseH), false);
             transformMat(noseBmMt, noseBmTmp.getWidth() / 2f, noseBmTmp.getHeight() / 2f, noseF.x * scaleX - noseBmTmp.getWidth() / 2f,

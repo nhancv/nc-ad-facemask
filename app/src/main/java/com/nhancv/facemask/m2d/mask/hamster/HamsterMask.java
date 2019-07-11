@@ -44,6 +44,7 @@ import zeusees.tracking.Face;
 
 public class HamsterMask extends BaseMask implements Mask {
     private static final String TAG = HamsterMask.class.getSimpleName();
+    private Bitmap mask;
     private HamsterSprites hamsterSprites;
     private volatile Bitmap noseBm, beanBm, leftBm, rightBm;
     private volatile Bitmap noseBmTmp, beanBmTmp, leftBmTmp, rightBmTmp;
@@ -55,8 +56,10 @@ public class HamsterMask extends BaseMask implements Mask {
     @Override
     public void init(Context context) {
         super.init(context);
-        hamsterSprites = new HamsterSprites(
-                BitmapFactory.decodeResource(context.getResources(), R.drawable.hamster_mask));
+        if (mask == null) {
+            mask = BitmapFactory.decodeResource(context.getResources(), R.drawable.hamster_mask);
+        }
+        hamsterSprites = new HamsterSprites(mask);
 
         updateSprite();
 
@@ -119,21 +122,13 @@ public class HamsterMask extends BaseMask implements Mask {
             float earRatio = leftBm.getHeight() * 1.0f / leftBm.getWidth();
             float earW = Math.abs(1f * faceRect.width()) * scaleX;
             float earH = earW * earRatio;
-            if (rotation.y > -10) {
-                leftBmTmp = Bitmap.createScaledBitmap(leftBm, (int) (earW), (int) (earH), false);
-                transformMat(leftBmMt, leftBmTmp.getWidth() / 2f, leftBmTmp.getHeight() / 2f, leftEarF.x * scaleX - leftBmTmp.getWidth() / 2f,
-                        leftEarF.y * scaleY - leftBmTmp.getHeight() / 2f, rotation, translation);
-            } else {
-                leftBmTmp = null;
-            }
+            leftBmTmp = Bitmap.createScaledBitmap(leftBm, (int) (earW), (int) (earH), false);
+            transformMat(leftBmMt, leftBmTmp.getWidth() / 2f, leftBmTmp.getHeight() / 2f, leftEarF.x * scaleX - leftBmTmp.getWidth() / 2f,
+                    leftEarF.y * scaleY - leftBmTmp.getHeight() / 2f, rotation, translation);
 
-            if (rotation.y < 10) {
-                rightBmTmp = Bitmap.createScaledBitmap(rightBm, (int) (earW), (int) (earH), false);
-                transformMat(rightBmMt, rightBmTmp.getWidth() / 2f, rightBmTmp.getHeight() / 2f, rightEarF.x * scaleX - rightBmTmp.getWidth() / 2f,
-                        rightEarF.y * scaleY - rightBmTmp.getHeight() / 2f, rotation, translation);
-            } else {
-                rightBmTmp = null;
-            }
+            rightBmTmp = Bitmap.createScaledBitmap(rightBm, (int) (earW), (int) (earH), false);
+            transformMat(rightBmMt, rightBmTmp.getWidth() / 2f, rightBmTmp.getHeight() / 2f, rightEarF.x * scaleX - rightBmTmp.getWidth() / 2f,
+                    rightEarF.y * scaleY - rightBmTmp.getHeight() / 2f, rotation, translation);
 
             int nosePointId = 46;
             PointF noseF = new PointF(point2Ds[nosePointId].x, point2Ds[nosePointId].y);

@@ -45,6 +45,7 @@ import zeusees.tracking.Face;
 
 public class NerdMask extends BaseMask implements Mask {
     private static final String TAG = NerdMask.class.getSimpleName();
+    private Bitmap mask;
     private NerdSprites nerdSprites;
     private volatile Bitmap glassBm, decorSkinBm, hatBm, decorFlowerBm;
     private volatile Bitmap glassBmTmp, decorSkinBmTmp, hatBmTmp, decorFlowerBmTmp;
@@ -56,8 +57,10 @@ public class NerdMask extends BaseMask implements Mask {
     @Override
     public void init(Context context) {
         super.init(context);
-        nerdSprites = new NerdSprites(
-                BitmapFactory.decodeResource(context.getResources(), R.drawable.nerd_mask));
+        if(mask == null) {
+            mask = BitmapFactory.decodeResource(context.getResources(), R.drawable.nerd_mask);
+        }
+        nerdSprites = new NerdSprites(mask);
 
         updateSprite();
 

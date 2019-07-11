@@ -45,6 +45,7 @@ import zeusees.tracking.Face;
 
 public class RabbitMask extends BaseMask implements Mask {
     private static final String TAG = RabbitMask.class.getSimpleName();
+    private Bitmap mask;
     private RabbitSprites rabbitSprites;
     private Bitmap noseBm, heartBm, leftBm, rightBm;
     private Bitmap noseBmTmp, heartBmTmp, leftBmTmp, rightBmTmp;
@@ -53,8 +54,10 @@ public class RabbitMask extends BaseMask implements Mask {
     @Override
     public void init(Context context) {
         super.init(context);
-        rabbitSprites = new RabbitSprites(
-                BitmapFactory.decodeResource(context.getResources(), R.drawable.rabbit_mask));
+        if(mask == null) {
+            mask = BitmapFactory.decodeResource(context.getResources(), R.drawable.rabbit_mask);
+        }
+        rabbitSprites = new RabbitSprites(mask);
 
         updateSprite();
 
