@@ -5,8 +5,8 @@
     android:layout_height="match_parent"
     >
 
-    <com.nhancv.facemask.m2d.OpenGLPreview
-        android:id="@+id/fragment_camera_opengl_preview"
+    <com.nhancv.facemask.m2d.SurfacePreview
+        android:id="@+id/fragment_camera_surface_preview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="visible"

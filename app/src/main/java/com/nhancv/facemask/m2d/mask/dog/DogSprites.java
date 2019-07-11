@@ -103,10 +103,10 @@ public class DogSprites {
 //        m.preScale(-1, 1);
         Bitmap bm = findSprite(1, m);
         if (bm == null) return null;
-        Bitmap bmFinal = Bitmap.createBitmap(328, SPRITE_SIZE, Bitmap.Config.ARGB_8888);
+        Bitmap bmFinal = Bitmap.createBitmap(338, SPRITE_SIZE, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmFinal);
         canvas.drawBitmap(bm, 0, 0, null);
-        if(!bm.isRecycled()) bm.recycle();
+//        if(!bm.isRecycled()) bm.recycle();
         return bmFinal;
     }
 
@@ -114,10 +114,10 @@ public class DogSprites {
         Matrix m = new Matrix();
         Bitmap bm = findSprite(2, m);
         if (bm == null) return null;
-        Bitmap bmFinal = Bitmap.createBitmap(328, SPRITE_SIZE, Bitmap.Config.ARGB_8888);
+        Bitmap bmFinal = Bitmap.createBitmap(338, SPRITE_SIZE, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmFinal);
-        canvas.drawBitmap(bm, 70, 0, null);
-        if(!bm.isRecycled()) bm.recycle();
+        canvas.drawBitmap(bm, 80, 0, null);
+//        if(!bm.isRecycled()) bm.recycle();
         return bmFinal;
     }
 
@@ -128,14 +128,19 @@ public class DogSprites {
         Bitmap bmFinal = Bitmap.createBitmap(SPRITE_SIZE, SPRITE_SIZE, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmFinal);
         canvas.drawBitmap(bm, 0, -10, null);
-        if(!bm.isRecycled()) bm.recycle();
+//        if(!bm.isRecycled()) bm.recycle();
         return bmFinal;
     }
 
     public Bitmap bone() {
         Matrix m = new Matrix();
-        m.setScale(10f, 10f);
-        return findSprite(4, m);
+        Bitmap bm = findSprite(4, m);
+        if (bm == null) return null;
+        Bitmap bmFinal = Bitmap.createBitmap(SPRITE_SIZE, SPRITE_SIZE, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bmFinal);
+        canvas.drawBitmap(bm, 0, 0, null);
+//        if(!bm.isRecycled()) bm.recycle();
+        return bmFinal;
     }
 
 }

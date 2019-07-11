@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PointF;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.media.Image;
 import android.media.ImageReader;
@@ -19,14 +20,9 @@ import android.util.Log;
 
 import com.nhancv.facemask.fps.NSemaphore;
 import com.nhancv.facemask.fps.StableFps;
-import com.nhancv.facemask.m2d.OpenGLPreview;
-import com.nhancv.facemask.util.Constant;
-
-import org.wysaid.nativePort.CGEDeformFilterWrapper;
-import org.wysaid.nativePort.CGENativeLibrary;
+import com.nhancv.facemask.m2d.SurfacePreview;
 
 import java.util.Locale;
-import java.util.concurrent.Semaphore;
 
 import zeusees.tracking.Face;
 import zeusees.tracking.FaceTracking;
@@ -54,8 +50,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
      * Inject
      */
     private Matrix transformMatrix;
-    private OpenGLPreview openGlPreview;
-    private CGEDeformFilterWrapper mDeformWrapper;
+    private SurfacePreview surfacePreview;
     /**
      * Global vars
      */
@@ -73,15 +68,17 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     private boolean initTrack106;
     private Context context;
 
+    private volatile Bitmap previewBm;
+    private volatile NSemaphore trackingSemaphore = new NSemaphore();
+    private volatile NSemaphore previewSemaphore = new NSemaphore();
+
     public void initialize(
             final Context context,
             final Matrix transformMatrix,
-            final OpenGLPreview openGlPreview,
-            final CGEDeformFilterWrapper mDeformWrapper) {
+            final SurfacePreview surfacePreview) {
         this.context = context;
         this.transformMatrix = transformMatrix;
-        this.openGlPreview = openGlPreview;
-        this.mDeformWrapper = mDeformWrapper;
+        this.surfacePreview = surfacePreview;
 
         previewFps = new StableFps(10);
 
@@ -168,8 +165,6 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
 
     }
 
-    private NSemaphore trackingSemaphore = new NSemaphore();
-
     @Override
     public void onImageAvailable(final ImageReader reader) {
         if (!trackingSemaphore.available()) return;
@@ -227,9 +222,6 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
         return true;
     }
 
-    private Bitmap previewBm;
-    private NSemaphore previewSemaphore = new NSemaphore();
-
     private synchronized void previewRenderProcess() {
         previewSemaphore.acquire();
         if (multiTrack106 != null) {
@@ -241,19 +233,19 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
             matrix.postTranslate(0, previewBmTmp.getWidth());
             matrix.postScale(-1, 1);
             matrix.postTranslate(previewBmTmp.getHeight(), 0);
-            if(previewBm!= null && !previewBm.isRecycled()) {
-                previewBm.recycle();
-                previewBm = null;
-            }
+//            if (previewBm != null && !previewBm.isRecycled()) {
+//                previewBm.recycle();
+//                previewBm = null;
+//            }
             previewBm = Bitmap.createBitmap(previewBmTmp, 0, 0, previewBmTmp.getWidth(), previewBmTmp.getHeight(), matrix, false);
+
             // TODO: 2019-06-19 Filter with OpenGLES
 //            Bitmap bmFiltered = CGENativeLibrary.filterImage_MultipleEffects(previewBm, Constant.EFFECT_ACTIVE, 1.0f);
             // Show preview
-            openGlPreview.maskUpdateLocation(face, previewWidth, previewHeight, transformMatrix);
-
+            surfacePreview.maskUpdateLocation(face, previewWidth, previewHeight, transformMatrix);
             // Initialize a new Canvas instance
             Canvas openGLCanvas = new Canvas(previewBm);
-            openGlPreview.renderMaskToCanvas(openGLCanvas);
+            surfacePreview.renderMaskToCanvas(openGLCanvas);
 
             // Show landmark for debug
             // Draw landmarks to SurfaceView
@@ -285,7 +277,17 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
                 }
                 openGLCanvas.drawText(log, 10, 30, redPaint);
             }
-            openGlPreview.setImageBitmap(previewBm);
+            if (!surfacePreview.getHolder().getSurface().isValid()) {
+                return;
+            }
+            Canvas canvas = surfacePreview.getHolder().lockCanvas();
+            if (canvas == null)
+                return;
+
+            canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+            canvas.drawBitmap(previewBm, 0, 0, null);
+
+            surfacePreview.getHolder().unlockCanvasAndPost(canvas);
         }
         previewSemaphore.release();
     }

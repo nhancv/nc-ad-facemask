@@ -32,16 +32,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.nhancv.facemask.m2d.OpenGLPreview;
+import com.nhancv.facemask.m2d.SurfacePreview;
 import com.nhancv.facemask.m2d.mask.MaskUpdater;
 import com.nhancv.facemask.pose.SolvePNP;
 import com.nhancv.facemask.tracking.FaceLandmarkTracking;
 import com.nhancv.facemask.util.Constant;
-
-import org.wysaid.nativePort.CGEDeformFilterWrapper;
-import org.wysaid.nativePort.CGEImageHandler;
-import org.wysaid.texUtils.TextureRenderer;
-import org.wysaid.view.ImageGLSurfaceView;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -111,10 +106,7 @@ public class CameraFragment extends Fragment
     /**
      * UI component
      */
-    private OpenGLPreview openGlPreview;
-    private CGEDeformFilterWrapper mDeformWrapper;
-    private float mTouchRadius = 200.0f;
-    private float mTouchIntensity = 0.5f;
+    private SurfacePreview surfacePreview;
 
     private boolean permissionReady;
     private int effectIndex;
@@ -166,16 +158,33 @@ public class CameraFragment extends Fragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        /* Calculate VIEWPORT */
         // Get display size
         Display display = Objects.requireNonNull(getActivity()).getWindowManager().getDefaultDisplay();
         display.getSize(SCREEN_SIZE);
         int screenWidth = SCREEN_SIZE.x;
         int screenHeight = SCREEN_SIZE.y;
-        Log.d(TAG, String.format(Locale.getDefault(), "onCreateView: w %d x h %d", screenWidth, screenHeight));
         //Sony: 1080x1776
         SURFACE_HEIGHT = screenWidth;
         SURFACE_WIDTH = SURFACE_HEIGHT * READER_WIDTH / READER_HEIGHT;
-        transformMatrix.setScale(SURFACE_HEIGHT / (float) READER_HEIGHT, SURFACE_WIDTH / (float) READER_WIDTH);
+
+        float scaling = READER_HEIGHT / (float) READER_WIDTH;
+        float viewRatio = screenWidth / (float) screenHeight;
+        float s = scaling / viewRatio;
+        int w, h;
+        //AspectFill
+        if (s > 1.0) {
+            w = (int) (screenHeight * scaling);
+            h = screenHeight;
+        } else {
+            w = screenWidth;
+            h = (int) (screenWidth / scaling);
+        }
+        //transformMatrix.setScale(SURFACE_HEIGHT / (float) READER_HEIGHT, SURFACE_WIDTH / (float) READER_WIDTH);
+        transformMatrix.setScale(w / (float) READER_HEIGHT, h / (float) READER_WIDTH);
+        /* End Calculate VIEWPORT */
+
         SolvePNP.getInstance().initialize(new Point((int) (READER_WIDTH / 2f), (int) (READER_HEIGHT / 2f)));
 
         // Setup view
@@ -190,36 +199,8 @@ public class CameraFragment extends Fragment
 
         });
 
-        openGlPreview = view.findViewById(R.id.fragment_camera_opengl_preview);
-        openGlPreview.setSurfaceCreatedCallback(() -> {
-            openGlPreview.queueEvent(() -> {
-                mDeformWrapper = CGEDeformFilterWrapper.create(screenWidth, screenHeight, 10.0f);
-//                mDeformWrapper.setUndoSteps(200); // set max undo steps to 200.
-//                if (mDeformWrapper != null) {
-//                    CGEImageHandler handler = openGlPreview.getImageHandler();
-//                    handler.setFilterWithAddres(mDeformWrapper.getNativeAddress());
-//                    handler.processFilters();
-//                }
-            });
-        });
-//        openGlPreview.postDelayed(() -> {
-//            // Test effect
-//            TextureRenderer.Viewport viewport = openGlPreview.getRenderViewport();
-//            final float dw = viewport.width;
-//            final float dh = viewport.height;
-//            if (mDeformWrapper != null) {
-//                openGlPreview.flush(true, () -> {
-//                    if (mDeformWrapper == null) return;
-//                    mDeformWrapper.bloatDeform(dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
-//                    mDeformWrapper.bloatDeform(dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
-//                    mDeformWrapper.bloatDeform(dw / 2, dh / 2, dw, dh, mTouchRadius, mTouchIntensity);
-//
-////                    mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
-////                    mDeformWrapper.wrinkleDeform(dw / 2, dh / 3, dw, dh, mTouchRadius, mTouchIntensity);
-//                });
-//            }
-//        }, 2000);
-        openGlPreview.setDisplayMode(ImageGLSurfaceView.DisplayMode.DISPLAY_ASPECT_FILL);
+        surfacePreview = view.findViewById(R.id.fragment_camera_surface_preview);
+//        surfacePreview.setDisplayMode(ImageGLSurfaceView.DisplayMode.DISPLAY_ASPECT_FILL);
         return view;
     }
 
@@ -231,7 +212,6 @@ public class CameraFragment extends Fragment
     @Override
     public void onResume() {
         super.onResume();
-        openGlPreview.onResume();
         if (permissionReady) {
             startBackgroundThread();
             openCamera(SURFACE_WIDTH, SURFACE_HEIGHT);
@@ -259,13 +239,6 @@ public class CameraFragment extends Fragment
             release();
         }
         super.onPause();
-
-        if (mDeformWrapper != null) {
-            mDeformWrapper.release(false);
-            mDeformWrapper = null;
-        }
-        openGlPreview.release();
-        openGlPreview.onPause();
     }
 
     private void release() {
@@ -504,7 +477,7 @@ public class CameraFragment extends Fragment
             cameraOpenCloseLock.release();
         }
         // Initialize Preview listener
-        onGetPreviewListener.initialize(getContext(), transformMatrix, openGlPreview, mDeformWrapper);
+        onGetPreviewListener.initialize(getContext(), transformMatrix, surfacePreview);
     }
 
     // Shows a {@link Toast} on the UI thread.

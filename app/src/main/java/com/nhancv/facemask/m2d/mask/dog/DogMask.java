@@ -47,8 +47,8 @@ import zeusees.tracking.Face;
 public class DogMask extends BaseMask implements Mask {
     private static final String TAG = DogMask.class.getSimpleName();
     private DogSprites dogSprites;
-    private Bitmap noseBm, boneBm, leftBm, rightBm;
-    private Bitmap noseBmTmp, boneBmTmp, leftBmTmp, rightBmTmp;
+    private volatile Bitmap noseBm, boneBm, leftBm, rightBm;
+    private volatile Bitmap noseBmTmp, boneBmTmp, leftBmTmp, rightBmTmp;
     private Matrix noseBmMt, boneBmMt, leftBmMt, rightBmMt;
     private final int animFrameLimit = 15;
     private int animFrameCounter = 0;
@@ -72,7 +72,7 @@ public class DogMask extends BaseMask implements Mask {
      * Update sprite rabbit_mask for animation
      */
     private void updateSprite() {
-        release();
+//        release();
         noseBm = dogSprites.nose();
         leftBm = dogSprites.leftEar();
         rightBm = dogSprites.rightEar();
@@ -85,7 +85,7 @@ public class DogMask extends BaseMask implements Mask {
 
     @Override
     public void update(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix, SolvePNP solvePNP) {
-        if (face != null && !noseBm.isRecycled() && !boneBm.isRecycled()) {
+        if (face != null) {
             // Update next sprite
             updateSprite();
 
@@ -123,8 +123,8 @@ public class DogMask extends BaseMask implements Mask {
                 boneBmTmp = null;
             }
 
-            PointF leftEarF = new PointF(point2Ds[11].x, point2Ds[11].y);
-            PointF rightEarF = new PointF(point2Ds[13].x, point2Ds[13].y);
+            PointF leftEarF = new PointF(point2Ds[10].x, point2Ds[10].y);
+            PointF rightEarF = new PointF(point2Ds[15].x, point2Ds[15].y);
             float earRatio = leftBm.getHeight() * 1.0f / leftBm.getWidth();
             float earW = Math.abs(1f * faceRect.width()) * scaleX;
             float earH = earW * earRatio;
@@ -169,13 +169,13 @@ public class DogMask extends BaseMask implements Mask {
             noseBm.recycle();
             noseBm = null;
         }
-        if (boneBm != null) {
-            boneBm.recycle();
-            boneBm = null;
-        }
         if (noseBmTmp != null) {
             noseBmTmp.recycle();
             noseBmTmp = null;
+        }
+        if (boneBm != null) {
+            boneBm.recycle();
+            boneBm = null;
         }
         if (boneBmTmp != null) {
             boneBmTmp.recycle();
@@ -185,13 +185,13 @@ public class DogMask extends BaseMask implements Mask {
             leftBm.recycle();
             leftBm = null;
         }
-        if (rightBm != null) {
-            rightBm.recycle();
-            rightBm = null;
-        }
         if (leftBmTmp != null) {
             leftBmTmp.recycle();
             leftBmTmp = null;
+        }
+        if (rightBm != null) {
+            rightBm.recycle();
+            rightBm = null;
         }
         if (rightBmTmp != null) {
             rightBmTmp.recycle();
