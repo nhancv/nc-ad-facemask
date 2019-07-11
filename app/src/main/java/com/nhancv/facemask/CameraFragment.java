@@ -36,13 +36,11 @@ import com.nhancv.facemask.m2d.SurfacePreview;
 import com.nhancv.facemask.m2d.mask.MaskUpdater;
 import com.nhancv.facemask.pose.SolvePNP;
 import com.nhancv.facemask.tracking.FaceLandmarkTracking;
-import com.nhancv.facemask.util.Constant;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -109,7 +107,6 @@ public class CameraFragment extends Fragment
     private SurfacePreview surfacePreview;
 
     private boolean permissionReady;
-    private int effectIndex;
 
     /**
      * Listener / Callback
@@ -190,17 +187,28 @@ public class CameraFragment extends Fragment
         // Setup view
         View view = inflater.inflate(R.layout.fragment_camera, container, false);
 
-        view.findViewById(R.id.bt_change_filter).setOnClickListener(v -> {
-            effectIndex++;
-            effectIndex = effectIndex % Constant.EFFECT_CONFIGS.length;
-            Constant.EFFECT_ACTIVE = Constant.EFFECT_CONFIGS[effectIndex];
+        view.findViewById(R.id.bt_rabbit_filter).setOnClickListener(v -> {
+            MaskUpdater.MASK_ACTIVE = MaskUpdater.MaskType.RABBIT;
 
-            MaskUpdater.MASK_ACTIVE = (MaskUpdater.MASK_ACTIVE + 1) % 2;
+        });
+        view.findViewById(R.id.bt_dog_filter).setOnClickListener(v -> {
+            MaskUpdater.MASK_ACTIVE = MaskUpdater.MaskType.DOG;
+
+        });
+        view.findViewById(R.id.bt_cat_filter).setOnClickListener(v -> {
+            MaskUpdater.MASK_ACTIVE = MaskUpdater.MaskType.CAT;
+
+        });
+        view.findViewById(R.id.bt_nerd_filter).setOnClickListener(v -> {
+            MaskUpdater.MASK_ACTIVE = MaskUpdater.MaskType.NERD;
+
+        });
+        view.findViewById(R.id.bt_hamster_filter).setOnClickListener(v -> {
+            MaskUpdater.MASK_ACTIVE = MaskUpdater.MaskType.HAMSTER;
 
         });
 
         surfacePreview = view.findViewById(R.id.fragment_camera_surface_preview);
-//        surfacePreview.setDisplayMode(ImageGLSurfaceView.DisplayMode.DISPLAY_ASPECT_FILL);
         return view;
     }
 

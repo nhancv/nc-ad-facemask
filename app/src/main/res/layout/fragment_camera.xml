@@ -12,21 +12,55 @@
         android:visibility="visible"
         />
 
-    <LinearLayout
+    <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="50dp"
-        android:baselineAligned="false"
-        android:gravity="center"
-        android:orientation="horizontal"
         >
 
-        <Button
-            android:id="@+id/bt_change_filter"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="Change filter"
-            />
-    </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:baselineAligned="false"
+            android:gravity="center"
+            android:orientation="horizontal"
+            >
+
+            <Button
+                android:id="@+id/bt_rabbit_filter"
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:text="Rabbit"
+                />
+
+            <Button
+                android:id="@+id/bt_dog_filter"
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:text="Dog"
+                />
+
+            <Button
+                android:id="@+id/bt_cat_filter"
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:text="Cat"
+                />
+
+            <Button
+                android:id="@+id/bt_nerd_filter"
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:text="Nerd"
+                />
+
+            <Button
+                android:id="@+id/bt_hamster_filter"
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:text="Hamster"
+                />
+        </LinearLayout>
+    </HorizontalScrollView>
 </RelativeLayout>

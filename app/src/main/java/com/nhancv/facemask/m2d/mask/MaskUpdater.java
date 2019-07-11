@@ -31,7 +31,10 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 
 import com.nhancv.facemask.fps.StableFps;
+import com.nhancv.facemask.m2d.mask.cat.CatMask;
 import com.nhancv.facemask.m2d.mask.dog.DogMask;
+import com.nhancv.facemask.m2d.mask.hamster.HamsterMask;
+import com.nhancv.facemask.m2d.mask.nerd.NerdMask;
 import com.nhancv.facemask.m2d.mask.rabbit.RabbitMask;
 import com.nhancv.facemask.pose.SolvePNP;
 
@@ -40,35 +43,57 @@ import zeusees.tracking.Face;
 
 public class MaskUpdater {
 
+    public enum MaskType {
+        RABBIT,
+        DOG,
+        CAT,
+        NERD,
+        HAMSTER
+    }
+
     private static final String TAG = MaskUpdater.class.getSimpleName();
 
-    public static int MASK_ACTIVE = 1;
+    public static MaskType MASK_ACTIVE = MaskType.HAMSTER;
     private Context context;
     private Mask mask;
     private SolvePNP solvePNP;
-    private int currentMaskIndex = MASK_ACTIVE;
+    private MaskType maskType = null;
 
     public MaskUpdater(Context context) {
         this.context = context;
         //start thread
         solvePNP = SolvePNP.getInstance();
-        //init rabbit_mask
-//        mask = new RabbitMask();
-        mask = new DogMask();
-        mask.init(context);
+        //init mask
+        checkMaskChange();
+    }
+
+    public void checkMaskChange() {
+        if (maskType != MASK_ACTIVE) {
+            mask = null;
+            maskType = MASK_ACTIVE;
+            switch (MASK_ACTIVE) {
+                case RABBIT:
+                    mask = new RabbitMask();
+                    break;
+                case DOG:
+                    mask = new DogMask();
+                    break;
+                case CAT:
+                    mask = new CatMask();
+                    break;
+                case NERD:
+                    mask = new NerdMask();
+                    break;
+                case HAMSTER:
+                    mask = new HamsterMask();
+                    break;
+            }
+            mask.init(context);
+        }
     }
 
     public void maskUpdateLocation(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix) {
-        if (MASK_ACTIVE != currentMaskIndex) {
-            currentMaskIndex = MASK_ACTIVE;
-            mask = null;
-            if (currentMaskIndex == 0) {
-                mask = new RabbitMask();
-            } else if (currentMaskIndex == 1) {
-                mask = new DogMask();
-            }
-            if (mask != null) mask.init(context);
-        }
+        checkMaskChange();
         if (mask != null) mask.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
     }
 

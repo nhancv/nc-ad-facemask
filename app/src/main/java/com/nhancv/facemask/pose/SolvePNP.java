@@ -99,10 +99,10 @@ public class SolvePNP {
     private void setUpWorldPoints() {
         objPointMat = new MatOfPoint3f();
         List<Point3> objPoints = new ArrayList<>();
-        objPoints.add(new Point3(36.8301, 78.3185, 52.0345));//nose tip 1879
+        objPoints.add(new Point3(36.8301, 78.3185, 52.0345));//glass tip 1879
         objPoints.add(new Point3(46.391205, 121.975700, 36.571663));//v897 -> 44 lm
         objPoints.add(new Point3(26.833687, 121.975700, 36.849419));//v1873 -> 60 lm
-        objPoints.add(new Point3(36.6623, 68.8159, 40.2229));//nose tip -> 46 lm
+        objPoints.add(new Point3(36.6623, 68.8159, 40.2229));//glass tip -> 46 lm
         objPoints.add(new Point3(36.599148, 109.525101, 35.774132));//v2224 -> 21 lm
         objPoints.add(new Point3(36.547054, 9.838245, 32.105911));//chin 1398 -> 0 lm
         objPoints.add(new Point3(-14.982872, 108.473167, 10.518028));//left eye left corner
@@ -136,10 +136,10 @@ public class SolvePNP {
     private MatOfPoint2f getValidPoints() {
         List<org.opencv.core.Point> objPoints = new ArrayList<>();
         MatOfPoint2f imagePoints = new MatOfPoint2f();
-        objPoints.add(new org.opencv.core.Point(point2Ds[69].x, point2Ds[69].y)); //nose tip
-        objPoints.add(new org.opencv.core.Point(point2Ds[44].x, point2Ds[44].y)); //nose tip
-        objPoints.add(new org.opencv.core.Point(point2Ds[60].x, point2Ds[60].y)); //nose tip
-        objPoints.add(new org.opencv.core.Point(point2Ds[46].x, point2Ds[46].y)); //nose
+        objPoints.add(new org.opencv.core.Point(point2Ds[69].x, point2Ds[69].y)); //glass tip
+        objPoints.add(new org.opencv.core.Point(point2Ds[44].x, point2Ds[44].y)); //glass tip
+        objPoints.add(new org.opencv.core.Point(point2Ds[60].x, point2Ds[60].y)); //glass tip
+        objPoints.add(new org.opencv.core.Point(point2Ds[46].x, point2Ds[46].y)); //glass
         objPoints.add(new org.opencv.core.Point(point2Ds[21].x, point2Ds[21].y)); //v2224 -> 21 lm
         objPoints.add(new org.opencv.core.Point(point2Ds[0].x, point2Ds[0].y)); //chin
         objPoints.add(new org.opencv.core.Point(point2Ds[94].x, point2Ds[94].y)); //left eye left corner

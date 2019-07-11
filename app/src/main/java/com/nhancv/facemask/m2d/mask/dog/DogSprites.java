@@ -56,7 +56,8 @@ public class DogSprites {
 
 
     public DogSprites(Bitmap bitmap) {
-        this.bitmap = bitmap; // size 2048x2048, sprite size 256x256
+        this.bitmap = Bitmap.createScaledBitmap(bitmap, SPRITE_SIZE * maskIndexs[0].length, SPRITE_SIZE * maskIndexs.length, true);
+        bitmap.recycle();
     }
 
     private Bitmap getSprite(int r, int c, Matrix m) {

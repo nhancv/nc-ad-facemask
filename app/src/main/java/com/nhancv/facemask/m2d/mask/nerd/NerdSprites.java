@@ -24,40 +24,36 @@
  * @author Nhan Cao <nhan.cao@beesightsoft.com>
  */
 
-package com.nhancv.facemask.m2d.mask.rabbit;
+package com.nhancv.facemask.m2d.mask.nerd;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 
-public class RabbitSprites {
-    private static final String TAG = RabbitSprites.class.getSimpleName();
+public class NerdSprites {
+    private static final String TAG = NerdSprites.class.getSimpleName();
     private static final int SPRITE_SIZE = 256;
-    private static final int SKIP = 2;
+    private static final int SKIP = 1;
     private Bitmap bitmap;
     private int width = SPRITE_SIZE;
     private int height = SPRITE_SIZE;
 
     private int[][] maskIndexs = {
-            {1, 1, 1, 1, 1, 1, 1, 1},
-            {1, 1, 1, 1, 1, 1, 1, 0},
-            {3, 3, 3, 3, 3, 3, 3, 3},
-            {3, 3, 3, 3, 3, 4, 4, 4},
-            {4, 5, 5, 5, 5, 5, 5, 6},
-            {6, 6, 6, 6, 6, 0, 0, 0}
+            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+            {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
+            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3},
+            {4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4}
     };
 
     private int[][] playIndexs = {
-            {0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0}
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
     };
 
 
-    public RabbitSprites(Bitmap bitmap) {
+    public NerdSprites(Bitmap bitmap) {
         this.bitmap = Bitmap.createScaledBitmap(bitmap, SPRITE_SIZE * maskIndexs[0].length, SPRITE_SIZE * maskIndexs.length, true);
         bitmap.recycle();
     }
@@ -76,6 +72,7 @@ public class RabbitSprites {
                 }
             }
         }
+
 
         // Clear play index
         for (int i = 0; i < maskIndexs.length; i++) {
@@ -100,39 +97,49 @@ public class RabbitSprites {
         return null;
     }
 
-    public Bitmap leftEar() {
+    public Bitmap hat() {
         Matrix m = new Matrix();
-        m.preScale(-1, 1);
+//        m.preScale(-1, 1);
         Bitmap bm = findSprite(1, m);
         if (bm == null) return null;
-        Bitmap bmFinal = Bitmap.createBitmap(256, 256 * 2, Bitmap.Config.ARGB_8888);
+        Bitmap bmFinal = Bitmap.createBitmap(SPRITE_SIZE, 512, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmFinal);
         canvas.drawBitmap(bm, 0, 0, null);
+//        if(!bm.isRecycled()) bm.recycle();
         return bmFinal;
     }
 
-    public Bitmap rightEar() {
+    public Bitmap decorFlower() {
         Matrix m = new Matrix();
-        Bitmap bm = findSprite(1, m);
+        Bitmap bm = findSprite(2, m);
         if (bm == null) return null;
-        Bitmap bmFinal = Bitmap.createBitmap(256, 256 * 2, Bitmap.Config.ARGB_8888);
+        Bitmap bmFinal = Bitmap.createBitmap(SPRITE_SIZE, 512, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmFinal);
         canvas.drawBitmap(bm, 0, 0, null);
+//        if(!bm.isRecycled()) bm.recycle();
         return bmFinal;
     }
 
-    public Bitmap heart() {
+    public Bitmap glass() {
         Matrix m = new Matrix();
-        return findSprite(3, m);
+        Bitmap bm = findSprite(3, m);
+        if (bm == null) return null;
+        Bitmap bmFinal = Bitmap.createBitmap(SPRITE_SIZE, SPRITE_SIZE, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bmFinal);
+        canvas.drawBitmap(bm, 0, 0, null);
+//        if(!bm.isRecycled()) bm.recycle();
+        return bmFinal;
     }
 
-    public Bitmap nose() {
+    public Bitmap decorSkin() {
         Matrix m = new Matrix();
-        return findSprite(4, m);
+        Bitmap bm = findSprite(4, m);
+        if (bm == null) return null;
+        Bitmap bmFinal = Bitmap.createBitmap(SPRITE_SIZE, SPRITE_SIZE, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bmFinal);
+        canvas.drawBitmap(bm, 0, 0, null);
+//        if(!bm.isRecycled()) bm.recycle();
+        return bmFinal;
     }
 
-    public Bitmap necklace() {
-        Matrix m = new Matrix();
-        return findSprite(5, m);
-    }
 }
