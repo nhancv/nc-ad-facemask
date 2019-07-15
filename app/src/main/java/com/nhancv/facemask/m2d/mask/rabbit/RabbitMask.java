@@ -104,8 +104,10 @@ public class RabbitMask extends BaseMask implements Mask {
 
             float[] scalePts = new float[9];
             scaleMatrix.getValues(scalePts);
-            float scaleX = scalePts[0]; // x value
-            float scaleY = scalePts[4]; // y value
+//            float scaleX = scalePts[0]; // x value
+//            float scaleY = scalePts[4]; // y value
+            float scaleX = 1f;
+            float scaleY = 1f;
 
             float heartRatio = heartBm.getHeight() * 1.0f / heartBm.getWidth();
             float heartW = Math.abs(1f * faceRect.width()) * scaleX;

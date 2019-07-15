@@ -104,9 +104,9 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
             @Override
             public void handleMessage(Message msg) {
                 if (msg.what == PREVIEW_RENDER_MSG) {
-                    long start = System.currentTimeMillis();
+//                    long start = System.currentTimeMillis();
                     previewRenderProcess();
-                    Log.e(TAG, Thread.currentThread().getId() + " previewRenderHandler: " + (System.currentTimeMillis() - start) + "ms");
+//                    Log.e(TAG, Thread.currentThread().getId() + " previewRenderHandler: " + (System.currentTimeMillis() - start) + "ms");
                 }
             }
         };
@@ -118,7 +118,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
             public void handleMessage(Message msg) {
                 if (msg.what == FRAME_DATA_READY_MSG && multiTrack106 != null) {
                     trackingSemaphore.acquire();
-                    long start = System.currentTimeMillis();
+//                    long start = System.currentTimeMillis();
                     System.arraycopy(nv21Data, 0, trackingFrameBuffer, 0, nv21Data.length);
                     if (!initTrack106) {
                         multiTrack106.faceTrackingInit(trackingFrameBuffer, previewHeight, previewWidth);
@@ -127,7 +127,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
                         multiTrack106.faceTrackingUpdate(trackingFrameBuffer, previewHeight, previewWidth);
                     }
                     trackingSemaphore.release();
-                    Log.e(TAG, Thread.currentThread().getId() + " trackingHandler: " + (System.currentTimeMillis() - start) + "ms");
+//                    Log.e(TAG, Thread.currentThread().getId() + " trackingHandler: " + (System.currentTimeMillis() - start) + "ms");
                 }
             }
         };
@@ -168,11 +168,11 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     @Override
     public void onImageAvailable(final ImageReader reader) {
         if (!trackingSemaphore.available()) return;
-        long start = System.currentTimeMillis();
+//        long start = System.currentTimeMillis();
         if (!preImageProcess(reader)) {
             return;
         }
-        Log.e(TAG, Thread.currentThread().getId() + " onImageAvailable: " + (System.currentTimeMillis() - start) + "ms");
+//        Log.e(TAG, Thread.currentThread().getId() + " onImageAvailable: " + (System.currentTimeMillis() - start) + "ms");
         // Fps for render to ui thread
         if (!previewFps.isStarted()) {
             previewFps.start(fps -> {
@@ -228,7 +228,8 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
             System.arraycopy(nv21Data, 0, previewRenderBuffer, 0, nv21Data.length);
             Face face = multiTrack106.getTrackingInfo();
             Bitmap previewBmTmp = STUtils.NV21ToRGBABitmap(previewRenderBuffer, previewWidth, previewHeight, context);
-            Matrix matrix = new Matrix(transformMatrix);
+//            Matrix matrix = new Matrix(transformMatrix);
+            Matrix matrix = new Matrix();
             matrix.postRotate(-90);
             matrix.postTranslate(0, previewBmTmp.getWidth());
             matrix.postScale(-1, 1);
@@ -285,6 +286,7 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
                 return;
 
             canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+            canvas.setMatrix(transformMatrix);
             canvas.drawBitmap(previewBm, 0, 0, null);
 
             surfacePreview.getHolder().unlockCanvasAndPost(canvas);

@@ -92,8 +92,10 @@ public class HamsterMask extends BaseMask implements Mask {
             Translation translation = new Translation(0, 0, solvePNP.getTz());
             float[] scalePts = new float[9];
             scaleMatrix.getValues(scalePts);
-            float scaleX = scalePts[0]; // x value
-            float scaleY = scalePts[4]; // y value
+//            float scaleX = scalePts[0]; // x value
+//            float scaleY = scalePts[4]; // y value
+            float scaleX = 1f;
+            float scaleY = 1f;
 
             if (isMouthOpened || mouthActiveAnimation) {
                 int beanPointId = 0;
