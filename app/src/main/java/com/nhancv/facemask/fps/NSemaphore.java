@@ -38,7 +38,7 @@ public class NSemaphore {
     }
 
     public synchronized void release() {
-        --semaphore;
+        if(semaphore > 0) --semaphore;
     }
 
 }

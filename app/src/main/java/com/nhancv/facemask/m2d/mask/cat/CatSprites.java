@@ -39,17 +39,21 @@ public class CatSprites {
     private int height = SPRITE_SIZE;
 
     private int[][] maskIndexs = {
-            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-            {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
-            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3},
-            {4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4}
+            {1, 1, 1, 1, 1},
+            {2, 2, 2, 2, 2},
+            {3, 3, 3, 3, 3},
+            {4, 4, 4, 4, 4},
+            {5, 5, 5, 5, 5},
+            {6, 6, 6, 6, 6}
     };
 
     private int[][] playIndexs = {
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0}
     };
 
     // size 2048x2048, sprite size 256x256
@@ -143,5 +147,22 @@ public class CatSprites {
 //        if(!bm.isRecycled()) bm.recycle();
         return bmFinal;
     }
+
+    public Bitmap eyeBrowL() {
+        Matrix m = new Matrix();
+        m.preScale(-1, 1);
+        return findSprite(5, m);
+    }
+
+    public Bitmap eyeBrowR() {
+        Matrix m = new Matrix();
+        return findSprite(5, m);
+    }
+
+    public Bitmap saliva() {
+        Matrix m = new Matrix();
+        return findSprite(6, m);
+    }
+
 
 }

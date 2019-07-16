@@ -119,7 +119,7 @@ public class STUtils {
             YuvImage yuvImage = new YuvImage(nv21, 17, width, height, (int[]) null);
             timings.addSplit("NV21 bytes to YuvImage");
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            yuvImage.compressToJpeg(rect, 90, baos);
+            yuvImage.compressToJpeg(rect, 50, baos);
             byte[] cur = baos.toByteArray();
             timings.addSplit("YuvImage crop and compress to Jpeg Bytes");
             bitmap = BitmapFactory.decodeByteArray(cur, 0, cur.length);
@@ -357,5 +357,128 @@ public class STUtils {
         buffer2.get(rez, buffer0_size, buffer2_size);
 
         return rez;
+    }
+
+    /**
+     * Width < Height: 480 x 640
+     * @param data
+     * @param imageWidth
+     * @param imageHeight
+     * @return
+     */
+    public static byte[] rotateYUV420Degree90(byte[] data, int imageWidth, int imageHeight) {
+        byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];
+        // Rotate the Y luma
+        int i = 0;
+        for (int x = 0; x < imageWidth; x++) {
+            for (int y = imageHeight - 1; y >= 0; y--) {
+                yuv[i] = data[y * imageWidth + x];
+                i++;
+            }
+        }
+        // Rotate the U and V color components
+        i = imageWidth * imageHeight * 3 / 2 - 1;
+        for (int x = imageWidth - 1; x > 0; x = x - 2) {
+            for (int y = 0; y < imageHeight / 2; y++) {
+                yuv[i] = data[(imageWidth * imageHeight) + (y * imageWidth) + x];
+                i--;
+                yuv[i] = data[(imageWidth * imageHeight) + (y * imageWidth) + (x - 1)];
+                i--;
+            }
+        }
+        return yuv;
+    }
+
+    private static byte[] rotateYUV420Degree180(byte[] data, int imageWidth, int imageHeight) {
+        byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];
+        int i = 0;
+        int count = 0;
+        for (i = imageWidth * imageHeight - 1; i >= 0; i--) {
+            yuv[count] = data[i];
+            count++;
+        }
+        i = imageWidth * imageHeight * 3 / 2 - 1;
+        for (i = imageWidth * imageHeight * 3 / 2 - 1; i >= imageWidth
+                * imageHeight; i -= 2) {
+            yuv[count++] = data[i - 1];
+            yuv[count++] = data[i];
+        }
+        return yuv;
+    }
+
+    public static byte[] rotateYUV420Degree270(byte[] data, int imageWidth,
+                                               int imageHeight) {
+        byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];
+        int nWidth = 0, nHeight = 0;
+        int wh = 0;
+        int uvHeight = 0;
+        if (imageWidth != nWidth || imageHeight != nHeight) {
+            nWidth = imageWidth;
+            nHeight = imageHeight;
+            wh = imageWidth * imageHeight;
+            uvHeight = imageHeight >> 1;// uvHeight = height / 2
+        }
+        // ??Y
+        int k = 0;
+        for (int i = 0; i < imageWidth; i++) {
+            int nPos = 0;
+            for (int j = 0; j < imageHeight; j++) {
+                yuv[k] = data[nPos + i];
+                k++;
+                nPos += imageWidth;
+            }
+        }
+        for (int i = 0; i < imageWidth; i += 2) {
+            int nPos = wh;
+            for (int j = 0; j < uvHeight; j++) {
+                yuv[k] = data[nPos + i];
+                yuv[k + 1] = data[nPos + i + 1];
+                k += 2;
+                nPos += imageWidth;
+            }
+        }
+        return rotateYUV420Degree180(yuv, imageWidth, imageHeight);
+    }
+
+    public static void decodeYUV420(int[] rgba, byte[] yuv420, int width, int height) {
+        int half_width = (width + 1) >> 1;
+        int half_height = (height +1) >> 1;
+        int y_size = width * height;
+        int uv_size = half_width * half_height;
+
+
+        for (int j = 0; j < height; j++) {
+            for (int i = 0; i < width; i++) {
+
+
+                double y = (yuv420[j * width + i]) & 0xff;
+                double v = (yuv420[y_size + (j >> 1) * half_width + (i>>1)]) & 0xff;
+                double u = (yuv420[y_size + uv_size + (j >> 1) * half_width + (i>>1)]) & 0xff;
+
+
+                double r;
+                double g;
+                double b;
+
+
+                r = y + 1.402 * (u-128);
+                g = y - 0.34414*(v-128) - 0.71414*(u-128);
+                b = y + 1.772*(v-128);
+
+
+                if (r < 0) r = 0;
+                else if (r > 255) r = 255;
+                if (g < 0) g = 0;
+                else if (g > 255) g = 255;
+                if (b < 0) b = 0;
+                else if (b > 255) b = 255;
+
+
+                int ir = (int)r;
+                int ig = (int)g;
+                int ib = (int)b;
+                rgba[j * width + i] = 0xff000000 | (ir << 16) | (ig << 8) | ib;
+            }
+        }
     }
 }

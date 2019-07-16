@@ -167,7 +167,6 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
 
     @Override
     public void onImageAvailable(final ImageReader reader) {
-        if (!trackingSemaphore.available()) return;
 //        long start = System.currentTimeMillis();
         if (!preImageProcess(reader)) {
             return;
@@ -185,12 +184,13 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     }
 
     private boolean preImageProcess(ImageReader reader) {
+        if (!trackingSemaphore.available()) return false;
         Image image = null;
         try {
             image = reader.acquireLatestImage();
 
             if (image == null) {
-                return true;
+                return false;
             }
             // Initialize the storage bitmaps once when the resolution is known.
             if (previewWidth != image.getWidth() || previewHeight != image.getHeight()) {
