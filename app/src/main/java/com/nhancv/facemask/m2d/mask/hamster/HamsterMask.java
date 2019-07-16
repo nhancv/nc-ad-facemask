@@ -130,6 +130,7 @@ public class HamsterMask extends BaseMask implements Mask {
                     animFrameCounter = 0;
                 }
             } else {
+                decoreSkinBmTmp = null;
                 salivaBmTmp = null;
             }
 

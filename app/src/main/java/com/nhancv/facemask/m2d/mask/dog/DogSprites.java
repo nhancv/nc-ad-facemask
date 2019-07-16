@@ -33,7 +33,7 @@ import android.graphics.Matrix;
 public class DogSprites {
     private static final String TAG = DogSprites.class.getSimpleName();
     private static final int SPRITE_SIZE = 256;
-    private static final int SKIP = 1;
+    private static final int SKIP = 2;
     private Bitmap bitmap;
     private int width = SPRITE_SIZE;
     private int height = SPRITE_SIZE;
@@ -144,7 +144,12 @@ public class DogSprites {
 
     public Bitmap saliva() {
         Matrix m = new Matrix();
-        return findSprite(5, m);
+        Bitmap bm = findSprite(5, m);
+        if (bm == null) return null;
+        Bitmap bmFinal = Bitmap.createBitmap(SPRITE_SIZE, 512, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bmFinal);
+        canvas.drawBitmap(bm, 0, 180, null);
+        return bmFinal;
     }
 
 

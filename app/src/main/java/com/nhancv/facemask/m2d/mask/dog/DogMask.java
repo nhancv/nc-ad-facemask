@@ -58,7 +58,7 @@ public class DogMask extends BaseMask implements Mask {
     @Override
     public void init(Context context) {
         super.init(context);
-        if(mask == null) {
+        if (mask == null) {
             mask = BitmapFactory.decodeResource(context.getResources(), R.drawable.dog_mask);
         }
         dogSprites = new DogSprites(mask);
@@ -103,27 +103,6 @@ public class DogMask extends BaseMask implements Mask {
             float scaleX = 1f;
             float scaleY = 1f;
 
-            if (isMouthOpened || mouthActiveAnimation) {
-                int salivaPointId = 45;
-                PointF salivaF = new PointF(point2Ds[salivaPointId].x, point2Ds[salivaPointId].y);
-                float salivaRatio = salivaBm.getHeight() * 1.0f / salivaBm.getWidth();
-                float salivaW = Math.abs(1f * faceRect.width()) * scaleX;
-                float salivaH = salivaW * salivaRatio;
-                salivaBmTmp = Bitmap.createScaledBitmap(salivaBm, (int) (salivaW), (int) (salivaH), false);
-                transformMat(salivaBmMt, salivaBmTmp.getWidth() / 2f, salivaBmTmp.getHeight() / 2f, salivaF.x * scaleX - salivaBmTmp.getWidth() / 2f,
-                        salivaF.y * scaleY - salivaBmTmp.getHeight() / 2f, rotation, translation);
-
-                if (!mouthActiveAnimation) mouthActiveAnimation = true;
-                if (animFrameCounter < animFrameLimit) {
-                    animFrameCounter++;
-                } else {
-                    mouthActiveAnimation = false;
-                    animFrameCounter = 0;
-                }
-            } else {
-                salivaBmTmp = null;
-            }
-
             PointF leftEarF = new PointF(point2Ds[10].x, point2Ds[10].y);
             PointF rightEarF = new PointF(point2Ds[15].x, point2Ds[15].y);
             float earRatio = leftBm.getHeight() * 1.0f / leftBm.getWidth();
@@ -154,7 +133,7 @@ public class DogMask extends BaseMask implements Mask {
             transformMat(noseBmMt, noseBmTmp.getWidth() / 2f, noseBmTmp.getHeight() / 2f, noseF.x * scaleX - noseBmTmp.getWidth() / 2f,
                     noseF.y * scaleY - noseBmTmp.getHeight() / 2f, rotation, translation);
 
-            int eyeBrowLPointId = 84;
+            int eyeBrowLPointId = 29;
             PointF eyeBrowLF = new PointF(point2Ds[eyeBrowLPointId].x, point2Ds[eyeBrowLPointId].y);
             float eyeBrowLRatio = eyeBrowLBm.getHeight() * 1.0f / eyeBrowLBm.getWidth();
             float eyeBrowLW = Math.abs(1f * faceRect.width()) * scaleX;
@@ -163,11 +142,21 @@ public class DogMask extends BaseMask implements Mask {
             transformMat(eyeBrowLBmMt, eyeBrowLBmTmp.getWidth() / 2f, eyeBrowLBmTmp.getHeight() / 2f, eyeBrowLF.x * scaleX - eyeBrowLBmTmp.getWidth() / 2f,
                     eyeBrowLF.y * scaleY - eyeBrowLBmTmp.getHeight() / 2f, rotation, translation);
 
-            int eyeBrowRPointId = 75;
+            int eyeBrowRPointId = 70;
             PointF eyeBrowRF = new PointF(point2Ds[eyeBrowRPointId].x, point2Ds[eyeBrowRPointId].y);
             eyeBrowRBmTmp = Bitmap.createScaledBitmap(eyeBrowRBm, (int) (eyeBrowLW), (int) (eyeBrowLH), false);
             transformMat(eyeBrowRBmMt, eyeBrowRBmTmp.getWidth() / 2f, eyeBrowRBmTmp.getHeight() / 2f, eyeBrowRF.x * scaleX - eyeBrowRBmTmp.getWidth() / 2f,
                     eyeBrowRF.y * scaleY - eyeBrowRBmTmp.getHeight() / 2f, rotation, translation);
+
+            int salivaPointId = 45;
+            PointF salivaF = new PointF(point2Ds[salivaPointId].x, point2Ds[salivaPointId].y);
+            float salivaRatio = salivaBm.getHeight() * 1.0f / salivaBm.getWidth();
+            float salivaW = Math.abs(1f * faceRect.width()) * scaleX;
+            float salivaH = salivaW * salivaRatio;
+            salivaBmTmp = Bitmap.createScaledBitmap(salivaBm, (int) (salivaW), (int) (salivaH), false);
+            transformMat(salivaBmMt, salivaBmTmp.getWidth() / 2f, salivaBmTmp.getHeight() / 2f, salivaF.x * scaleX - salivaBmTmp.getWidth() / 2f,
+                    salivaF.y * scaleY - salivaBmTmp.getHeight() / 2f, rotation, translation);
+
         } else {
             rightBmTmp = leftBmTmp = noseBmTmp = eyeBrowLBmTmp = eyeBrowRBmTmp = salivaBmTmp = null;
         }

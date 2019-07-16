@@ -47,9 +47,9 @@ public class CatMask extends BaseMask implements Mask {
     private static final String TAG = CatMask.class.getSimpleName();
     private Bitmap mask;
     private CatSprites catSprites;
-    private volatile Bitmap noseBm, decoreSkinBm, leftBm, rightBm, eyeBrowLBm, eyeBrowRBm, salivaBm;
-    private volatile Bitmap noseBmTmp, decoreSkinBmTmp, leftBmTmp, rightBmTmp, eyeBrowLBmTmp, eyeBrowRBmTmp, salivaBmTmp;
-    private Matrix noseBmMt, decoreSkinBmMt, leftBmMt, rightBmMt, eyeBrowLBmMt, eyeBrowRBmMt, salivaBmMt;
+    private volatile Bitmap noseBm, leftBm, rightBm, decoreSkinBm, eyeBrowLBm, eyeBrowRBm, salivaBm;
+    private volatile Bitmap noseBmTmp, leftBmTmp, rightBmTmp, decoreSkinBmTmp, eyeBrowLBmTmp, eyeBrowRBmTmp, salivaBmTmp;
+    private Matrix noseBmMt, leftBmMt, rightBmMt, decoreSkinBmMt, eyeBrowLBmMt, eyeBrowRBmMt, salivaBmMt;
     private final int animFrameLimit = 4;
     private int animFrameCounter = 0;
     private boolean mouthActiveAnimation = false;
@@ -57,7 +57,7 @@ public class CatMask extends BaseMask implements Mask {
     @Override
     public void init(Context context) {
         super.init(context);
-        if(mask == null) {
+        if (mask == null) {
             mask = BitmapFactory.decodeResource(context.getResources(), R.drawable.cat_mask);
         }
         catSprites = new CatSprites(mask);
@@ -173,7 +173,7 @@ public class CatMask extends BaseMask implements Mask {
                     eyeBrowRF.y * scaleY - eyeBrowRBmTmp.getHeight() / 2f, rotation, translation);
 
         } else {
-            rightBmTmp = leftBmTmp = decoreSkinBmTmp = noseBmTmp = eyeBrowLBmTmp = eyeBrowRBmTmp = salivaBmTmp = null;
+            rightBmTmp = leftBmTmp = noseBmTmp = decoreSkinBmTmp = eyeBrowLBmTmp = eyeBrowRBmTmp = salivaBmTmp = null;
         }
     }
 
@@ -183,7 +183,8 @@ public class CatMask extends BaseMask implements Mask {
         if (leftBmTmp != null && !leftBmTmp.isRecycled()) canvas.drawBitmap(leftBmTmp, leftBmMt, null);
         if (rightBmTmp != null && !rightBmTmp.isRecycled()) canvas.drawBitmap(rightBmTmp, rightBmMt, null);
         if (rightBmTmp != null && !rightBmTmp.isRecycled()) canvas.drawBitmap(rightBmTmp, rightBmMt, null);
-        if (decoreSkinBmTmp != null && !decoreSkinBmTmp.isRecycled()) canvas.drawBitmap(decoreSkinBmTmp, decoreSkinBmMt, null);
+        if (decoreSkinBmTmp != null && !decoreSkinBmTmp.isRecycled())
+            canvas.drawBitmap(decoreSkinBmTmp, decoreSkinBmMt, null);
         if (eyeBrowLBmTmp != null && !eyeBrowLBmTmp.isRecycled()) canvas.drawBitmap(eyeBrowLBmTmp, eyeBrowLBmMt, null);
         if (eyeBrowRBmTmp != null && !eyeBrowRBmTmp.isRecycled()) canvas.drawBitmap(eyeBrowRBmTmp, eyeBrowRBmMt, null);
         if (salivaBmTmp != null && !salivaBmTmp.isRecycled()) canvas.drawBitmap(salivaBmTmp, salivaBmMt, null);
@@ -198,14 +199,6 @@ public class CatMask extends BaseMask implements Mask {
         if (noseBmTmp != null) {
             noseBmTmp.recycle();
             noseBmTmp = null;
-        }
-        if (decoreSkinBm != null) {
-            decoreSkinBm.recycle();
-            decoreSkinBm = null;
-        }
-        if (decoreSkinBmTmp != null) {
-            decoreSkinBmTmp.recycle();
-            decoreSkinBmTmp = null;
         }
         if (leftBm != null) {
             leftBm.recycle();
@@ -222,6 +215,14 @@ public class CatMask extends BaseMask implements Mask {
         if (rightBmTmp != null) {
             rightBmTmp.recycle();
             rightBmTmp = null;
+        }
+        if (decoreSkinBm != null) {
+            decoreSkinBm.recycle();
+            decoreSkinBm = null;
+        }
+        if (decoreSkinBmTmp != null) {
+            decoreSkinBmTmp.recycle();
+            decoreSkinBmTmp = null;
         }
         if (eyeBrowLBm != null) {
             eyeBrowLBm.recycle();

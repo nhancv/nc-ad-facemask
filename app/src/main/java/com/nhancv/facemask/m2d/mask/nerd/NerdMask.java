@@ -47,17 +47,17 @@ public class NerdMask extends BaseMask implements Mask {
     private static final String TAG = NerdMask.class.getSimpleName();
     private Bitmap mask;
     private NerdSprites nerdSprites;
-    private volatile Bitmap glassBm, decorSkinBm, hatBm, decorFlowerBm;
-    private volatile Bitmap glassBmTmp, decorSkinBmTmp, hatBmTmp, decorFlowerBmTmp;
-    private Matrix glassBmMt, decorSkinBmMt, hatBmMt, decorFlowerBmMt;
-    private final int animFrameLimit = 15;
+    private volatile Bitmap glassBm, decorSkinBm, hatBm, decorFlowerBm, eyeBrowLBm, eyeBrowRBm, salivaBm;
+    private volatile Bitmap glassBmTmp, decorSkinBmTmp, hatBmTmp, decorFlowerBmTmp, eyeBrowLBmTmp, eyeBrowRBmTmp, salivaBmTmp;
+    private Matrix glassBmMt, decorSkinBmMt, hatBmMt, decorFlowerBmMt, eyeBrowLBmMt, eyeBrowRBmMt, salivaBmMt;
+    private final int animFrameLimit = 4;
     private int animFrameCounter = 0;
     private boolean mouthActiveAnimation = false;
 
     @Override
     public void init(Context context) {
         super.init(context);
-        if(mask == null) {
+        if (mask == null) {
             mask = BitmapFactory.decodeResource(context.getResources(), R.drawable.nerd_mask);
         }
         nerdSprites = new NerdSprites(mask);
@@ -68,6 +68,9 @@ public class NerdMask extends BaseMask implements Mask {
         decorSkinBmMt = new Matrix();
         hatBmMt = new Matrix();
         decorFlowerBmMt = new Matrix();
+        eyeBrowLBmMt = new Matrix();
+        eyeBrowRBmMt = new Matrix();
+        salivaBmMt = new Matrix();
     }
 
     /**
@@ -79,6 +82,9 @@ public class NerdMask extends BaseMask implements Mask {
         hatBm = nerdSprites.hat();
         decorFlowerBm = nerdSprites.decorFlower();
         decorSkinBm = nerdSprites.decorSkin();
+        eyeBrowLBm = nerdSprites.eyeBrowL();
+        eyeBrowRBm = nerdSprites.eyeBrowR();
+        salivaBm = nerdSprites.saliva();
     }
 
     @Override
@@ -118,17 +124,20 @@ public class NerdMask extends BaseMask implements Mask {
                 }
             } else {
                 decorSkinBmTmp = null;
+                salivaBmTmp = null;
             }
 
-            PointF hatF = new PointF(point2Ds[21].x, point2Ds[21].y);
+            int hatPointId = 79;
+            PointF hatF = new PointF(point2Ds[hatPointId].x, point2Ds[hatPointId].y);
             float hatRatio = hatBm.getHeight() * 1.0f / hatBm.getWidth();
-            float hatW = Math.abs(1.6f * faceRect.width()) * scaleX;
+            float hatW = Math.abs(1.2f * faceRect.width()) * scaleX;
             float hatH = hatW * hatRatio;
             hatBmTmp = Bitmap.createScaledBitmap(hatBm, (int) (hatW), (int) (hatH), false);
             transformMat(hatBmMt, hatBmTmp.getWidth() / 2f, hatBmTmp.getHeight() / 2f, hatF.x * scaleX - hatBmTmp.getWidth() / 2f,
                     hatF.y * scaleY - hatBmTmp.getHeight() / 2f, rotation, translation);
 
-            PointF decorFlowerF = new PointF(point2Ds[70].x, point2Ds[70].y);
+            int decorFlowerPointId = 75;
+            PointF decorFlowerF = new PointF(point2Ds[decorFlowerPointId].x, point2Ds[decorFlowerPointId].y);
             float decorFlowerRatio = decorFlowerBm.getHeight() * 1.0f / decorFlowerBm.getWidth();
             float decorFlowerW = Math.abs(1f * faceRect.width()) * scaleX;
             float decorFlowerH = decorFlowerW * decorFlowerRatio;
@@ -136,7 +145,7 @@ public class NerdMask extends BaseMask implements Mask {
             transformMat(decorFlowerBmMt, decorFlowerBmTmp.getWidth() / 2f, decorFlowerBmTmp.getHeight() / 2f, decorFlowerF.x * scaleX - decorFlowerBmTmp.getWidth() / 2f,
                     decorFlowerF.y * scaleY - decorFlowerBmTmp.getHeight() / 2f, rotation, translation);
 
-            int glassPointId = 21;
+            int glassPointId = 23;
             PointF glassF = new PointF(point2Ds[glassPointId].x, point2Ds[glassPointId].y);
             float glassRatio = glassBm.getHeight() * 1.0f / glassBm.getWidth();
             float glassW = Math.abs(1.3f * faceRect.width()) * scaleX;
@@ -144,19 +153,47 @@ public class NerdMask extends BaseMask implements Mask {
             glassBmTmp = Bitmap.createScaledBitmap(glassBm, (int) (glassW), (int) (glassH), false);
             transformMat(glassBmMt, glassBmTmp.getWidth() / 2f, glassBmTmp.getHeight() / 2f, glassF.x * scaleX - glassBmTmp.getWidth() / 2f,
                     glassF.y * scaleY - glassBmTmp.getHeight() / 2f, rotation, translation);
+
+            int eyeBrowLPointId = 84;
+            PointF eyeBrowLF = new PointF(point2Ds[eyeBrowLPointId].x, point2Ds[eyeBrowLPointId].y);
+            float eyeBrowLRatio = eyeBrowLBm.getHeight() * 1.0f / eyeBrowLBm.getWidth();
+            float eyeBrowLW = Math.abs(1f * faceRect.width()) * scaleX;
+            float eyeBrowLH = eyeBrowLW * eyeBrowLRatio;
+            eyeBrowLBmTmp = Bitmap.createScaledBitmap(eyeBrowLBm, (int) (eyeBrowLW), (int) (eyeBrowLH), false);
+            transformMat(eyeBrowLBmMt, eyeBrowLBmTmp.getWidth() / 2f, eyeBrowLBmTmp.getHeight() / 2f, eyeBrowLF.x * scaleX - eyeBrowLBmTmp.getWidth() / 2f,
+                    eyeBrowLF.y * scaleY - eyeBrowLBmTmp.getHeight() / 2f, rotation, translation);
+
+            int eyeBrowRPointId = 75;
+            PointF eyeBrowRF = new PointF(point2Ds[eyeBrowRPointId].x, point2Ds[eyeBrowRPointId].y);
+            eyeBrowRBmTmp = Bitmap.createScaledBitmap(eyeBrowRBm, (int) (eyeBrowLW), (int) (eyeBrowLH), false);
+            transformMat(eyeBrowRBmMt, eyeBrowRBmTmp.getWidth() / 2f, eyeBrowRBmTmp.getHeight() / 2f, eyeBrowRF.x * scaleX - eyeBrowRBmTmp.getWidth() / 2f,
+                    eyeBrowRF.y * scaleY - eyeBrowRBmTmp.getHeight() / 2f, rotation, translation);
+
+            int salivaPointId = 88;
+            PointF salivaF = new PointF(point2Ds[salivaPointId].x, point2Ds[salivaPointId].y);
+            float salivaRatio = salivaBm.getHeight() * 1.0f / salivaBm.getWidth();
+            float salivaW = Math.abs(1f * faceRect.width()) * scaleX;
+            float salivaH = salivaW * salivaRatio;
+            salivaBmTmp = Bitmap.createScaledBitmap(salivaBm, (int) (salivaW), (int) (salivaH), false);
+            transformMat(salivaBmMt, salivaBmTmp.getWidth() / 2f, salivaBmTmp.getHeight() / 2f, salivaF.x * scaleX - salivaBmTmp.getWidth() / 2f,
+                    salivaF.y * scaleY - salivaBmTmp.getHeight() / 2f, rotation, translation);
+
         } else {
-            decorFlowerBmTmp = hatBmTmp = decorSkinBmTmp = glassBmTmp = null;
+            decorFlowerBmTmp = hatBmTmp = glassBmTmp = decorSkinBmTmp = eyeBrowLBmTmp = eyeBrowRBmTmp = salivaBmTmp = null;
         }
     }
 
     @Override
     public void draw(Canvas canvas) {
         if (glassBmTmp != null && !glassBmTmp.isRecycled()) canvas.drawBitmap(glassBmTmp, glassBmMt, null);
-        if (decorSkinBmTmp != null && !decorSkinBmTmp.isRecycled())
-            canvas.drawBitmap(decorSkinBmTmp, decorSkinBmMt, null);
         if (hatBmTmp != null && !hatBmTmp.isRecycled()) canvas.drawBitmap(hatBmTmp, hatBmMt, null);
         if (decorFlowerBmTmp != null && !decorFlowerBmTmp.isRecycled())
             canvas.drawBitmap(decorFlowerBmTmp, decorFlowerBmMt, null);
+        if (decorSkinBmTmp != null && !decorSkinBmTmp.isRecycled())
+            canvas.drawBitmap(decorSkinBmTmp, decorSkinBmMt, null);
+        if (eyeBrowLBmTmp != null && !eyeBrowLBmTmp.isRecycled()) canvas.drawBitmap(eyeBrowLBmTmp, eyeBrowLBmMt, null);
+        if (eyeBrowRBmTmp != null && !eyeBrowRBmTmp.isRecycled()) canvas.drawBitmap(eyeBrowRBmTmp, eyeBrowRBmMt, null);
+        if (salivaBmTmp != null && !salivaBmTmp.isRecycled()) canvas.drawBitmap(salivaBmTmp, salivaBmMt, null);
     }
 
     @Override
@@ -192,6 +229,30 @@ public class NerdMask extends BaseMask implements Mask {
         if (decorFlowerBmTmp != null) {
             decorFlowerBmTmp.recycle();
             decorFlowerBmTmp = null;
+        }
+        if (eyeBrowLBm != null) {
+            eyeBrowLBm.recycle();
+            eyeBrowLBm = null;
+        }
+        if (eyeBrowLBmTmp != null) {
+            eyeBrowLBmTmp.recycle();
+            eyeBrowLBmTmp = null;
+        }
+        if (eyeBrowRBm != null) {
+            eyeBrowRBm.recycle();
+            eyeBrowRBm = null;
+        }
+        if (eyeBrowRBmTmp != null) {
+            eyeBrowRBmTmp.recycle();
+            eyeBrowRBmTmp = null;
+        }
+        if (salivaBm != null) {
+            salivaBm.recycle();
+            salivaBm = null;
+        }
+        if (salivaBmTmp != null) {
+            salivaBmTmp.recycle();
+            salivaBmTmp = null;
         }
     }
 

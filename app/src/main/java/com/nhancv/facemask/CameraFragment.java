@@ -59,6 +59,8 @@ public class CameraFragment extends Fragment
     public static final int MAX_PREVIEW_HEIGHT = 480;//1080
     public static final int READER_WIDTH = 320;
     public static final int READER_HEIGHT = 240;
+//    public static final int READER_WIDTH = 640;
+//    public static final int READER_HEIGHT = 480;
     public static int SURFACE_WIDTH; //1440
     public static int SURFACE_HEIGHT; //1080
 
