@@ -53,7 +53,7 @@ public class MaskUpdater {
 
     private static final String TAG = MaskUpdater.class.getSimpleName();
 
-    public static MaskType MASK_ACTIVE = MaskType.DOG;
+    public static MaskType MASK_ACTIVE = MaskType.HAMSTER;
     private Context context;
     private Mask mask;
     private SolvePNP solvePNP;

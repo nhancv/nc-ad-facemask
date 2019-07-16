@@ -184,7 +184,6 @@ public class FaceLandmarkTracking implements OnImageAvailableListener {
     }
 
     private boolean preImageProcess(ImageReader reader) {
-        if (!trackingSemaphore.available()) return false;
         Image image = null;
         try {
             image = reader.acquireLatestImage();

@@ -46,10 +46,10 @@ public class HamsterMask extends BaseMask implements Mask {
     private static final String TAG = HamsterMask.class.getSimpleName();
     private Bitmap mask;
     private HamsterSprites hamsterSprites;
-    private volatile Bitmap noseBm, beanBm, leftBm, rightBm;
-    private volatile Bitmap noseBmTmp, beanBmTmp, leftBmTmp, rightBmTmp;
-    private Matrix noseBmMt, beanBmMt, leftBmMt, rightBmMt;
-    private final int animFrameLimit = 15;
+    private volatile Bitmap noseBm, leftBm, rightBm, decoreSkinBm, eyeBrowLBm, eyeBrowRBm, salivaBm;
+    private volatile Bitmap noseBmTmp, leftBmTmp, rightBmTmp, decoreSkinBmTmp, eyeBrowLBmTmp, eyeBrowRBmTmp, salivaBmTmp;
+    private Matrix noseBmMt, leftBmMt, rightBmMt, decoreSkinBmMt, eyeBrowLBmMt, eyeBrowRBmMt, salivaBmMt;
+    private final int animFrameLimit = 4;
     private int animFrameCounter = 0;
     private boolean mouthActiveAnimation = false;
 
@@ -64,9 +64,12 @@ public class HamsterMask extends BaseMask implements Mask {
         updateSprite();
 
         noseBmMt = new Matrix();
-        beanBmMt = new Matrix();
         leftBmMt = new Matrix();
         rightBmMt = new Matrix();
+        decoreSkinBmMt = new Matrix();
+        eyeBrowLBmMt = new Matrix();
+        eyeBrowRBmMt = new Matrix();
+        salivaBmMt = new Matrix();
     }
 
     /**
@@ -77,7 +80,10 @@ public class HamsterMask extends BaseMask implements Mask {
         noseBm = hamsterSprites.nose();
         leftBm = hamsterSprites.leftEar();
         rightBm = hamsterSprites.rightEar();
-        beanBm = hamsterSprites.bean();
+        decoreSkinBm = hamsterSprites.decorSkin();
+        eyeBrowLBm = hamsterSprites.eyeBrowL();
+        eyeBrowRBm = hamsterSprites.eyeBrowR();
+        salivaBm = hamsterSprites.saliva();
     }
 
     @Override
@@ -98,15 +104,23 @@ public class HamsterMask extends BaseMask implements Mask {
             float scaleY = 1f;
 
             if (isMouthOpened || mouthActiveAnimation) {
-                int beanPointId = 0;
-                PointF beanF = new PointF(point2Ds[beanPointId].x, point2Ds[beanPointId].y);
+                int decoreSkinPointId = 22;
+                PointF decoreSkinF = new PointF(point2Ds[decoreSkinPointId].x, point2Ds[decoreSkinPointId].y);
+                float decoreSkinRatio = decoreSkinBm.getHeight() * 1.0f / decoreSkinBm.getWidth();
+                float decoreSkinW = Math.abs(1f * faceRect.width()) * scaleX;
+                float decoreSkinH = decoreSkinW * decoreSkinRatio;
+                decoreSkinBmTmp = Bitmap.createScaledBitmap(decoreSkinBm, (int) (decoreSkinW), (int) (decoreSkinH), false);
+                transformMat(decoreSkinBmMt, decoreSkinBmTmp.getWidth() / 2f, decoreSkinBmTmp.getHeight() / 2f, decoreSkinF.x * scaleX - decoreSkinBmTmp.getWidth() / 2f,
+                        decoreSkinF.y * scaleY - decoreSkinBmTmp.getHeight() / 2f, rotation, translation);
 
-                float beanRatio = beanBm.getHeight() * 1.0f / beanBm.getWidth();
-                float beanW = Math.abs(1f * faceRect.width()) * scaleX;
-                float beanH = beanW * beanRatio;
-                beanBmTmp = Bitmap.createScaledBitmap(beanBm, (int) (beanW), (int) (beanH), false);
-                transformMat(beanBmMt, beanBmTmp.getWidth() / 2f, beanBmTmp.getHeight() / 2f, beanF.x * scaleX - beanBmTmp.getWidth() / 2f,
-                        beanF.y * scaleY - beanBmTmp.getHeight() / 2f, rotation, translation);
+                int salivaPointId = 103;
+                PointF salivaF = new PointF(point2Ds[salivaPointId].x, point2Ds[salivaPointId].y);
+                float salivaRatio = salivaBm.getHeight() * 1.0f / salivaBm.getWidth();
+                float salivaW = Math.abs(1.3f * faceRect.width()) * scaleX;
+                float salivaH = salivaW * salivaRatio;
+                salivaBmTmp = Bitmap.createScaledBitmap(salivaBm, (int) (salivaW), (int) (salivaH), false);
+                transformMat(salivaBmMt, salivaBmTmp.getWidth() / 2f, salivaBmTmp.getHeight() / 2f, salivaF.x * scaleX - salivaBmTmp.getWidth() / 2f,
+                        salivaF.y * scaleY - salivaBmTmp.getHeight() / 2f, rotation, translation);
 
                 if (!mouthActiveAnimation) mouthActiveAnimation = true;
                 if (animFrameCounter < animFrameLimit) {
@@ -116,7 +130,7 @@ public class HamsterMask extends BaseMask implements Mask {
                     animFrameCounter = 0;
                 }
             } else {
-                beanBmTmp = null;
+                salivaBmTmp = null;
             }
 
             PointF leftEarF = new PointF(point2Ds[29].x, point2Ds[29].y);
@@ -140,17 +154,35 @@ public class HamsterMask extends BaseMask implements Mask {
             noseBmTmp = Bitmap.createScaledBitmap(noseBm, (int) (noseW), (int) (noseH), false);
             transformMat(noseBmMt, noseBmTmp.getWidth() / 2f, noseBmTmp.getHeight() / 2f, noseF.x * scaleX - noseBmTmp.getWidth() / 2f,
                     noseF.y * scaleY - noseBmTmp.getHeight() / 2f, rotation, translation);
+
+            int eyeBrowLPointId = 29;
+            PointF eyeBrowLF = new PointF(point2Ds[eyeBrowLPointId].x, point2Ds[eyeBrowLPointId].y);
+            float eyeBrowLRatio = eyeBrowLBm.getHeight() * 1.0f / eyeBrowLBm.getWidth();
+            float eyeBrowLW = Math.abs(1.2f * faceRect.width()) * scaleX;
+            float eyeBrowLH = eyeBrowLW * eyeBrowLRatio;
+            eyeBrowLBmTmp = Bitmap.createScaledBitmap(eyeBrowLBm, (int) (eyeBrowLW), (int) (eyeBrowLH), false);
+            transformMat(eyeBrowLBmMt, eyeBrowLBmTmp.getWidth() / 2f, eyeBrowLBmTmp.getHeight() / 2f, eyeBrowLF.x * scaleX - eyeBrowLBmTmp.getWidth() / 2f,
+                    eyeBrowLF.y * scaleY - eyeBrowLBmTmp.getHeight() / 2f, rotation, translation);
+
+            int eyeBrowRPointId = 70;
+            PointF eyeBrowRF = new PointF(point2Ds[eyeBrowRPointId].x, point2Ds[eyeBrowRPointId].y);
+            eyeBrowRBmTmp = Bitmap.createScaledBitmap(eyeBrowRBm, (int) (eyeBrowLW), (int) (eyeBrowLH), false);
+            transformMat(eyeBrowRBmMt, eyeBrowRBmTmp.getWidth() / 2f, eyeBrowRBmTmp.getHeight() / 2f, eyeBrowRF.x * scaleX - eyeBrowRBmTmp.getWidth() / 2f,
+                    eyeBrowRF.y * scaleY - eyeBrowRBmTmp.getHeight() / 2f, rotation, translation);
         } else {
-            rightBmTmp = leftBmTmp = beanBmTmp = noseBmTmp = null;
+            rightBmTmp = leftBmTmp = noseBmTmp = decoreSkinBmTmp = eyeBrowLBmTmp = eyeBrowRBmTmp = salivaBmTmp = null;
         }
     }
 
     @Override
     public void draw(Canvas canvas) {
         if (noseBmTmp != null && !noseBmTmp.isRecycled()) canvas.drawBitmap(noseBmTmp, noseBmMt, null);
-        if (beanBmTmp != null && !beanBmTmp.isRecycled()) canvas.drawBitmap(beanBmTmp, beanBmMt, null);
         if (leftBmTmp != null && !leftBmTmp.isRecycled()) canvas.drawBitmap(leftBmTmp, leftBmMt, null);
         if (rightBmTmp != null && !rightBmTmp.isRecycled()) canvas.drawBitmap(rightBmTmp, rightBmMt, null);
+        if (decoreSkinBmTmp != null && !decoreSkinBmTmp.isRecycled()) canvas.drawBitmap(decoreSkinBmTmp, decoreSkinBmMt, null);
+        if (eyeBrowLBmTmp != null && !eyeBrowLBmTmp.isRecycled()) canvas.drawBitmap(eyeBrowLBmTmp, eyeBrowLBmMt, null);
+        if (eyeBrowRBmTmp != null && !eyeBrowRBmTmp.isRecycled()) canvas.drawBitmap(eyeBrowRBmTmp, eyeBrowRBmMt, null);
+        if (salivaBmTmp != null && !salivaBmTmp.isRecycled()) canvas.drawBitmap(salivaBmTmp, salivaBmMt, null);
     }
 
     @Override
@@ -162,14 +194,6 @@ public class HamsterMask extends BaseMask implements Mask {
         if (noseBmTmp != null) {
             noseBmTmp.recycle();
             noseBmTmp = null;
-        }
-        if (beanBm != null) {
-            beanBm.recycle();
-            beanBm = null;
-        }
-        if (beanBmTmp != null) {
-            beanBmTmp.recycle();
-            beanBmTmp = null;
         }
         if (leftBm != null) {
             leftBm.recycle();
@@ -186,6 +210,38 @@ public class HamsterMask extends BaseMask implements Mask {
         if (rightBmTmp != null) {
             rightBmTmp.recycle();
             rightBmTmp = null;
+        }
+        if (decoreSkinBm != null) {
+            decoreSkinBm.recycle();
+            decoreSkinBm = null;
+        }
+        if (decoreSkinBmTmp != null) {
+            decoreSkinBmTmp.recycle();
+            decoreSkinBmTmp = null;
+        }
+        if (eyeBrowLBm != null) {
+            eyeBrowLBm.recycle();
+            eyeBrowLBm = null;
+        }
+        if (eyeBrowLBmTmp != null) {
+            eyeBrowLBmTmp.recycle();
+            eyeBrowLBmTmp = null;
+        }
+        if (eyeBrowRBm != null) {
+            eyeBrowRBm.recycle();
+            eyeBrowRBm = null;
+        }
+        if (eyeBrowRBmTmp != null) {
+            eyeBrowRBmTmp.recycle();
+            eyeBrowRBmTmp = null;
+        }
+        if (salivaBm != null) {
+            salivaBm.recycle();
+            salivaBm = null;
+        }
+        if (salivaBmTmp != null) {
+            salivaBmTmp.recycle();
+            salivaBmTmp = null;
         }
     }
 

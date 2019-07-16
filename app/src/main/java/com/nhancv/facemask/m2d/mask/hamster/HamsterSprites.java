@@ -39,24 +39,22 @@ public class HamsterSprites {
     private int height = SPRITE_SIZE;
 
     private int[][] maskIndexs = {
-            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-            {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
-            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3},
-            {4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4},
-            {5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5},
-            {5, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0}
+            {1, 1, 1, 1, 1},
+            {2, 2, 2, 2, 2},
+            {3, 3, 3, 3, 3},
+            {4, 4, 4, 4, 4},
+            {5, 5, 5, 5, 5},
+            {6, 6, 6, 6, 6}
     };
 
     private int[][] playIndexs = {
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0}
     };
-
 
     public HamsterSprites(Bitmap bitmap) {
         if (this.bitmap == null) {
@@ -111,7 +109,6 @@ public class HamsterSprites {
         Bitmap bmFinal = Bitmap.createBitmap(SPRITE_SIZE, 500, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmFinal);
         canvas.drawBitmap(bm, 0, 0, null);
-//        if(!bm.isRecycled()) bm.recycle();
         return bmFinal;
     }
 
@@ -122,7 +119,6 @@ public class HamsterSprites {
         Bitmap bmFinal = Bitmap.createBitmap(SPRITE_SIZE, 500, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmFinal);
         canvas.drawBitmap(bm, 0, 0, null);
-//        if(!bm.isRecycled()) bm.recycle();
         return bmFinal;
     }
 
@@ -133,7 +129,6 @@ public class HamsterSprites {
         Bitmap bmFinal = Bitmap.createBitmap(SPRITE_SIZE, SPRITE_SIZE, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmFinal);
         canvas.drawBitmap(bm, -3, 0, null);
-//        if(!bm.isRecycled()) bm.recycle();
         return bmFinal;
     }
 
@@ -144,19 +139,24 @@ public class HamsterSprites {
         Bitmap bmFinal = Bitmap.createBitmap(SPRITE_SIZE, SPRITE_SIZE, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmFinal);
         canvas.drawBitmap(bm, 0, 0, null);
-//        if(!bm.isRecycled()) bm.recycle();
         return bmFinal;
     }
 
-    public Bitmap bean() {
+    public Bitmap eyeBrowL() {
         Matrix m = new Matrix();
-        Bitmap bm = findSprite(5, m);
-        if (bm == null) return null;
-        Bitmap bmFinal = Bitmap.createBitmap(SPRITE_SIZE, SPRITE_SIZE, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bmFinal);
-        canvas.drawBitmap(bm, 0, 0, null);
-//        if(!bm.isRecycled()) bm.recycle();
-        return bmFinal;
+        m.preScale(-1, 1);
+        return findSprite(6, m);
     }
+
+    public Bitmap eyeBrowR() {
+        Matrix m = new Matrix();
+        return findSprite(6, m);
+    }
+
+    public Bitmap saliva() {
+        Matrix m = new Matrix();
+        return findSprite(5, m);
+    }
+
 
 }

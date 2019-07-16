@@ -65,9 +65,9 @@ public class CatMask extends BaseMask implements Mask {
         updateSprite();
 
         noseBmMt = new Matrix();
-        decoreSkinBmMt = new Matrix();
         leftBmMt = new Matrix();
         rightBmMt = new Matrix();
+        decoreSkinBmMt = new Matrix();
         eyeBrowLBmMt = new Matrix();
         eyeBrowRBmMt = new Matrix();
         salivaBmMt = new Matrix();
@@ -180,10 +180,10 @@ public class CatMask extends BaseMask implements Mask {
     @Override
     public void draw(Canvas canvas) {
         if (noseBmTmp != null && !noseBmTmp.isRecycled()) canvas.drawBitmap(noseBmTmp, noseBmMt, null);
-        if (decoreSkinBmTmp != null && !decoreSkinBmTmp.isRecycled()) canvas.drawBitmap(decoreSkinBmTmp, decoreSkinBmMt, null);
         if (leftBmTmp != null && !leftBmTmp.isRecycled()) canvas.drawBitmap(leftBmTmp, leftBmMt, null);
         if (rightBmTmp != null && !rightBmTmp.isRecycled()) canvas.drawBitmap(rightBmTmp, rightBmMt, null);
         if (rightBmTmp != null && !rightBmTmp.isRecycled()) canvas.drawBitmap(rightBmTmp, rightBmMt, null);
+        if (decoreSkinBmTmp != null && !decoreSkinBmTmp.isRecycled()) canvas.drawBitmap(decoreSkinBmTmp, decoreSkinBmMt, null);
         if (eyeBrowLBmTmp != null && !eyeBrowLBmTmp.isRecycled()) canvas.drawBitmap(eyeBrowLBmTmp, eyeBrowLBmMt, null);
         if (eyeBrowRBmTmp != null && !eyeBrowRBmTmp.isRecycled()) canvas.drawBitmap(eyeBrowRBmTmp, eyeBrowRBmMt, null);
         if (salivaBmTmp != null && !salivaBmTmp.isRecycled()) canvas.drawBitmap(salivaBmTmp, salivaBmMt, null);
