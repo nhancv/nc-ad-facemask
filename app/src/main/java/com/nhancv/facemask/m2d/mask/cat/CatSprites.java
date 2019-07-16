@@ -110,7 +110,6 @@ public class CatSprites {
         Bitmap bmFinal = Bitmap.createBitmap(SPRITE_SIZE, 500, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmFinal);
         canvas.drawBitmap(bm, 0, 0, null);
-//        if(!bm.isRecycled()) bm.recycle();
         return bmFinal;
     }
 
@@ -121,7 +120,6 @@ public class CatSprites {
         Bitmap bmFinal = Bitmap.createBitmap(SPRITE_SIZE, 500, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmFinal);
         canvas.drawBitmap(bm, 0, 0, null);
-//        if(!bm.isRecycled()) bm.recycle();
         return bmFinal;
     }
 
@@ -132,7 +130,6 @@ public class CatSprites {
         Bitmap bmFinal = Bitmap.createBitmap(SPRITE_SIZE, SPRITE_SIZE, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmFinal);
         canvas.drawBitmap(bm, -3, -10, null);
-//        if(!bm.isRecycled()) bm.recycle();
         return bmFinal;
     }
 
@@ -144,7 +141,6 @@ public class CatSprites {
         Canvas canvas = new Canvas(bmFinal);
         canvas.drawBitmap(bm, 0, 0, null);
         canvas.drawBitmap(bm, 256, 0, null);
-//        if(!bm.isRecycled()) bm.recycle();
         return bmFinal;
     }
 

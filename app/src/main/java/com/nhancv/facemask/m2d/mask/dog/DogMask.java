@@ -48,10 +48,10 @@ public class DogMask extends BaseMask implements Mask {
     private static final String TAG = DogMask.class.getSimpleName();
     private Bitmap mask;
     private DogSprites dogSprites;
-    private volatile Bitmap noseBm, boneBm, leftBm, rightBm;
-    private volatile Bitmap noseBmTmp, boneBmTmp, leftBmTmp, rightBmTmp;
-    private Matrix noseBmMt, boneBmMt, leftBmMt, rightBmMt;
-    private final int animFrameLimit = 15;
+    private volatile Bitmap noseBm, leftBm, rightBm, eyeBrowLBm, eyeBrowRBm, salivaBm;
+    private volatile Bitmap noseBmTmp, leftBmTmp, rightBmTmp, eyeBrowLBmTmp, eyeBrowRBmTmp, salivaBmTmp;
+    private Matrix noseBmMt, leftBmMt, rightBmMt, eyeBrowLBmMt, eyeBrowRBmMt, salivaBmMt;
+    private final int animFrameLimit = 4;
     private int animFrameCounter = 0;
     private boolean mouthActiveAnimation = false;
 
@@ -66,9 +66,11 @@ public class DogMask extends BaseMask implements Mask {
         updateSprite();
 
         noseBmMt = new Matrix();
-        boneBmMt = new Matrix();
         leftBmMt = new Matrix();
         rightBmMt = new Matrix();
+        eyeBrowLBmMt = new Matrix();
+        eyeBrowRBmMt = new Matrix();
+        salivaBmMt = new Matrix();
     }
 
     /**
@@ -79,12 +81,10 @@ public class DogMask extends BaseMask implements Mask {
         noseBm = dogSprites.nose();
         leftBm = dogSprites.leftEar();
         rightBm = dogSprites.rightEar();
-        boneBm = dogSprites.bone();
+        eyeBrowLBm = dogSprites.eyeBrowL();
+        eyeBrowRBm = dogSprites.eyeBrowR();
+        salivaBm = dogSprites.saliva();
     }
-
-    private PointF lastNoseF = new PointF();
-    private NKalmanFilter kmNoseX = new NKalmanFilter(1, 1, 50f);
-    private NKalmanFilter kmNoseY = new NKalmanFilter(1, 1, 50f);
 
     @Override
     public void update(Face face, int previewWidth, int previewHeight, Matrix scaleMatrix, SolvePNP solvePNP) {
@@ -94,12 +94,6 @@ public class DogMask extends BaseMask implements Mask {
 
             super.update(face, previewWidth, previewHeight, scaleMatrix, solvePNP);
             //Buffer coors
-            int nosePointId = 46;
-            int bonePointId = 32;
-            PointF noseF = new PointF(point2Ds[nosePointId].x, point2Ds[nosePointId].y);
-            PointF boneF = new PointF(point2Ds[bonePointId].x, point2Ds[bonePointId].y);
-            denoise(kmNoseX, kmNoseY, lastNoseF, noseF);
-
             Rotation rotation = new Rotation(solvePNP.getRx(), solvePNP.getRy(), solvePNP.getRz());
             Translation translation = new Translation(0, 0, solvePNP.getTz());
             float[] scalePts = new float[9];
@@ -110,12 +104,14 @@ public class DogMask extends BaseMask implements Mask {
             float scaleY = 1f;
 
             if (isMouthOpened || mouthActiveAnimation) {
-                float boneRatio = boneBm.getHeight() * 1.0f / boneBm.getWidth();
-                float boneW = Math.abs(1f * faceRect.width()) * scaleX;
-                float boneH = boneW * boneRatio;
-                boneBmTmp = Bitmap.createScaledBitmap(boneBm, (int) (boneW), (int) (boneH), false);
-                transformMat(boneBmMt, boneBmTmp.getWidth() / 2f, boneBmTmp.getHeight() / 2f, boneF.x * scaleX - boneBmTmp.getWidth() / 2f,
-                        boneF.y * scaleY - boneBmTmp.getHeight() / 2f, rotation, translation);
+                int salivaPointId = 45;
+                PointF salivaF = new PointF(point2Ds[salivaPointId].x, point2Ds[salivaPointId].y);
+                float salivaRatio = salivaBm.getHeight() * 1.0f / salivaBm.getWidth();
+                float salivaW = Math.abs(1f * faceRect.width()) * scaleX;
+                float salivaH = salivaW * salivaRatio;
+                salivaBmTmp = Bitmap.createScaledBitmap(salivaBm, (int) (salivaW), (int) (salivaH), false);
+                transformMat(salivaBmMt, salivaBmTmp.getWidth() / 2f, salivaBmTmp.getHeight() / 2f, salivaF.x * scaleX - salivaBmTmp.getWidth() / 2f,
+                        salivaF.y * scaleY - salivaBmTmp.getHeight() / 2f, rotation, translation);
 
                 if (!mouthActiveAnimation) mouthActiveAnimation = true;
                 if (animFrameCounter < animFrameLimit) {
@@ -125,7 +121,7 @@ public class DogMask extends BaseMask implements Mask {
                     animFrameCounter = 0;
                 }
             } else {
-                boneBmTmp = null;
+                salivaBmTmp = null;
             }
 
             PointF leftEarF = new PointF(point2Ds[10].x, point2Ds[10].y);
@@ -149,23 +145,42 @@ public class DogMask extends BaseMask implements Mask {
                 rightBmTmp = null;
             }
 
+            int nosePointId = 46;
+            PointF noseF = new PointF(point2Ds[nosePointId].x, point2Ds[nosePointId].y);
             float noseRatio = noseBm.getHeight() * 1.0f / noseBm.getWidth();
             float noseW = Math.abs(1.2f * faceRect.width()) * scaleX;
             float noseH = noseW * noseRatio;
             noseBmTmp = Bitmap.createScaledBitmap(noseBm, (int) (noseW), (int) (noseH), false);
             transformMat(noseBmMt, noseBmTmp.getWidth() / 2f, noseBmTmp.getHeight() / 2f, noseF.x * scaleX - noseBmTmp.getWidth() / 2f,
                     noseF.y * scaleY - noseBmTmp.getHeight() / 2f, rotation, translation);
+
+            int eyeBrowLPointId = 84;
+            PointF eyeBrowLF = new PointF(point2Ds[eyeBrowLPointId].x, point2Ds[eyeBrowLPointId].y);
+            float eyeBrowLRatio = eyeBrowLBm.getHeight() * 1.0f / eyeBrowLBm.getWidth();
+            float eyeBrowLW = Math.abs(1f * faceRect.width()) * scaleX;
+            float eyeBrowLH = eyeBrowLW * eyeBrowLRatio;
+            eyeBrowLBmTmp = Bitmap.createScaledBitmap(eyeBrowLBm, (int) (eyeBrowLW), (int) (eyeBrowLH), false);
+            transformMat(eyeBrowLBmMt, eyeBrowLBmTmp.getWidth() / 2f, eyeBrowLBmTmp.getHeight() / 2f, eyeBrowLF.x * scaleX - eyeBrowLBmTmp.getWidth() / 2f,
+                    eyeBrowLF.y * scaleY - eyeBrowLBmTmp.getHeight() / 2f, rotation, translation);
+
+            int eyeBrowRPointId = 75;
+            PointF eyeBrowRF = new PointF(point2Ds[eyeBrowRPointId].x, point2Ds[eyeBrowRPointId].y);
+            eyeBrowRBmTmp = Bitmap.createScaledBitmap(eyeBrowRBm, (int) (eyeBrowLW), (int) (eyeBrowLH), false);
+            transformMat(eyeBrowRBmMt, eyeBrowRBmTmp.getWidth() / 2f, eyeBrowRBmTmp.getHeight() / 2f, eyeBrowRF.x * scaleX - eyeBrowRBmTmp.getWidth() / 2f,
+                    eyeBrowRF.y * scaleY - eyeBrowRBmTmp.getHeight() / 2f, rotation, translation);
         } else {
-            rightBmTmp = leftBmTmp = boneBmTmp = noseBmTmp = null;
+            rightBmTmp = leftBmTmp = noseBmTmp = eyeBrowLBmTmp = eyeBrowRBmTmp = salivaBmTmp = null;
         }
     }
 
     @Override
     public void draw(Canvas canvas) {
         if (noseBmTmp != null && !noseBmTmp.isRecycled()) canvas.drawBitmap(noseBmTmp, noseBmMt, null);
-        if (boneBmTmp != null && !boneBmTmp.isRecycled()) canvas.drawBitmap(boneBmTmp, boneBmMt, null);
         if (leftBmTmp != null && !leftBmTmp.isRecycled()) canvas.drawBitmap(leftBmTmp, leftBmMt, null);
         if (rightBmTmp != null && !rightBmTmp.isRecycled()) canvas.drawBitmap(rightBmTmp, rightBmMt, null);
+        if (eyeBrowLBmTmp != null && !eyeBrowLBmTmp.isRecycled()) canvas.drawBitmap(eyeBrowLBmTmp, eyeBrowLBmMt, null);
+        if (eyeBrowRBmTmp != null && !eyeBrowRBmTmp.isRecycled()) canvas.drawBitmap(eyeBrowRBmTmp, eyeBrowRBmMt, null);
+        if (salivaBmTmp != null && !salivaBmTmp.isRecycled()) canvas.drawBitmap(salivaBmTmp, salivaBmMt, null);
     }
 
     @Override
@@ -177,14 +192,6 @@ public class DogMask extends BaseMask implements Mask {
         if (noseBmTmp != null) {
             noseBmTmp.recycle();
             noseBmTmp = null;
-        }
-        if (boneBm != null) {
-            boneBm.recycle();
-            boneBm = null;
-        }
-        if (boneBmTmp != null) {
-            boneBmTmp.recycle();
-            boneBmTmp = null;
         }
         if (leftBm != null) {
             leftBm.recycle();
@@ -201,6 +208,26 @@ public class DogMask extends BaseMask implements Mask {
         if (rightBmTmp != null) {
             rightBmTmp.recycle();
             rightBmTmp = null;
+        }
+        if (eyeBrowLBmTmp != null) {
+            eyeBrowLBmTmp.recycle();
+            eyeBrowLBmTmp = null;
+        }
+        if (eyeBrowRBm != null) {
+            eyeBrowRBm.recycle();
+            eyeBrowRBm = null;
+        }
+        if (eyeBrowRBmTmp != null) {
+            eyeBrowRBmTmp.recycle();
+            eyeBrowRBmTmp = null;
+        }
+        if (salivaBm != null) {
+            salivaBm.recycle();
+            salivaBm = null;
+        }
+        if (salivaBmTmp != null) {
+            salivaBmTmp.recycle();
+            salivaBmTmp = null;
         }
     }
 
